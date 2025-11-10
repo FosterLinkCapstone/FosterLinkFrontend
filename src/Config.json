@@ -1,0 +1,7 @@
+{
+    "apiUrl": {
+        "dev": "http://localhost:8080/v1/",
+        "staging": "https://fosterlink-backend-dev.azurewebsites.net/v1/",
+        "prod": "TODO"
+    }
+}
