@@ -1,8 +1,5 @@
-
-import { useMemo } from 'react'
 import './App.css'
 import { AuthProvider } from './net-fosterlink/backend/AuthContext'
-import {apiUrl as apiUrlCfg} from "@/Config.json"
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { Home } from './net-fosterlink/pages/Home'
 import { Login } from './net-fosterlink/pages/Login'
@@ -10,7 +7,7 @@ import { Register } from './net-fosterlink/pages/Register'
 
 function App() {
 
-  const apiUrl = useMemo(() => {
+  /*const apiUrl = useMemo(() => {
       if (import.meta.env.MODE == "development") {
       if (import.meta.env.BASE_URL.includes("localhost")) {
         return apiUrlCfg.dev
@@ -22,7 +19,7 @@ function App() {
       } else {
         return apiUrlCfg.dev
       }
-  }, [])
+  }, [])*/
   
 
   return (
