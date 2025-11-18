@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react'
+import { useMemo } from 'react'
 import './App.css'
 import { AuthProvider } from './net-fosterlink/backend/AuthContext'
 import {apiUrl as apiUrlCfg} from "@/Config.json"
@@ -10,25 +10,25 @@ import { Register } from './net-fosterlink/pages/Register'
 
 function App() {
 
-  const apiUrl = useRef<string>("http://localhost:8080/v1/")
-  useEffect(() => {
-    if (import.meta.env.MODE == "development") {
+  const apiUrl = useMemo(() => {
+      if (import.meta.env.MODE == "development") {
       if (import.meta.env.BASE_URL.includes("localhost")) {
-        apiUrl.current = apiUrlCfg.dev
+        return apiUrlCfg.dev
       } else {
-        apiUrl.current = apiUrlCfg.staging
+        return apiUrlCfg.staging
       }
-    } else if (import.meta.env.MODE == "production") {
-      apiUrl.current = apiUrlCfg.prod
-    } else {
-      apiUrl.current = apiUrlCfg.dev
-    }
-  })
+      } else if (import.meta.env.MODE == "production") {
+        return apiUrlCfg.prod
+      } else {
+        return apiUrlCfg.dev
+      }
+  }, [])
+  
 
   return (
     <>
         <BrowserRouter>
-          <AuthProvider apiUrl={apiUrl.current}>
+          <AuthProvider apiUrl={import.meta.env.VITE_API_URL}>
             <Routes>
               <Route path="/" element={<Home/>}/>
               <Route path="/login" element={<Login/>}/>
