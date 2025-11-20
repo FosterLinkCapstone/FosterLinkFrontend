@@ -4,6 +4,7 @@ on:
   push:
     branches: 
       - master
+      - staging
   workflow_dispatch:
 
 env:
@@ -39,6 +40,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    environment: ${{ github.ref_name }}
 
     steps:
       - name: Download build artifact
@@ -46,12 +48,15 @@ jobs:
         with:
           name: frontend-dist
           path: .
+      
+      - name: List environment info
+        run: echo "Github branch ${{ github.ref_name }} | Azure profile name ${{ vars.ENV_NAME }}"
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: fosterlink-frontend-staging
+          app-name: ${{ vars.ENV_NAME }}
           slot-name: Production
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          publish-profile: ${{ secrets.PUBLISH_PROFILE }}
           package: .
