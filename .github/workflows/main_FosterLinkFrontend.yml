@@ -7,10 +7,6 @@ on:
       - staging
   workflow_dispatch:
 
-env:
-  # These should come from GitHub's Action Variables or Secrets—not from env.* inside env
-  VITE_API_URL: ${{ vars.VITE_API_URL }}
-
 jobs:
 
   build:
