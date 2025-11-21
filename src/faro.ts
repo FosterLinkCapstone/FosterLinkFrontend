@@ -2,8 +2,8 @@ import { initializeFaro, getWebInstrumentations } from "@grafana/faro-react";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
 
 let mode = "dev";
-switch (import.meta.env.MODE) {
-  case "production":
+switch (import.meta.env.BRANCH) {
+  case "master":
     mode = "prod";
     break;
   case "staging":
