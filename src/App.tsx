@@ -6,7 +6,6 @@ import { Login } from './net-fosterlink/pages/Login'
 import { Register } from './net-fosterlink/pages/Register'
 
 function App() {
-  console.log(import.meta.env)
   return (
     <>
         <BrowserRouter>
