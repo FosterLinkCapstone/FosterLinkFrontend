@@ -7,21 +7,6 @@ import { Register } from './net-fosterlink/pages/Register'
 
 function App() {
 
-  /*const apiUrl = useMemo(() => {
-      if (import.meta.env.MODE == "development") {
-      if (import.meta.env.BASE_URL.includes("localhost")) {
-        return apiUrlCfg.dev
-      } else {
-        return apiUrlCfg.staging
-      }
-      } else if (import.meta.env.MODE == "production") {
-        return apiUrlCfg.prod
-      } else {
-        return apiUrlCfg.dev
-      }
-  }, [])*/
-  
-
   return (
     <>
         <BrowserRouter>
