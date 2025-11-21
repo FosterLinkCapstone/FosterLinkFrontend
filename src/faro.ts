@@ -2,7 +2,7 @@ import { initializeFaro, getWebInstrumentations } from "@grafana/faro-react";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
 
 let mode = "dev";
-switch (import.meta.env.BRANCH) {
+switch (import.meta.env.VITE_BRANCH) {
   case "master":
     mode = "prod";
     break;
@@ -15,7 +15,7 @@ switch (import.meta.env.BRANCH) {
 }
 
 initializeFaro({
-  url: import.meta.env.GRAFANA_FARO_URL,
+  url: import.meta.env.VITE_GRAFANA_FARO_URL,
   app: {
     name: `fosterlink-frontend-${mode}`,
     version: "1.0.0",
