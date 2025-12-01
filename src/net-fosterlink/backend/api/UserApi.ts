@@ -6,6 +6,7 @@ export interface UserApiType {
     login: (email: string, password: string) => Promise<LoginResponse>,
     getInfo: () => Promise<UserInfoResponse>,
     register: (info: {firstName: string, lastName: string, username: string, email: string, password: string}) => Promise<{error: string | undefined, jwt: string}>
+    isAdmin: () => Promise<boolean>
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -96,6 +97,10 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                     }
                 }
             }
+        },
+        isAdmin: async(): Promise<boolean> => {
+            const res = await auth.api.get("/users/isAdmin")
+            return res.data
         }
     }
     

@@ -34,7 +34,7 @@ export const Thread = ({ thread }: { thread: ThreadModel }) => {
           <AvatarImage src="https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg?20200418092106" />
           <AvatarFallback>PFP</AvatarFallback>
         </Avatar>
-        <p className="font-medium">{thread.postedByUsername}</p>
+        <p className="font-medium">{thread.author.username}</p>
         <Badge className="my-1">TODO: badges</Badge>
         <p className="text-xs text-gray-500">TODO: post count</p>
         <p className="text-xs text-green-600 font-medium">TODO: verification</p>
