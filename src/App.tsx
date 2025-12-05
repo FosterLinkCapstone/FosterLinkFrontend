@@ -4,35 +4,43 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { Home } from './net-fosterlink/pages/Home'
 import { Login } from './net-fosterlink/pages/Login'
 import { Register } from './net-fosterlink/pages/Register'
+import { Threads } from './net-fosterlink/pages/Threads'
+import { createGlobalStyle } from 'styled-components'
+import { ThreadLoader } from './net-fosterlink/pages/ThreadLoader'
+import { FaqHome } from './net-fosterlink/pages/FaqHome'
+import { AdminOnly } from './net-fosterlink/pages/AdminOnly'
+import { PendingFaqs } from './net-fosterlink/pages/PendingFaqs'
+import { Agencies } from './net-fosterlink/pages/Agencies'
+import { PendingAgencies } from './net-fosterlink/pages/PendingAgencies'
 
 function App() {
 
-  /*const apiUrl = useMemo(() => {
-      if (import.meta.env.MODE == "development") {
-      if (import.meta.env.BASE_URL.includes("localhost")) {
-        return apiUrlCfg.dev
-      } else {
-        return apiUrlCfg.staging
-      }
-      } else if (import.meta.env.MODE == "production") {
-        return apiUrlCfg.prod
-      } else {
-        return apiUrlCfg.dev
-      }
-  }, [])*/
-  
+  const GlobalStyle = createGlobalStyle`
+    #root {
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: none !important;
+    }
+  `
 
   return (
     <>
         <BrowserRouter>
-          <AuthProvider apiUrl={import.meta.env.VITE_API_URL}>
+          <AuthProvider apiUrl={import.meta.env.VITE_API_URL} mapsApiKey={import.meta.env.VITE_MAPS_API_KEY}>
             <Routes>
               <Route path="/" element={<Home/>}/>
               <Route path="/login" element={<Login/>}/>
               <Route path="/register" element={<Register/>}/>
+              <Route path="/threads" element={<Threads/>}/>
+              <Route path="/threads/thread/:threadId" element={<ThreadLoader preloadedThread={undefined}/>}></Route>
+              <Route path="/faq" element={<FaqHome/>}/>
+              <Route path="/faq/pending" element={<AdminOnly><PendingFaqs/></AdminOnly>}/>
+              <Route path="/agencies" element={<Agencies/>}/>
+              <Route path="/agencies/pending" element={<AdminOnly><PendingAgencies/></AdminOnly>}/>
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        <GlobalStyle/>
     </>
   )
 }

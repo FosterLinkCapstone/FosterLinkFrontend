@@ -7,12 +7,14 @@ import { useRef, useState } from "react"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { AlertCircleIcon } from "lucide-react"
 import { userApi } from "../backend/api/UserApi"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
+import { PhoneNumberInput } from "../components/PhoneNumberInput"
 
 export const Register = () => {
     const username = useRef<string>("")
     const firstName = useRef<string>("")
     const lastName = useRef<string>("")
+    const [phoneNumber, setPhoneNumber] = useState<string>("")
     const [email, setEmail] = useState<string>("")
     const [password, setPassword] = useState<string>("")
     const [confirmPassword, setConfirmPassword] = useState<string>("")
@@ -21,16 +23,13 @@ export const Register = () => {
     const auth = useAuth()
     const userApiRef = userApi(auth)
 
-    const toLogin = () => {
-        navigate("/login")
-    }
-
     const submitRegister = () => {
         userApiRef.register({
             firstName: firstName.current,
             lastName: lastName.current,
             username: username.current,
             email: email,
+            phoneNumber: phoneNumber,
             password: password
         }).then(res => {
             if (res.error) {
@@ -47,7 +46,7 @@ export const Register = () => {
         <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Register for a new account!</CardTitle>
-                <CardDescription>Or, <Button onClick={toLogin} variant="outline" >Login</Button></CardDescription>
+                <CardDescription>Or, <Link className="text-blue-600 hover:text-blue-800" to="/login">login</Link></CardDescription>
             </CardHeader>
             <CardContent>
                 <form>
@@ -69,6 +68,10 @@ export const Register = () => {
                             <Input id="email" type="email" onChange={(event) => setEmail(event.target.value)} required/>
                         </div>
                         <div className="grid gap-2">
+                            <Label htmlFor="phoneNumber">Phone Number</Label>
+                            <PhoneNumberInput value={phoneNumber} setValue={setPhoneNumber}/>
+                        </div>
+                        <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
                             <Input id="password" type="password" onChange={(event) =>  setPassword(event.target.value)} required/>
                         </div>
@@ -76,21 +79,27 @@ export const Register = () => {
                             <Label htmlFor="confirm-password">Confirm Password</Label>
                             <Input id="confirm-password" type="password" onChange={(event) => setConfirmPassword(event.target.value)} required/>
                         </div>
-                        <Alert variant="destructive" style={{ visibility: (password == confirmPassword) ? "visible" : "hidden" }}>
+                        {
+                            password != confirmPassword && <Alert variant="destructive" className="text-red-400 bg-red-200">
                             <AlertCircleIcon/>
                             <AlertTitle>Passwords don't match!</AlertTitle>
                         </Alert>
+                        }
+
                     </div>
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitRegister} className="w-full">
+                <Button type="button" onClick={submitRegister} variant="outline" className="w-full">
                     Login
                 </Button>
-                <Alert variant="destructive" style={{ visibility: error != "" ? "visible" : "hidden" }}>
+                {
+                    error != "" && <Alert variant="destructive">
                     <AlertCircleIcon/>
                     <AlertTitle>{error}</AlertTitle>
                 </Alert>
+                }
+                
             </CardFooter>
         </Card>
         </div>

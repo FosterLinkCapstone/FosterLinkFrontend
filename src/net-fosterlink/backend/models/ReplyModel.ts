@@ -1,14 +1,11 @@
 import type { UserModel } from "./UserModel"
 
-export interface ThreadModel {
+export interface ReplyModel {
     id: number,
-    title: string,
     content: string,
     createdAt: Date,
     updatedAt: Date,
-    author: UserModel
+    author: UserModel,
     likeCount: number,
     liked: boolean,
-    // TODO: comment count (backend update)
-    tags: string[]
 }

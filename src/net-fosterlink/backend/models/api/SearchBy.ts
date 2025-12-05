@@ -1,0 +1,6 @@
+export enum SearchBy {
+    TAGS = 'TAGS',
+    USERNAME = 'USERNAME',
+    THREAD_CONTENT = 'THREAD_CONTENT',
+    THREAD_TITLE = 'THREAD_TITLE'
+}

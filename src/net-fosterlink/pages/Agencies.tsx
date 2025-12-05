@@ -1,0 +1,142 @@
+import { useEffect, useState } from "react"
+import type { AgencyModel } from "../backend/models/AgencyModel"
+import { agencyApi } from "../backend/api/AgencyApi"
+import { useAuth } from "../backend/AuthContext"
+import { Navbar } from "../components/Navbar"
+import { AlertCircleIcon, Loader2 } from "lucide-react"
+import { AgencyCard } from "../components/agencies/AgencyCard"
+import { Button } from "@/components/ui/button"
+import { CreateAgencyCard } from "../components/agencies/CreateAgencyCard"
+import type { CreateAgencyModel } from "../backend/models/api/CreateAgencyModel"
+import { Alert, AlertTitle } from "@/components/ui/alert"
+import { Link, useSearchParams } from "react-router"
+import type { ErrorWrapper } from "../util/ErrorWrapper"
+import { StatusDialog } from "../components/StatusDialog"
+
+export const Agencies = () => {
+    const auth = useAuth()
+    const [searchParams, _] = useSearchParams()
+    const [agencies, setAgencies] = useState<AgencyModel[] | null>(null)
+    const [pendingCount, setPendingCount] = useState(0)
+    const [creatingAgency, setCreatingAgency] = useState<boolean>(false)
+    const [createError, setCreateError] = useState<ErrorWrapper<AgencyModel> | null>(null)
+    const [createSuccess, setCreateSuccess] = useState<boolean>(false)
+    const [removeSuccess, setRemoveSuccess] = useState<boolean>(false)
+    const [removeError, setRemoveError] = useState<boolean>(false)
+
+    const agencyApiRef = agencyApi(auth)
+    useEffect(() => {
+        agencyApiRef.getAll().then(res => {
+            setAgencies(res)
+        })
+
+    }, [])
+    console.log("Agencies component rendering, auth.agent:", auth.agent, "auth.admin:", auth.admin)
+    useEffect(() => {
+        if (auth.agent && searchParams.has("creating")) {
+            setCreatingAgency(searchParams.get("creating") === "true")
+        }
+    }, [auth.agent])
+    useEffect(() => {
+        if (auth.admin) {
+            if (searchParams.has("creating")) {
+                setCreatingAgency(searchParams.get("creating") === "true")
+            }
+            agencyApiRef.countPending().then(res => {
+                setPendingCount(res)
+            })
+        }
+    }, [auth.admin])
+
+    const handleCreateAgency = (agency: CreateAgencyModel) => {
+        agencyApiRef.create(agency).then(res => {
+            if (res.isError) {
+                setCreateError(res)
+            } else {
+                setCreatingAgency(false)
+                setCreateSuccess(true)
+            }
+        })
+    }
+    const onRemove = (agencyId: number) => {
+        agencyApiRef.approve(agencyId, false).then(res => {
+            if (res) {
+                setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
+                setRemoveSuccess(true)
+            } else {
+                setRemoveError(true)
+            }
+        })
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            { createError &&
+            <StatusDialog open={createError != null}
+                onOpenChange={() => setCreateError(null)}
+                title={`Could not create agency!`}
+                subtext={createError?.error ?? ''}
+                isSuccess={false}
+            />
+            }
+            { createSuccess &&
+            <StatusDialog open={createSuccess}
+                onOpenChange={() => setCreateSuccess(false)}
+                title={`Successfully created agency!`}
+                subtext="Awaiting review from an administrator."
+                isSuccess={true}
+            />      
+            }
+            { removeSuccess &&    
+            <StatusDialog open={removeSuccess}
+                onOpenChange={() => setRemoveSuccess(false)}
+                title={`Successfully removed agency!`}
+                subtext=""
+                isSuccess={true}
+            />
+            }
+            { removeError &&
+            <StatusDialog open={removeSuccess}
+                onOpenChange={() => setRemoveError(false)}
+                title={`Could not remove agency!`}
+                subtext=""
+                isSuccess={false}
+            />
+            }
+            <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+                <Navbar userInfo={auth.getUserInfo()} />
+            </div>
+            {
+                agencies == null ?
+                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                        <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+                    </div>
+                    :
+                    <div className="w-screen h-full items-center justify-items-center">
+                        <h1 className="text-3xl font-bold my-2 text-center">Agencies</h1>
+                        <div className="w-fit h-full flex flex-col items-center gap-2 pb-3">
+                            {
+                                auth.admin &&
+                                <Alert className='w-full text-black bg-yellow-200' variant="destructive">
+                                    <AlertCircleIcon />
+                                    <AlertTitle>There are {pendingCount} pending agencies. <Link className="text-blue-600 hover:text-blue-800" to="/agencies/pending">See more</Link></AlertTitle>
+                                </Alert>
+                            }
+                            {
+                                ((auth.admin != null && auth.admin != null) && (auth.admin || auth.agent)) &&
+                                <Button onClick={() => { setCreatingAgency(!creatingAgency) }} variant="outline" className="w-full my-4">Create a new agency</Button>
+                            }
+                            {
+                                creatingAgency && <>
+                                    <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
+                                </>
+                            }
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <AgencyCard onRemove={onRemove} agency={a} />)}
+                        </div> 
+                    </div>
+
+            }
+
+        </div>
+    )
+}
