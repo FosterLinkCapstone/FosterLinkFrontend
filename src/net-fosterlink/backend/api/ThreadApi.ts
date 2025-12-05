@@ -5,6 +5,8 @@ import type { ThreadSearchResponse } from "../models/api/ThreadSearchResponse";
 import type { ReplyModel } from "../models/ReplyModel";
 import type { ThreadModel } from "../models/ThreadModel";
 
+// TODO implement error wrapper everywhere necessary 
+
 export interface ThreadApiType {
     getAll: () => Promise<ThreadModel[]>,
     search: (searchBy: SearchBy, searchTerm: string) => Promise<ThreadSearchResponse>,

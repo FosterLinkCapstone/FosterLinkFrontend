@@ -1,7 +1,8 @@
 import axios from 'axios'
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { UserModel } from './models/UserModel'
+import type { PrivilegeModel } from './models/PrivilegeModel'
 
 export interface AuthContextType {
     token: string | null,
@@ -10,21 +11,27 @@ export interface AuthContextType {
     isLoggedIn: () => boolean,
     logout: () => void,
     setUserInfo: (user: UserModel) => void,
-    getUserInfo: () => UserModel | undefined
+    getUserInfo: () => UserModel | undefined,
+    getMapsApiKey: () => string,
+    faqAuthor: boolean,
+    agent: boolean,
+    admin: boolean | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const AuthProvider = ({apiUrl, children}: { apiUrl: string, children: React.ReactNode}) => {
+export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string, mapsApiKey: string, children: React.ReactNode }) => {
     const navigate = useNavigate()
     const [token, setToken] = useState<string | null>(
         sessionStorage.getItem("jwt")
     )
+    const [admin, setAdmin] = useState<boolean | null>(null)
+    const [faqAuthor, setFaqAuthor] = useState(false)
+    const [agent, setAgent] = useState(false)
     const currentUserInfo = useRef<UserModel | undefined>(
         undefined
     )
-    const api = axios.create({baseURL: apiUrl})
-
+    const api = axios.create({ baseURL: apiUrl })
     api.interceptors.request.use((cfg) => {
         cfg.headers.Authorization = `Bearer ${token}`
         return cfg
@@ -34,23 +41,36 @@ export const AuthProvider = ({apiUrl, children}: { apiUrl: string, children: Rea
             api.get(`/users/getInfo`).then(res => {
                 if (res.status == 200) {
                     currentUserInfo.current = res.data
+                    api.get(`/users/privileges`).then(pri => {
+                        const priv: PrivilegeModel = pri.data
+                        setAdmin(priv.admin)
+                        setAgent(priv.agent)
+                        setFaqAuthor(priv.faqAuthor)
+                    })
                 }
             })
         }
     }, [token])
     const isLoggedIn = () => {
         const s = sessionStorage.getItem("jwt")
-        return s != null && s != "" 
+        return s != null && s != ""
     }
-
+    const getMapsApiKey = () => {
+        return mapsApiKey
+    }
     const updateToken = (newToken: string | null) => {
         setToken(newToken)
         if (newToken) sessionStorage.setItem("jwt", newToken)
         else sessionStorage.removeItem("jwt")
     };
     const logout = () => {
-        updateToken(null)
-        navigate("/")
+        api.post("/users/logout").then(() => {
+            updateToken(null)
+            setAdmin(false)
+            setAgent(false)
+            setFaqAuthor(false)
+            navigate("/")
+        })
     }
     const setUserInfo = (user: UserModel) => {
         currentUserInfo.current = user
@@ -58,8 +78,23 @@ export const AuthProvider = ({apiUrl, children}: { apiUrl: string, children: Rea
     const getUserInfo = (): UserModel | undefined => {
         return currentUserInfo.current
     }
-    return(
-        <AuthContext.Provider value={{token, setToken:updateToken, api, isLoggedIn, logout, setUserInfo, getUserInfo}}>
+
+    const contextValue = useMemo(() => ({
+        token,
+        setToken: updateToken,
+        api,
+        isLoggedIn,
+        logout,
+        setUserInfo,
+        getUserInfo,
+        getMapsApiKey,
+        faqAuthor,
+        agent,
+        admin
+    }), [token, faqAuthor, agent, admin])
+
+    return (
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     )

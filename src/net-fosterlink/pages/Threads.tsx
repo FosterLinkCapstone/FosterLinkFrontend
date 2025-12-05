@@ -11,14 +11,15 @@ import type { ThreadModel } from "../backend/models/ThreadModel";
 import { SearchBy } from "../backend/models/api/SearchBy";
 import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
 import { CreateThreadCardWide } from "../components/forum/CreateThreadCardWide";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 export const Threads = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [searchBy, setSearchBy] = useState<string>('');
   const [threads, setThreads] = useState<ThreadModel[]>([])
+    const [searchParams, _] = useSearchParams()
   const [error, setError] = useState<string>('')
-  const [creating, setCreating] = useState<boolean>(false)
+  const [creating, setCreating] = useState<boolean>(searchParams.get("creating") === "true")
   const auth = useAuth()
   const threadApiRef = threadApi(auth)
   const navigate = useNavigate()

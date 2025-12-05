@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { PendingFaqModel } from "@/net-fosterlink/backend/models/PendingFaqModel";
+import { ApprovalStatus, type PendingFaqModel } from "@/net-fosterlink/backend/models/PendingFaqModel";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -18,11 +19,12 @@ export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({ faq, onExpand, o
 
     return (
         <Card
-            className="mb-4 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+            className={"mb-4 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" + (faq.approvalStatus == ApprovalStatus.DENIED ? "bg-red-200" : "")}
             onClick={onExpand}
         >
             <div className="p-6">
                 <div className="flex items-center justify-between">
+                    <div className="w-10 ml-4"></div>
                     <div className="flex-1 text-center">
                         <h3 className="text-xl font-semibold mb-2">{faq.title}</h3>
                         <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
@@ -34,44 +36,66 @@ export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({ faq, onExpand, o
                                 </AvatarFallback>
                             </Avatar>
                             <span className="font-medium">{faq.author.username}</span>
+                            {
+                                faq.approvalStatus == ApprovalStatus.DENIED && <span className="text-red-600">Denied by {faq.deniedByUsername}</span>
+                            }
                         </div>
                     </div>
                     <button
                         onClick={(e) => {
+                            e.stopPropagation();
                             if (expanded) {
-                                e.stopPropagation();
                                 onCollapse();
                             } else {
-                                onExpand()
+                                onExpand();
                             }
-
                         }}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-4"
                     >
                         {
-                            expanded ? <ChevronDown className="h-6 w-6 text-gray-600" /> : <ChevronUp className="h-6 w-6 text-gray-600" />
+                            expanded ? <ChevronUp className="h-6 w-6 text-gray-600" /> : <ChevronDown className="h-6 w-6 text-gray-600" />
                         }
                     </button>
                 </div>
             </div>
             {expanded && <div className="bg-gray-100 p-6 text-center">
-                <p className="text-gray-700">{faq.summary}</p>
-                <div className="mt-4">
+                <p className="text-gray-700 mb-4">{faq.summary}</p>
+                <div className="flex flex-col items-center gap-2">
                     <button
-                        className="text-sm text-blue-600 hover:text-blue-800 font-medium" onClick={onShowDetail}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onShowDetail();
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                     >
                         Click for more!
                     </button>
-                    <button
-                        className="text-sm text-green-600 hover:text-green-800 font-medium" onClick={() => onApprove(faq)}
-                    >
-                        Approve
-                    </button>
-                    <button
-                        className="text-sm text-red-600 hover:text-red-800 font-medium" onClick={() => onDeny(faq)}
-                    >
-                        Deny
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onApprove(faq);
+                            }}
+                            className="text-sm text-green-600 hover:text-green-800 font-medium"
+                            variant="outline"
+                        >
+                            Approve
+                        </Button>
+                        {
+                            faq.approvalStatus !== ApprovalStatus.DENIED && 
+                            <Button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeny(faq);
+                                }}
+                                className="text-sm text-red-600 hover:text-red-800 font-medium"
+                                variant="outline"
+                            >
+                                Deny
+                            </Button>
+                        }
+
+                    </div>
                 </div>
             </div>}
         </Card>

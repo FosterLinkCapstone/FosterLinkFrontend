@@ -7,10 +7,11 @@ export interface PendingFaqModel {
     createdAt: Date,
     updatedAt: Date,
     author: UserModel,
-    approvalStatus: ApprovalStatus
+    approvalStatus: ApprovalStatus,
+    deniedByUsername: string | null
 }
 export enum ApprovalStatus {
-    APPROVED,
-    DENIED,
-    PENDING
+    APPROVED = "APPROVED",
+    DENIED = "DENIED",
+    PENDING = "PENDING"
 }

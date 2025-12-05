@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
-import type { PendingFaqModel } from "../backend/models/PendingFaqModel";
+import { Link, useSearchParams } from "react-router";
+import { ApprovalStatus, type PendingFaqModel } from "../backend/models/PendingFaqModel";
 import { useAuth } from "../backend/AuthContext";
 import { faqApi } from "../backend/api/FaqApi";
 import { Navbar } from "../components/Navbar";
 import { FaqDialog } from "../components/faq/FaqDialog";
 import { PendingFaqCard } from "../components/faq/PendingFaqCard";
+import { StatusDialog } from "../components/StatusDialog";
 
 export const PendingFaqs = () => {
       const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -13,8 +14,8 @@ export const PendingFaqs = () => {
   const [detailFaq, setDetailFaq] = useState<PendingFaqModel | null>(null);
   const faqContent = useRef<string>('')
   const [faqs, setFaqs] = useState<PendingFaqModel[]>([])
+  const [approvedOrDenied, setApprovedOrDenied] = useState<string>('')
   const auth = useAuth()
-  const navigate = useNavigate()
   const faqApiRef = faqApi(auth);
     useEffect(() => {
         faqApiRef.getPending().then(res => {
@@ -52,7 +53,8 @@ export const PendingFaqs = () => {
   const handleApprove = (faq: PendingFaqModel) => {
     faqApiRef.approve(faq.id, true).then(t => {
         if (t) {
-            navigate(`/faq?openId=${faq.id}`)
+          setFaqs(faqs.filter(f => f.id !== faq.id))
+          setApprovedOrDenied("approved")
         } else {
             alert("Error approving!")
         }
@@ -61,7 +63,10 @@ export const PendingFaqs = () => {
   const handleDeny = (faq: PendingFaqModel) => {
         faqApiRef.approve(faq.id, false).then(t => {
         if (t) {
-            alert("Successfully denied FAQ response")
+            faq.approvalStatus = ApprovalStatus.DENIED
+            faq.deniedByUsername = auth.getUserInfo()!.username
+            setApprovedOrDenied("denied")
+
         } else {
             alert("Error denying!")
         }
@@ -70,13 +75,20 @@ export const PendingFaqs = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+                  <StatusDialog open={approvedOrDenied != ''}
+                        onOpenChange={() => setApprovedOrDenied('')}
+                        title={`Successfully ${approvedOrDenied} FAQ response`}
+                        subtext=""
+                        isSuccess={true}
+                />
       <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
 
-      {/* Main content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-3xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
+        <h1 className="text-3xl font-bold mb-1 text-center">Frequently Asked Questions (pending)</h1>
+        <Link to="/faq" className="text-blue-600 hover:text-blue-800">Go back</Link>
+        <div className="mb-6"></div> {/* spacer */}
         
         {faqs.map((faq) => (
             <PendingFaqCard
@@ -91,7 +103,7 @@ export const PendingFaqs = () => {
             />
         ))}
       </div>
-      <FaqDialog detailFaq={detailFaq} content={faqContent.current} handleOpenChange={handleCloseDetail}/>  
+      <FaqDialog detailFaq={detailFaq ? {id: detailFaq.id, title: detailFaq.title, summary: detailFaq.summary, createdAt: detailFaq.createdAt, updatedAt: detailFaq.updatedAt, author: detailFaq.author, approvedByUsername: detailFaq?.deniedByUsername ?? ''} : null} content={faqContent.current} handleOpenChange={handleCloseDetail}/>  
     </div>
   );
 }

@@ -7,19 +7,16 @@ import { useRef, useState } from "react"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { AlertCircleIcon } from "lucide-react"
 import { userApi } from "../backend/api/UserApi"
-import { useNavigate } from "react-router"
+import { Link, useNavigate, useSearchParams } from "react-router"
 
 export const Login = () => {
+    const [searchParams, _] = useSearchParams()
     const email = useRef<string>("")
     const password = useRef<string>("")
     const [error, setError] = useState<string>("")
     const auth = useAuth()
     const userApiRef = userApi(auth)
     const navigate = useNavigate()
-
-    const toSignUp = () => {
-        navigate("/signup")
-    }
 
     const submitLogin = () => {
         setError("")
@@ -29,7 +26,7 @@ export const Login = () => {
                     setError(res.error)
                 } else {
                     auth.setToken(res.jwt)
-                    navigate("/")
+                    navigate(searchParams.has("currentPage") ? searchParams.get("currentPage")! : "/")
                 }
             })
         } else {
@@ -42,7 +39,7 @@ export const Login = () => {
 <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Login to your account</CardTitle>
-                <CardDescription>Or, <Button onClick={toSignUp} variant="outline" >Sign Up</Button></CardDescription>
+                <CardDescription>Or, <Link to="/register" className="text-blue-600 hover:text-blue-800">sign up</Link></CardDescription>
             </CardHeader>
             <CardContent>
                 <form>
@@ -62,10 +59,13 @@ export const Login = () => {
                 <Button type="button" onClick={submitLogin} className="w-full">
                     Login
                 </Button>
-                <Alert variant="destructive" style={{ visibility: error != "" ? "visible" : "hidden" }}>
+                {
+                    error != "" && <Alert variant="destructive">
                     <AlertCircleIcon/>
                     <AlertTitle>{error}</AlertTitle>
                 </Alert>
+                }
+
             </CardFooter>
         </Card>
         </div>

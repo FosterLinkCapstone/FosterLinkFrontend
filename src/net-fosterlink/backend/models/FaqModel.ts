@@ -7,4 +7,5 @@ export interface FaqModel {
     createdAt: Date,
     updatedAt: Date | undefined,
     author: UserModel,
+    approvedByUsername: string
 }
