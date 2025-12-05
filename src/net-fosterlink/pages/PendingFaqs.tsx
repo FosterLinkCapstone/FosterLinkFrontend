@@ -90,7 +90,7 @@ export const PendingFaqs = () => {
         <Link to="/faq" className="text-blue-600 hover:text-blue-800">Go back</Link>
         <div className="mb-6"></div> {/* spacer */}
         
-        {faqs.map((faq) => (
+        {faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
             <PendingFaqCard
                 key={faq.id}
                 faq={faq}

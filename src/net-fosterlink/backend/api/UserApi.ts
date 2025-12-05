@@ -7,7 +7,7 @@ import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 export interface UserApiType {
     login: (email: string, password: string) => Promise<LoginResponse>,
     getInfo: () => Promise<UserInfoResponse>,
-    register: (info: {firstName: string, lastName: string, username: string, email: string, password: string}) => Promise<{error: string | undefined, jwt: string}>
+    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<{error: string | undefined, jwt: string}>
     isAdmin: () => Promise<boolean>
     isFaqAuthor: () => Promise<boolean>
     getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>

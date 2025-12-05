@@ -29,6 +29,7 @@ export const Register = () => {
             lastName: lastName.current,
             username: username.current,
             email: email,
+            phoneNumber: phoneNumber,
             password: password
         }).then(res => {
             if (res.error) {

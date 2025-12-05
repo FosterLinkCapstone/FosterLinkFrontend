@@ -131,8 +131,8 @@ export const Agencies = () => {
                                     <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
                                 </>
                             }
-                            {agencies.map(a => <AgencyCard onRemove={onRemove} agency={a} />)}
-                        </div>
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <AgencyCard onRemove={onRemove} agency={a} />)}
+                        </div> 
                     </div>
 
             }

@@ -196,7 +196,7 @@ export const FaqHome = () => {
             <AlertTitle>{createError?.error}</AlertTitle>
           </Alert>
         }
-        {faqs.map((faq) => (
+        {faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
             <FaqCard
                 key={faq.id}
                 faq={faq}

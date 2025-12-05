@@ -106,7 +106,7 @@ export const Threads = () => {
               creating && <CreateThreadCardWide onCancel={() => setCreating(false)} onCreate={onThreadCreate}/>
             }
             {
-                threads.map(t => <ThreadPreviewWide thread={t}/>)
+                threads.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : threads.map(t => <ThreadPreviewWide thread={t}/>)
             }
         </div>
       </div>

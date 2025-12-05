@@ -49,7 +49,7 @@ export const PendingAgencies = () => {
         <div className="min-h-screen bg-gray-50">
                   <StatusDialog open={approvedOrDenied != ''}
                         onOpenChange={() => setApprovedOrDenied('')}
-                        title={`Successfully ${approvedOrDenied} FAQ response`}
+                        title={`Successfully ${approvedOrDenied} agency`}
                         subtext=""
                         isSuccess={true}
                 />
@@ -72,7 +72,7 @@ export const PendingAgencies = () => {
                          <h1 className="text-3xl font-bold mb-2 text-center">Agencies (pending)</h1>
                          <Link className="text-blue-600 hover:text-blue-800" to="/agencies">Go back</Link>
                         <div className="mt-6 w-fit h-full flex flex-col items-center gap-6 pb-3">
-                            {agencies.map(a => <div className="flex flex-col w-full gap-1">
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <div className="flex flex-col w-full gap-1">
                                 {
                                     a.approved == 3 &&
                                         <Alert className="bg-red-300 text-red-900" variant="destructive">
