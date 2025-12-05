@@ -21,10 +21,8 @@ export const PendingFaqs = () => {
         faqApiRef.getPending().then(res => {
             setFaqs(res)
             const opened = searchParams.get("openId")
-            console.log(opened)
             if (opened != null) {
                 const faq = res.find(f => f.id == +opened)
-                console.log(faq?.id)
                 if (faq) handleShowDetail(faq)
             }
         })
