@@ -80,7 +80,7 @@ export const PendingAgencies = () => {
                                             <AlertTitle>Denied by {a.approvedByUsername}</AlertTitle>
                                         </Alert>
                                 }
-                                <AgencyCard agency={a} />
+                                <AgencyCard onRemove={() => {return}} agency={a} /> {/* pending card will never call remove */}
                                 <div className="w-full flex flex-col mt-1 gap-2">
                                     <Button variant="outline" onClick={() => onApprove(a.id, true)} className="bg-green-200 text-green-800">Approve</Button>
                                     {
