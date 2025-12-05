@@ -12,6 +12,7 @@ env:
   VITE_API_URL: ${{ github.ref_name == 'staging' && vars.VITE_API_URL_STAGING || vars.VITE_API_URL_PROD }}
   VITE_GRAFANA_FARO_URL: ${{ github.ref_name == 'staging' && vars.GRAFANA_FARO_URL_STAGING || vars.GRAFANA_FARO_URL_PROD }}
   VITE_BRANCH: ${{ github.ref_name }}
+  VITE_MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
 
 jobs:
 
