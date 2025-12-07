@@ -14,7 +14,7 @@ export const Home = () => {
   const modules = [
     {
       title: 'Module 1: Forums',
-      paragraph: 'The forum is our approach to connecting existing foster parents with prospective ones. It will act as a way for those more knowledgeable in the specifics of foster care to share their ideas, skills and wisdom with those less knowledgeable.',
+      paragraph: 'The forum is our approach to connecting existing foster parents with prospective ones. It will act as a way for those more knowledgeable in the specifics of foster care to share their ideas, skills and wisdom with those looking to add to their knowledge base.',
       card: <DummyThread />
     },
     {
