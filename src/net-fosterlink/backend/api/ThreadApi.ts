@@ -8,7 +8,6 @@ import type { ThreadModel } from "../models/ThreadModel";
 // TODO implement error wrapper everywhere necessary 
 
 export interface ThreadApiType {
-    getAll: () => Promise<ThreadModel[]>,
     search: (searchBy: SearchBy, searchTerm: string) => Promise<ThreadSearchResponse>,
     rand: () => Promise<ThreadModel[]>,
     randForUser: (userId: number) => Promise<ThreadModel[]>,
@@ -22,15 +21,6 @@ export interface ThreadApiType {
 
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
     return {
-        getAll: async (): Promise<ThreadModel[]> => {
-            try {
-                const res = await auth.api.get("/threads/getAll")
-                return res.data
-            } catch (err: any) {
-                console.log(err)
-            }
-            return []
-        },
         search: async(searchBy: SearchBy, searchTerm: string): Promise<ThreadSearchResponse> => {
             try {
                 const res = await auth.api.post("/threads/search", {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { AgencyModel } from "../backend/models/AgencyModel"
 import { agencyApi } from "../backend/api/AgencyApi"
 import { useAuth } from "../backend/AuthContext"
@@ -24,14 +24,13 @@ export const Agencies = () => {
     const [removeSuccess, setRemoveSuccess] = useState<boolean>(false)
     const [removeError, setRemoveError] = useState<boolean>(false)
 
-    const agencyApiRef = agencyApi(auth)
+    const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
     useEffect(() => {
         agencyApiRef.getAll().then(res => {
             setAgencies(res)
         })
 
     }, [])
-    console.log("Agencies component rendering, auth.agent:", auth.agent, "auth.admin:", auth.admin)
     useEffect(() => {
         if (auth.agent && searchParams.has("creating")) {
             setCreatingAgency(searchParams.get("creating") === "true")
