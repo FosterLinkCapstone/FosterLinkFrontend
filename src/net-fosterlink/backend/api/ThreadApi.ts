@@ -1,3 +1,4 @@
+import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
 import type { AuthContextType } from "../AuthContext";
 import type { CreateThreadResponse } from "../models/api/CreateThreadResponse";
 import type { SearchBy } from "../models/api/SearchBy";
@@ -16,7 +17,8 @@ export interface ThreadApiType {
     replyTo: (content: string, threadId: number) => Promise<ReplyModel | undefined>,
     likeReply: (replyId: number) => Promise<boolean>,
     likeThread: (threadId: number) => Promise<boolean>,
-    createThread: (title: string, content: string) => Promise<CreateThreadResponse>
+    createThread: (title: string, content: string) => Promise<CreateThreadResponse>,
+    editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>
 }
 
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
@@ -111,6 +113,22 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                     }
                 }
                 return {thread: undefined, error: "Internal client error"}
+        },
+        editThreadContent: async(threadId: number, newContent: string): Promise<ErrorWrapper<ThreadModel|undefined>> => {
+            const res = await auth.api.put(`/threads/update`, {threadId: threadId, content: newContent, title: null})
+            try {
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be the thread author to do that!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         }
     }
+}
 }

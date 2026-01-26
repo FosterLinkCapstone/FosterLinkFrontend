@@ -12,11 +12,15 @@ import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ReplyModel } from "../backend/models/ReplyModel";
 import { getInitials } from "../util/StringUtil";
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 
 export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [replyText, setReplyText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [editing, setEditing] = useState<boolean>(false);
+  const [editedContent, setEditedContent] = useState<string>(thread.content);
   const [otherThreads, setOtherThreads] = useState<ThreadModel[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
   const [replies, setReplies] = useState<ReplyModel[]>([])
   const auth = useAuth()
   const [isLiked, setIsLiked] = useState<boolean>(thread.liked)
@@ -72,6 +76,14 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
       setIsLiked(!isLiked)
       threadApiRef.likeThread(thread.id)
     }
+  }
+  const submitEdit = () => {
+    thread.content = editedContent
+    setEditing(false)
+    setLoading(true)
+    threadApiRef.editThreadContent(thread.id, editedContent).then(() => {
+      setLoading(false)
+    })
   }
   const handleCancelReply = () => {
     setReplyText('');
@@ -129,10 +141,40 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
           </div>
 
           <Card className="p-6 mb-6">
-            <div className="prose max-w-none">
-              <p className="whitespace-pre-wrap text-gray-700">{thread.content}</p>
+            <div className=" max-w-none">
+              {
+                editing ? (
+                  <Textarea
+                    value={editedContent}
+                    onChange={(e) => {
+                      setEditedContent(e.target.value)
+                    }}
+                    onSubmit={submitEdit}
+                    className="w-full min-h-[200px]"
+                    id="editedContent"
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-gray-700">{thread.content}</p>
+                )
+              }
             </div>
           </Card>
+
+              {
+                auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id && (
+                  <div className="flex items-center gap-1.5">
+                    <Button variant="outline" className="mb-4" onClick={() => setEditing(!editing)}>
+                      {editing ? 'Cancel' : 'Edit Thread'}
+                    </Button>
+                    {
+                      editing && <Button variant="outline" className="mb-4" onClick={submitEdit}>Submit</Button>
+                    }
+                    <BackgroundLoadSpinner loading={loading} />
+                  </div> 
+
+                )
+              }
+
             <button className="flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1 rounded transition-colors disabled:fg-gray-400 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()} onClick={likeThread}>
                 {isLiked ? <>
                   <Heart fill="#ff0000ff" className="h-4 w-4 text-red-600"/>
