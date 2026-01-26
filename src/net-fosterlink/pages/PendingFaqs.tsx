@@ -19,11 +19,13 @@ export const PendingFaqs = () => {
   const faqApiRef = faqApi(auth);
     useEffect(() => {
         faqApiRef.getPending().then(res => {
-            setFaqs(res)
-            const opened = searchParams.get("openId")
-            if (opened != null) {
-                const faq = res.find(f => f.id == +opened)
-                if (faq) handleShowDetail(faq)
+            if (!res.isError && res.data) {
+                setFaqs(res.data)
+                const opened = searchParams.get("openId")
+                if (opened != null) {
+                    const faq = res.data.find(f => f.id == +opened)
+                    if (faq) handleShowDetail(faq)
+                }
             }
         })
     }, [])
@@ -38,9 +40,11 @@ export const PendingFaqs = () => {
 
   const handleShowDetail = (faq: PendingFaqModel) => {
     if (faqContent.current == '') {
-        faqApiRef.getContent(faq.id).then(c => {
-          faqContent.current = c
-          setDetailFaq(faq);
+        faqApiRef.getContent(faq.id).then(res => {
+          if (!res.isError && res.data) {
+            faqContent.current = res.data
+            setDetailFaq(faq);
+          }
         })
     } else setDetailFaq(faq)
   };
@@ -49,24 +53,24 @@ export const PendingFaqs = () => {
     setDetailFaq(null);
   };
   const handleApprove = (faq: PendingFaqModel) => {
-    faqApiRef.approve(faq.id, true).then(t => {
-        if (t) {
+    faqApiRef.approve(faq.id, true).then(res => {
+        if (!res.isError && res.data) {
           setFaqs(faqs.filter(f => f.id !== faq.id))
           setApprovedOrDenied("approved")
         } else {
-            alert("Error approving!")
+            alert(res.error || "Error approving!")
         }
     })
   }
   const handleDeny = (faq: PendingFaqModel) => {
-        faqApiRef.approve(faq.id, false).then(t => {
-        if (t) {
+        faqApiRef.approve(faq.id, false).then(res => {
+        if (!res.isError && res.data) {
             faq.approvalStatus = ApprovalStatus.DENIED
             faq.deniedByUsername = auth.getUserInfo()!.username
             setApprovedOrDenied("denied")
 
         } else {
-            alert("Error denying!")
+            alert(res.error || "Error denying!")
         }
     })
   }

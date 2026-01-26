@@ -6,66 +6,88 @@ import type { ApprovalCheckModel } from "../models/ApprovalCheckModel"
 import type { FaqRequestModel } from "../models/FaqRequestModel"
 
 export interface FaqApiType {
-    getAll: () => Promise<FaqModel[]>
-    getContent: (faqId: number) => Promise<string>
-    getPending: () => Promise<PendingFaqModel[]>
-    approve: (id: number, approved: boolean) => Promise<boolean>
+    getAll: () => Promise<ErrorWrapper<FaqModel[]>>
+    getContent: (faqId: number) => Promise<ErrorWrapper<string>>
+    getPending: () => Promise<ErrorWrapper<PendingFaqModel[]>>
+    approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     create: (title: string, summary: string, content: string) => Promise<ErrorWrapper<FaqModel>>
     checkApprovalStatus: () => Promise<ApprovalCheckModel>
     getRequests: () => Promise<ErrorWrapper<FaqRequestModel[]>>
-    answerRequest: (requestId: number) => Promise<boolean>
-    createRequest: (suggested: string) => Promise<boolean>
+    answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
+    createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
 }
 
 export const faqApi = (auth: AuthContextType): FaqApiType => {
     return {
-        getAll: async (): Promise<FaqModel[]> => {
-            const res = await auth.api.get("/faq/all")
-            if (res.data) {
-                return res.data
-            } else return []
+        getAll: async (): Promise<ErrorWrapper<FaqModel[]>> => {
+            try {
+                const res = await auth.api.get("/faq/all")
+                return {data: res.data || [], error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to view FAQs!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        getContent: async(faqId: number): Promise<string> => {
+        getContent: async(faqId: number): Promise<ErrorWrapper<string>> => {
             try {
                 const res = await auth.api.get(`/faq/content?id=${faqId}`)
-                return res.data
+                return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
                     switch (err.response.status) {
                         case 404:
-                            return "No content! (404)"
+                            return {data: undefined, error: "FAQ content not found!", isError: true}
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to view FAQ content!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
                     }
                 }
             }
-            return "Internal server error (500)"
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        getPending: async(): Promise<PendingFaqModel[]> => {
+        getPending: async(): Promise<ErrorWrapper<PendingFaqModel[]>> => {
             try {
                 const res = await auth.api.get(`/faq/pending`)
-                return res.data
-            } catch (err:any) {
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
                 if (err.response) {
                     switch(err.response.status) {
                         case 403:
-                            console.error("Unauthorized: this endpoint is administrator only")
+                            return {data: undefined, error: "Only administrators can view pending FAQs!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
                     }
                 }
             }
-            return []
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        approve: async(id: number, approved: boolean): Promise<boolean> => {
+        approve: async(id: number, approved: boolean): Promise<ErrorWrapper<boolean>> => {
             try {
                 const res = await auth.api.post(`/faq/approve`, {id: id, approved: approved})
-                if (res.status == 200) return true
-            } catch (err:any) {
+                if (res.status == 200) {
+                    return {data: true, error: undefined, isError: false}
+                }
+            } catch (err: any) {
                 if (err.response) {
                     switch(err.response.status) {
                         case 403:
-                            console.error("Unauthorized: this endpoint is administrator only")
+                            return {data: undefined, error: "Only administrators can approve FAQs!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "FAQ not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
                     }
                 }
             }
-            return false
+            return {data: undefined, error: "Internal client error", isError: true}
         },
         create: async(title: string, summary: string, content: string): Promise<ErrorWrapper<FaqModel>> => {
             try {
@@ -100,23 +122,45 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
             }
             return {data: undefined, isError: true, error: "Internal server error"}
         },
-        answerRequest: async(requestId: number): Promise<boolean> => {
+        answerRequest: async(requestId: number): Promise<ErrorWrapper<boolean>> => {
             try {
                 const res = await auth.api.post('/faq/requests/answer', {reqId: requestId})
-                if (res.status == 200) return true
-            } catch (error: any) {
-                return false
+                if (res.status == 200) {
+                    return {data: true, error: undefined, isError: false}
+                }
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "Only FAQ authors can answer requests!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "FAQ request not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
             }
-            return false
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        createRequest: async(suggested: string): Promise<boolean> => {
+        createRequest: async(suggested: string): Promise<ErrorWrapper<boolean>> => {
             try {
                 const res = await auth.api.post('/faq/requests/create', {suggested: suggested})
-                if (res.status == 200) return true;
-            } catch (error: any) {
-                return false
+                if (res.status == 200) {
+                    return {data: true, error: undefined, isError: false}
+                }
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to create FAQ requests!", isError: true}
+                        case 400:
+                            return {data: undefined, error: "Invalid request content!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
             }
-            return false
+            return {data: undefined, error: "Internal client error", isError: true}
         }
     }
 }

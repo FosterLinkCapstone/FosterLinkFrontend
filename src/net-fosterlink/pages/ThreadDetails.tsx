@@ -27,11 +27,15 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const threadApiRef = threadApi(auth)
 
   useEffect(() => {
-    threadApiRef.getReplies(thread.id).then(th => {
-        setReplies(th)
+    threadApiRef.getReplies(thread.id).then(res => {
+        if (!res.isError && res.data) {
+            setReplies(res.data)
+        }
     })
-    threadApiRef.randForUser(thread.author.id).then(th => {
-        setOtherThreads(th)
+    threadApiRef.randForUser(thread.author.id).then(res => {
+        if (!res.isError && res.data) {
+            setOtherThreads(res.data)
+        }
     })
   }, [thread.id])
 
@@ -45,13 +49,14 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
     if (auth.isLoggedIn()) {
       if (replyText != '' && thread) {
         threadApiRef.replyTo(replyText, thread.id).then(res => {
-          if (res) {
+          if (!res.isError && res.data) {
             success = true
-            setReplies([res, ...replies])
+            setReplies([res.data, ...replies])
+            setReplyText('');
+            setReplyingTo(null);
           } else {
-            // TODO output errors better
             const oldContent = replyText
-            setReplyText("Internal server error... please try again later!")
+            setReplyText(res.error || "Internal server error... please try again later!")
             setTimeout(() => setReplyText(oldContent), 3000)
           }
         })
@@ -65,16 +70,18 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
       setReplyText("Please log in")
       setTimeout(() => setReplyText(oldContent), 3000)
     }
-    if (success) {
-      setReplyText('');
-      setReplyingTo(null);
-    }
   };
   const likeThread = () => {
     if (auth.isLoggedIn()) {
       thread.likeCount += isLiked ? -1 : 1
       setIsLiked(!isLiked)
-      threadApiRef.likeThread(thread.id)
+      threadApiRef.likeThread(thread.id).then(res => {
+        if (res.isError) {
+          // Revert the like count change on error
+          thread.likeCount += isLiked ? 1 : -1
+          setIsLiked(!isLiked)
+        }
+      })
     }
   }
   const submitEdit = () => {

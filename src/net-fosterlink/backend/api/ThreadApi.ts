@@ -10,13 +10,13 @@ import type { ThreadModel } from "../models/ThreadModel";
 
 export interface ThreadApiType {
     search: (searchBy: SearchBy, searchTerm: string) => Promise<ThreadSearchResponse>,
-    rand: () => Promise<ThreadModel[]>,
-    randForUser: (userId: number) => Promise<ThreadModel[]>,
-    getReplies: (threadId: number) => Promise<ReplyModel[]>,
-    searchById: (threadId: number) => Promise<ThreadModel | undefined>,
-    replyTo: (content: string, threadId: number) => Promise<ReplyModel | undefined>,
-    likeReply: (replyId: number) => Promise<boolean>,
-    likeThread: (threadId: number) => Promise<boolean>,
+    rand: () => Promise<ErrorWrapper<ThreadModel[]>>,
+    randForUser: (userId: number) => Promise<ErrorWrapper<ThreadModel[]>>,
+    getReplies: (threadId: number) => Promise<ErrorWrapper<ReplyModel[]>>,
+    searchById: (threadId: number) => Promise<ErrorWrapper<ThreadModel | undefined>>,
+    replyTo: (content: string, threadId: number) => Promise<ErrorWrapper<ReplyModel | undefined>>,
+    likeReply: (replyId: number) => Promise<ErrorWrapper<boolean>>,
+    likeThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     createThread: (title: string, content: string) => Promise<CreateThreadResponse>,
     editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>
 }
@@ -45,56 +45,130 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 }
             }
         },
-        rand: async(): Promise<ThreadModel[]> => {
-            const res = await auth.api.get("/threads/rand")
-            return res.data
+        rand: async(): Promise<ErrorWrapper<ThreadModel[]>> => {
+            try {
+                const res = await auth.api.get("/threads/rand")
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to view threads!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        randForUser: async(userId: number): Promise<ThreadModel[]> => {
-            const res = await auth.api.get(`/threads/rand?userId=${userId}`)
-            return res.data
+        randForUser: async(userId: number): Promise<ErrorWrapper<ThreadModel[]>> => {
+            try {
+                const res = await auth.api.get(`/threads/rand?userId=${userId}`)
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 404:
+                            return {data: undefined, error: "User not found!", isError: true}
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to view threads!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        getReplies: async(threadId: number): Promise<ReplyModel[]> => {
-            const res = await auth.api.get(`/threads/replies?threadId=${threadId}`)
-            return res.data
+        getReplies: async(threadId: number): Promise<ErrorWrapper<ReplyModel[]>> => {
+            try {
+                const res = await auth.api.get(`/threads/replies?threadId=${threadId}`)
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 404:
+                            return {data: undefined, error: "Thread not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        searchById: async(threadId: number): Promise<ThreadModel | undefined> => {
+        searchById: async(threadId: number): Promise<ErrorWrapper<ThreadModel | undefined>> => {
             try {
                 const res = await auth.api.get(`/threads/search-by-id?threadId=${threadId}`)
-                return res.data
-            } catch (err:any) {
-                return undefined // todo
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 404:
+                            return {data: undefined, error: "Thread not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
             }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        replyTo: async(content: string, threadId: number): Promise<ReplyModel | undefined> => {
+        replyTo: async(content: string, threadId: number): Promise<ErrorWrapper<ReplyModel | undefined>> => {
             try {
                 const res = await auth.api.post(`/threads/replies`, {
                     content: content,
                     threadId: threadId
                 })
-                return res.data
+                return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
-                return undefined
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to reply!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Thread not found!", isError: true}
+                        case 400:
+                            return {data: undefined, error: "Invalid reply content!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
             }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        likeReply: async(replyId: number): Promise<boolean> => {
-            auth.api.post(`/threads/replies/like`, {replyId: replyId}).then(res => {
-                try {
-                    return res.data
-                } catch(err: any) {
-                    return false
+        likeReply: async(replyId: number): Promise<ErrorWrapper<boolean>> => {
+            try {
+                const res = await auth.api.post(`/threads/replies/like`, {replyId: replyId})
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to like replies!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Reply not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
                 }
-            })
-            return false
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        likeThread: async(threadId: number): Promise<boolean> => {
-            auth.api.post(`/threads/like`, {threadId: threadId}).then(res => {
-                try {
-                    return res.data
-                } catch (err: any) {
-                    return false
+        likeThread: async(threadId: number): Promise<ErrorWrapper<boolean>> => {
+            try {
+                const res = await auth.api.post(`/threads/like`, {threadId: threadId})
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to like threads!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Thread not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
                 }
-            })
-            return false
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
         createThread: async(title: string, content: string): Promise<CreateThreadResponse> => { // TODO implement tags
             const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: []})
@@ -115,8 +189,8 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 return {thread: undefined, error: "Internal client error"}
         },
         editThreadContent: async(threadId: number, newContent: string): Promise<ErrorWrapper<ThreadModel|undefined>> => {
-            const res = await auth.api.put(`/threads/update`, {threadId: threadId, content: newContent, title: null})
             try {
+                const res = await auth.api.put(`/threads/update`, {threadId: threadId, content: newContent, title: null})
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
@@ -126,9 +200,9 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }
+                }
             }
             return {data: undefined, error: "Internal client error", isError: true}
         }
     }
-}
 }

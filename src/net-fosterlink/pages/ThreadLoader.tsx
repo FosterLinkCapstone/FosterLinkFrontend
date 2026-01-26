@@ -14,9 +14,9 @@ export const ThreadLoader = ({preloadedThread = undefined} : {preloadedThread: T
 
     useEffect(() => {
         if (!thread || thread.id !== +`${threadId}`) {
-                threadApiRef.searchById(+`${threadId}`).then(t => {
-                    if (t) {
-                        setThread(t)
+                threadApiRef.searchById(+`${threadId}`).then(res => {
+                    if (!res.isError && res.data) {
+                        setThread(res.data)
                     }
                 })
         }

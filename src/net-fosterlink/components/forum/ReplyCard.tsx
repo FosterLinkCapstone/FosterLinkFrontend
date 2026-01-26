@@ -26,7 +26,13 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply }) => {
     if (auth.isLoggedIn()) {
       setIsLiked(!isLiked)
       reply.likeCount += isLiked ? -1 : 1
-      threadApiRef.likeReply(reply.id)
+      threadApiRef.likeReply(reply.id).then(res => {
+        if (res.isError) {
+          // Revert the like count change on error
+          setIsLiked(!isLiked)
+          reply.likeCount += isLiked ? 1 : -1
+        }
+      })
     }
   }
 

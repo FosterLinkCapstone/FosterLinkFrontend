@@ -43,11 +43,13 @@ export const FaqHome = () => {
     
   useEffect(() => {
         faqApiRef.getAll().then(res => {
-            setFaqs(res)
-            const opened = searchParams.get("openId")
-            if (opened != null) {
-                const faq = res.find(f => f.id == +opened)
-                if (faq) handleShowDetail(faq)
+            if (!res.isError && res.data) {
+                setFaqs(res.data)
+                const opened = searchParams.get("openId")
+                if (opened != null) {
+                    const faq = res.data.find(f => f.id == +opened)
+                    if (faq) handleShowDetail(faq)
+                }
             }
         })
     }, [])
@@ -71,8 +73,8 @@ export const FaqHome = () => {
   };
 
   const onRemove = (id: number) => {
-    faqApiRef.approve(id, false).then(t => {
-        if (t) {
+    faqApiRef.approve(id, false).then(res => {
+        if (!res.isError && res.data) {
           setFaqs(faqs.filter(f => f.id !== id))
           setFaqRemoved(true)
         }
@@ -81,9 +83,11 @@ export const FaqHome = () => {
 
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
-        faqApiRef.getContent(faq.id).then(c => {
-          faqContent.current = c
-          setDetailFaq(faq);
+        faqApiRef.getContent(faq.id).then(res => {
+          if (!res.isError && res.data) {
+            faqContent.current = res.data
+            setDetailFaq(faq);
+          }
         })
     } else setDetailFaq(faq)
   };
@@ -94,7 +98,9 @@ export const FaqHome = () => {
       const req = requests?.find(r => r.id === answeringId)
       if (req && req.suggestion === title) {
         faqApiRef.answerRequest(req.id).then(res => {
-          if (!res) setCreateError({data: undefined, isError: true, error: "Internal server error answering request"})
+          if (res.isError) {
+            setCreateError({data: undefined, isError: true, error: res.error || "Internal server error answering request"})
+          }
         })
       }
     }
@@ -124,10 +130,10 @@ export const FaqHome = () => {
     if (suggestion !== "") {
     faqApiRef.createRequest(suggestion).then(res => {
       setCreatingSuggestion(false)
-      if (res) {
+      if (!res.isError && res.data) {
         setSuggestionCreationError('')
       } else {
-        setSuggestionCreationError('Please try again later') // TODO
+        setSuggestionCreationError(res.error || 'Please try again later')
       }
     })
     }

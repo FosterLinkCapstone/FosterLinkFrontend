@@ -27,7 +27,9 @@ export const Agencies = () => {
     const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
     useEffect(() => {
         agencyApiRef.getAll().then(res => {
-            setAgencies(res)
+            if (!res.isError && res.data) {
+                setAgencies(res.data)
+            }
         })
 
     }, [])
@@ -42,7 +44,9 @@ export const Agencies = () => {
                 setCreatingAgency(searchParams.get("creating") === "true")
             }
             agencyApiRef.countPending().then(res => {
-                setPendingCount(res)
+                if (!res.isError && res.data !== undefined) {
+                    setPendingCount(res.data)
+                }
             })
         }
     }, [auth.admin])
@@ -59,7 +63,7 @@ export const Agencies = () => {
     }
     const onRemove = (agencyId: number) => {
         agencyApiRef.approve(agencyId, false).then(res => {
-            if (res) {
+            if (!res.isError && res.data) {
                 setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
                 setRemoveSuccess(true)
             } else {

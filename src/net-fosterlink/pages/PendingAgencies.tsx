@@ -19,13 +19,15 @@ export const PendingAgencies = () => {
     const agencyApiRef = agencyApi(auth)
     useEffect(() => {
         agencyApiRef.getPending().then(res => {
-            setAgencies(res)
+            if (!res.isError && res.data) {
+                setAgencies(res.data)
+            }
         })
     }, [])
 
     const onApprove = (id: number, approve: boolean) => {
         agencyApiRef.approve(id, approve).then(res => {
-            if (res == true) {
+            if (!res.isError && res.data) {
                 if (approve) {
                     setAgencies(agencies?.filter(a => a.id !== id) ?? [])
                 } else {

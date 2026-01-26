@@ -26,8 +26,10 @@ export const Threads = () => {
 
   useEffect(() => { // potential issue: filling data on empty search
     if (threads.length == 0) {
-        threadApiRef.rand().then(t => {
-            setThreads(t)
+        threadApiRef.rand().then(res => {
+            if (!res.isError && res.data) {
+                setThreads(res.data)
+            }
         })
     }
   }, [])
