@@ -12,6 +12,7 @@ import { AdminOnly } from './net-fosterlink/pages/AdminOnly'
 import { PendingFaqs } from './net-fosterlink/pages/PendingFaqs'
 import { Agencies } from './net-fosterlink/pages/Agencies'
 import { PendingAgencies } from './net-fosterlink/pages/PendingAgencies'
+import { NotFound } from './net-fosterlink/pages/NotFound'
 
 function App() {
 
@@ -37,6 +38,7 @@ function App() {
               <Route path="/faq/pending" element={<AdminOnly><PendingFaqs/></AdminOnly>}/>
               <Route path="/agencies" element={<Agencies/>}/>
               <Route path="/agencies/pending" element={<AdminOnly><PendingAgencies/></AdminOnly>}/>
+              <Route path="*" element={<NotFound/>}/>
             </Routes>
           </AuthProvider>
         </BrowserRouter>

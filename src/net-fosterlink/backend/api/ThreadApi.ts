@@ -18,7 +18,10 @@ export interface ThreadApiType {
     likeReply: (replyId: number) => Promise<ErrorWrapper<boolean>>,
     likeThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     createThread: (title: string, content: string) => Promise<CreateThreadResponse>,
-    editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>
+    editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>,
+    deleteThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
+    editReplyContent: (replyId: number, newContent: string) => Promise<ErrorWrapper<ReplyModel|undefined>>,
+    deleteReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
 }
 
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
@@ -203,6 +206,68 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 }
             }
             return {data: undefined, error: "Internal client error", isError: true}
+        },
+        deleteThread: async(threadId: number): Promise<ErrorWrapper<boolean>> => {
+            try {
+                const res = await auth.api.delete(`/threads/delete?threadId=${threadId}`)
+                if (res.status == 200) {
+                    return {data: true, error: undefined, isError: false}
+                }
+                return {data: false, error: "Internal server error", isError: true}
+            } catch(err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: false, error: "You must be the thread author to do that!", isError: true}
+                        case 404:
+                            return {data: false, error: "Thread not found!", isError: true}
+                        default:
+                            return {data: false, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: false, error: "Internal server error", isError: true}
+            }
+        ,
+        editReplyContent: async(replyId: number, newContent: string): Promise<ErrorWrapper<ReplyModel|undefined>> => {
+            try {
+                const res = await auth.api.put(`/threads/replies/update`, {replyId: replyId, content: newContent})
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be the reply author to do that!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Reply not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
+        },
+        deleteReply: async(replyId: number): Promise<ErrorWrapper<boolean>> => {
+            try {
+                const res = await auth.api.delete(`/threads/replies/delete?replyId=${replyId}`)
+                if (res.status == 200) {
+                    return {data: true, error: undefined, isError: false}
+                }
+                return {data: false, error: "Internal server error", isError: true}
+            } catch(err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: false, error: "You must be the reply author to do that!", isError: true}
+                        case 404:
+                            return {data: false, error: "Reply not found!", isError: true}
+                        default:
+                            return {data: false, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: false, error: "Internal server error", isError: true}
+            }
         }
+    
     }
-}

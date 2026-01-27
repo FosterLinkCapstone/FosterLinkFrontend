@@ -13,6 +13,7 @@ import { threadApi } from "../backend/api/ThreadApi";
 import type { ReplyModel } from "../backend/models/ReplyModel";
 import { getInitials } from "../util/StringUtil";
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
+import { confirm } from "../components/ConfirmDialog";
 
 export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [replyText, setReplyText] = useState('');
@@ -45,12 +46,10 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   };
 
   const handleSubmitNewReply = () => {
-    let success = false
     if (auth.isLoggedIn()) {
       if (replyText != '' && thread) {
         threadApiRef.replyTo(replyText, thread.id).then(res => {
           if (!res.isError && res.data) {
-            success = true
             setReplies([res.data, ...replies])
             setReplyText('');
             setReplyingTo(null);
@@ -92,9 +91,30 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
       setLoading(false)
     })
   }
+  const deleteThread = async () => {
+    setLoading(true)
+    const res = await confirm({
+      message: 'Are you sure you want to delete this thread?',
+    })
+    if (res) {
+      threadApiRef.deleteThread(thread.id).then(() => {
+        setLoading(false)
+        window.location.href = `/threads`
+      })
+    }
+
+  }
   const handleCancelReply = () => {
     setReplyText('');
     setReplyingTo(null);
+  };
+
+  const handleReplyUpdate = (updatedReply: ReplyModel) => {
+    setReplies(replies.map(r => r.id === updatedReply.id ? updatedReply : r))
+  };
+
+  const handleReplyDelete = (replyId: number) => {
+    setReplies(replies.filter(r => r.id !== replyId))
   };
   return (
     <div className="min-h-screen bg-gray-50">
@@ -166,7 +186,10 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
               }
             </div>
           </Card>
-
+              {
+                auth.isLoggedIn() && (auth.admin || auth.getUserInfo()!.id === thread.author.id) &&
+                <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={deleteThread}>Delete</Button> 
+              }
               {
                 auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id && (
                   <div className="flex items-center gap-1.5">
@@ -195,7 +218,13 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             <h2 className="text-xl font-semibold mb-4">Replies</h2>
             {
                 replies.map(r => 
-                    <ReplyCard reply={r} onReply={handleReply}/>
+                    <ReplyCard 
+                      key={r.id}
+                      reply={r} 
+                      onReply={handleReply}
+                      onReplyUpdate={handleReplyUpdate}
+                      onReplyDelete={handleReplyDelete}
+                    />
                 )
             }
 
