@@ -5,10 +5,12 @@ import type { AgencyModel } from "@/net-fosterlink/backend/models/AgencyModel";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 import { useRef } from "react";
+import { useNavigate } from "react-router";
 
 export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyModel, onRemove: (agencyId: number) => void, highlighted?: boolean }) => {
 
   const auth = useAuth()
+  const navigate = useNavigate()
   const fullAddress = `${agency.location.addrLine1}${agency.location.addrLine2 ? ', ' + agency.location.addrLine2 : ''}, ${agency.location.city}, ${agency.location.state} ${agency.location.zipCode}`;
   const encodedAddress = encodeURIComponent(fullAddress);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
@@ -45,7 +47,7 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
         <div className="w-full md:w-80 flex flex-col">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-start gap-4 mb-4">   
-              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+              <div onClick={() => navigate(`/users/${agency.agent.id}`)} className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 hover:text-blue-600 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400">
                 {agency.agent.profilePictureUrl ? (
                   <img 
                     src={agency.agent.profilePictureUrl} 
@@ -59,7 +61,7 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
                 )}
               </div>
               <div className="flex-1 min-w-0 text-start">
-                <h3 className="font-semibold text-lg">
+                <h3 className="font-semibold text-lg hover:text-blue-600 focus:outline-none cursor-pointer focus:ring-1 focus:ring-blue-400" onClick={() => navigate(`/users/${agency.agent.id}`)}>
                   {agency.agent.fullName}
                 </h3>
                 <div className="flex items-start gap-2 text-sm text-gray-600 mt-1">

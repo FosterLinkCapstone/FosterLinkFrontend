@@ -4,9 +4,12 @@ import type { FaqModel } from "@/net-fosterlink/backend/models/FaqModel"
 import { getInitials } from "@/net-fosterlink/util/StringUtil"
 import { Check, Share2 } from "lucide-react"
 import { useState } from "react"
+import { useNavigate } from "react-router"
 
 export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: FaqModel | null, handleOpenChange: () => void, content: string}) => {
     const [shareSuccess, setShareSuccess] = useState(false)
+
+    const navigate = useNavigate()
 
     const share = () => {
         const url = `${window.location.origin}/faq?openId=${detailFaq?.id}`
@@ -28,13 +31,16 @@ export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: F
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-3">{detailFaq.title}</h2>
                   <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={detailFaq.author.profilePictureUrl} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
-                        {getInitials(detailFaq.author.fullName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{detailFaq.author.username}</span>
+                  <button onClick={() => navigate(`/users/${detailFaq.author.id}`)} className="flex flex-row gap-2 hover:text-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                <span>By</span>
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={detailFaq.author.profilePictureUrl} />
+                  <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                    {getInitials(detailFaq.author.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{detailFaq.author.username}</span>
+              </button>
                   </div>
                 </div>
               </DialogHeader>
