@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
 import type { ThreadModel } from "../../backend/models/ThreadModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
+import { VerifiedCheck } from "../VerifiedCheck";
 
 interface ThreadPreviewProps {
     thread: ThreadModel
@@ -26,25 +27,44 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread }) => {
 
   const navigate = useNavigate()
 
+  const goToThread = () => {
+    navigate(`/threads/thread/${thread.id}`)
+  }
+
+  const goToProfile = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/users/${thread.author.id}`)
+  }
+
   return (
     <Card 
       className="flex overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
-      onClick={() => navigate(`/threads/thread/${thread.id}`)}
+      onClick={goToThread}
     >
       <div className="flex flex-col items-center p-6 border-r border-gray-200 bg-gray-50/50 min-w-[180px]">
-        <Avatar className="h-16 w-16 mb-3">
-          <AvatarImage src={thread.author.profilePictureUrl} alt={thread.author.username} />
-          <AvatarFallback className="bg-blue-100 text-blue-700 text-lg">
-            {getInitials(thread.author.fullName)}
-          </AvatarFallback>
-        </Avatar>
+        <button
+          type="button"
+          onClick={goToProfile}
+          className="mb-3 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={thread.author.profilePictureUrl} alt={thread.author.username} />
+            <AvatarFallback className="bg-blue-100 text-blue-700 text-lg">
+              {getInitials(thread.author.fullName)}
+            </AvatarFallback>
+          </Avatar>
+        </button>
         
-        <div className="flex items-center gap-1 mb-1">
+        <button
+          type="button"
+          onClick={goToProfile}
+          className="flex items-center gap-1 mb-1 hover:text-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-400 rounded-full px-1"
+        >
           <span className="font-semibold text-sm">{thread.author.username}</span>
           {thread.author.verified && (
-            <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500" />
+            <VerifiedCheck className="h-4 w-4" />
           )}
-        </div>
+        </button>
         
         <div className="text-xs text-gray-500 mb-3">
           {thread.author.fullName}

@@ -117,6 +117,11 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       {auth.isLoggedIn() ? (
                         <li className="list-none">
+                          {userInfo && (
+                            <ListItem href={`/users/${userInfo.id}`} title="My Profile">
+                              View your public profile and posts
+                            </ListItem>
+                          )}
                           <a
                             onClick={auth.logout}
                             className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"

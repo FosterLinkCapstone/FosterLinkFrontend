@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import type { ReplyModel } from "../../backend/models/ReplyModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "../../backend/AuthContext";
@@ -10,6 +10,8 @@ import { threadApi } from "../../backend/api/ThreadApi";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { confirm } from "../ConfirmDialog";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
+import { useNavigate } from "react-router";
+import { VerifiedCheck } from "../VerifiedCheck";
 
 interface ReplyCardProps {
   reply: ReplyModel;
@@ -25,6 +27,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
   const [editing, setEditing] = useState<boolean>(false)
   const [editedContent, setEditedContent] = useState<string>(reply.content)
   const [loading, setLoading] = useState<boolean>(false)
+  const navigate = useNavigate()
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -79,19 +82,31 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
     <Card className="p-4 mb-4">
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={reply.author.profilePictureUrl} alt={reply.author.username} />
-            <AvatarFallback className="bg-blue-100 text-blue-700">
-              {getInitials(reply.author.fullName)}
-            </AvatarFallback>
-          </Avatar>
+          <button
+            type="button"
+            onClick={() => navigate(`/users/${reply.author.id}`)}
+            className="rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={reply.author.profilePictureUrl} alt={reply.author.username} />
+              <AvatarFallback className="bg-blue-100 text-blue-700">
+                {getInitials(reply.author.fullName)}
+              </AvatarFallback>
+            </Avatar>
+          </button>
         </div>
 
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-semibold">{reply.author.username}</span>
+            <button
+              type="button"
+              onClick={() => navigate(`/users/${reply.author.id}`)}
+              className="font-semibold hover:text-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-400 rounded-full px-1"
+            >
+              {reply.author.username}
+            </button>
             {reply.author.verified && (
-              <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500" />
+              <VerifiedCheck className="h-4 w-4" />
             )}
             <span className="text-sm text-gray-500">
               Member since {new Date(reply.author.createdAt).getFullYear()}

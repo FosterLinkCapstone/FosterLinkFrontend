@@ -1,7 +1,8 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
+import { VerifiedCheck } from "../VerifiedCheck";
 
 export const DummyThread = () => {
   return (
@@ -15,7 +16,7 @@ export const DummyThread = () => {
         
         <div className="flex items-center gap-1 mb-1">
           <span className="font-semibold text-sm">johndoe</span>
-          <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500" />
+          <VerifiedCheck className="h-4 w-4" />
         </div>
         
         <div className="text-xs text-gray-500 mb-3">

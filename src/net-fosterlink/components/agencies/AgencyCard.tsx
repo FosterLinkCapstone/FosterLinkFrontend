@@ -6,7 +6,7 @@ import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 import { useRef } from "react";
 
-export const AgencyCard = ({ agency, onRemove } : { agency: AgencyModel, onRemove: (agencyId: number) => void }) => {
+export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyModel, onRemove: (agencyId: number) => void, highlighted?: boolean }) => {
 
   const auth = useAuth()
   const fullAddress = `${agency.location.addrLine1}${agency.location.addrLine2 ? ', ' + agency.location.addrLine2 : ''}, ${agency.location.city}, ${agency.location.state} ${agency.location.zipCode}`;
@@ -16,7 +16,7 @@ export const AgencyCard = ({ agency, onRemove } : { agency: AgencyModel, onRemov
   const staticMapUrl = useRef(`https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=300x200&markers=color:red%7C${encodedAddress}&key=${auth.getMapsApiKey()}`);
 
   return (
-    <Card className="w-full h-fit max-w-4xl">
+    <Card id={`${agency.id}`} className={`w-full h-fit max-w-4xl ${highlighted ? "ring-2 ring-blue-400" : ""}`}>
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-gray-200">
           <h2 className="text-2xl font-bold mb-4 text-center">{agency.agencyName}</h2>

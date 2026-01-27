@@ -24,6 +24,12 @@ export const Agencies = () => {
     const [removeSuccess, setRemoveSuccess] = useState<boolean>(false)
     const [removeError, setRemoveError] = useState<boolean>(false)
 
+    const highlightedAgencyId = useMemo(() => {
+        if (!searchParams.has("agencyId")) return null
+        const id = Number(searchParams.get("agencyId"))
+        return Number.isNaN(id) ? null : id
+    }, [searchParams])
+
     const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
     useEffect(() => {
         agencyApiRef.getAll().then(res => {
@@ -134,7 +140,7 @@ export const Agencies = () => {
                                     <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
                                 </>
                             }
-                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <AgencyCard onRemove={onRemove} agency={a} />)}
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
                         </div> 
                     </div>
 

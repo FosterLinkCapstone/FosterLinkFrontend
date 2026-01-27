@@ -3,7 +3,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
@@ -13,9 +13,12 @@ import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
 import { CreateThreadCardWide } from "../components/forum/CreateThreadCardWide";
 import { useNavigate, useSearchParams } from "react-router";
 
+type OrderBy = "newest" | "oldest" | "likes";
+
 export const Threads = () => {
   const [searchText, setSearchText] = useState<string>('');
-  const [searchBy, setSearchBy] = useState<string>('');
+  const [searchBy, setSearchBy] = useState<string>(SearchBy.THREAD_TITLE);
+  const [orderBy, setOrderBy] = useState<OrderBy>("newest");
   const [threads, setThreads] = useState<ThreadModel[]>([])
     const [searchParams, _] = useSearchParams()
   const [error, setError] = useState<string>('')
@@ -34,13 +37,26 @@ export const Threads = () => {
     }
   }, [])
 
+  const displayThreads = useMemo(() => {
+    const result = [...threads];
+    result.sort((a, b) => {
+      if (orderBy === "likes") {
+        return b.likeCount - a.likeCount;
+      }
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return orderBy === "newest" ? dateB - dateA : dateA - dateB;
+    });
+    return result;
+  }, [threads, orderBy]);
+
   const doSearch = async () => {
-    if (searchText != "" && searchBy != "") {
+    if (searchText.trim() !== "" && searchBy !== "") {
         const res = await threadApiRef.search(SearchBy[searchBy as keyof typeof SearchBy], searchText)
         if (res.errorMessage && res.errorMessage != "") {
             setError(res.errorMessage)
         } else {
-            setThreads(res.response) // TODO - implement filters here
+            setThreads(res.response ?? [])
         }
     }
   }
@@ -57,7 +73,7 @@ export const Threads = () => {
       
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-3 mb-6">
-          <DropdownMenu> {/* TODO template for the filters dropdown - not needed for MVC */}
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <Filter className="h-4 w-4" />
@@ -83,7 +99,7 @@ export const Threads = () => {
             <SelectTrigger className="w-auto min-w-[120px]">
               <SelectValue placeholder="Search By" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="THREAD_TITLE">Thread Title</SelectItem>
               <SelectItem value="THREAD_CONTENT">Thread Content</SelectItem>
               <SelectItem value="USERNAME">Username</SelectItem>
@@ -91,7 +107,18 @@ export const Threads = () => {
             </SelectContent>
           </Select>
 
-          <Button className="whitespace-nowrap" onClick={doSearch}>Search</Button>
+          <Select value={orderBy} onValueChange={(value: OrderBy) => setOrderBy(value)}>
+            <SelectTrigger className="w-auto min-w-[120px]">
+              <SelectValue placeholder="Order By" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="likes">Most liked</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" className="whitespace-nowrap" onClick={doSearch}>Search</Button>
         </div>
         {
           auth.isLoggedIn() && <div className="max-w-7xl mb-6">
@@ -108,7 +135,7 @@ export const Threads = () => {
               creating && <CreateThreadCardWide onCancel={() => setCreating(false)} onCreate={onThreadCreate}/>
             }
             {
-                threads.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : threads.map(t => <ThreadPreviewWide thread={t}/>)
+                displayThreads.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : displayThreads.map(t => <ThreadPreviewWide key={t.id} thread={t}/>)
             }
         </div>
       </div>

@@ -3,6 +3,7 @@ import type { AuthContextType } from "../AuthContext";
 import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { LoginResponse } from "../models/api/LoginResponse";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
+import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 
 export interface UserApiType {
     login: (email: string, password: string) => Promise<LoginResponse>,
@@ -10,7 +11,8 @@ export interface UserApiType {
     register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<{error: string | undefined, jwt: string}>
     isAdmin: () => Promise<ErrorWrapper<boolean>>
     isFaqAuthor: () => Promise<ErrorWrapper<boolean>>
-    getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>
+    getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
+    getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -160,7 +162,24 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 }
             }
             return {isError: true, error: "Internal server error", data: undefined}
+        },
+        getProfileMetadata: async(userId: number): Promise<ErrorWrapper<ProfileMetadataModel>> => {
+            try {
+                const res = await auth.api.get(`/users/profileMetadata?userId=${userId}`)
+                return {isError: false, error: undefined, data: res.data}
+            } catch (err: any) {
+                if (err.response) {
+                    switch (err.response.status) {
+                        case 404:
+                            return {isError: true, error: "Could not find that user!", data: undefined}
+                        default:
+                            return {isError: true, error: "Internal server error", data: undefined}
+                    }
+                }
+            }
+            return {isError: true, error: "Internal server error", data: undefined}
         }
+
     }
     
     }

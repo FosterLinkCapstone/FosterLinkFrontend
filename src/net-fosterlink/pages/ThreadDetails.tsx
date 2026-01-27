@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { ReplyCard } from "../components/forum/ReplyCard";
 import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
 import { useEffect, useState } from "react";
@@ -14,6 +14,8 @@ import type { ReplyModel } from "../backend/models/ReplyModel";
 import { getInitials } from "../util/StringUtil";
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 import { confirm } from "../components/ConfirmDialog";
+import { useNavigate } from "react-router";
+import { VerifiedCheck } from "../components/VerifiedCheck";
 
 export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [replyText, setReplyText] = useState('');
@@ -26,6 +28,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const auth = useAuth()
   const [isLiked, setIsLiked] = useState<boolean>(thread.liked)
   const threadApiRef = threadApi(auth)
+  const navigate = useNavigate()
 
   useEffect(() => {
     threadApiRef.getReplies(thread.id).then(res => {
@@ -131,8 +134,9 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               className="mb-3 min-h-[120px]"
+              disabled={!auth.isLoggedIn()}
             />
-            <Button onClick={handleSubmitNewReply} className="w-full">
+            <Button onClick={handleSubmitNewReply} className="w-full" disabled={!auth.isLoggedIn()}>
               Submit
             </Button>
           </Card>
@@ -153,15 +157,21 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
           <div className="mb-4">
             <h1 className="text-3xl font-bold mb-2">{thread.title}</h1>
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={thread.author.profilePictureUrl} />
-                <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
-                  {getInitials(thread.author.fullName)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-semibold">{thread.author.username}</span>
+              <button
+                type="button"
+                onClick={() => navigate(`/users/${thread.author.id}`)}
+                className="flex items-center gap-2 hover:text-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-400 rounded-full px-1"
+              >
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={thread.author.profilePictureUrl} />
+                  <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                    {getInitials(thread.author.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-semibold">{thread.author.username}</span>
+              </button>
               {thread.author.verified && (
-                <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500" />
+                <VerifiedCheck className="h-4 w-4" />
               )}
               <span>Posted at {thread.createdAt.toLocaleString()}</span>
             </div>
@@ -217,6 +227,9 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
           <div>
             <h2 className="text-xl font-semibold mb-4">Replies</h2>
             {
+              replies.length === 0 ? (
+                <p className="text-gray-500">No replies yet. Be the first to reply!</p>
+              ) : 
                 replies.map(r => 
                     <ReplyCard 
                       key={r.id}
@@ -242,7 +255,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-semibold">{auth.getUserInfo()!.username}</span>
                       {auth.getUserInfo()!.verified && (
-                        <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500" />
+                        <VerifiedCheck className="h-4 w-4" />
                       )}
                       <span className="text-sm text-gray-500">
                         Member since {new Date(auth.getUserInfo()!.createdAt).getFullYear()}
