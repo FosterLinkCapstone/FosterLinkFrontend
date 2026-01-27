@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { CreateAgencyCard } from "../components/agencies/CreateAgencyCard"
 import type { CreateAgencyModel } from "../backend/models/api/CreateAgencyModel"
 import { Alert, AlertTitle } from "@/components/ui/alert"
-import { Link, useSearchParams } from "react-router"
+import { Link, useNavigate, useSearchParams } from "react-router"
 import type { ErrorWrapper } from "../util/ErrorWrapper"
 import { StatusDialog } from "../components/StatusDialog"
 
@@ -23,6 +23,7 @@ export const Agencies = () => {
     const [createSuccess, setCreateSuccess] = useState<boolean>(false)
     const [removeSuccess, setRemoveSuccess] = useState<boolean>(false)
     const [removeError, setRemoveError] = useState<boolean>(false)
+    const navigate = useNavigate()
 
     const highlightedAgencyId = useMemo(() => {
         if (!searchParams.has("agencyId")) return null
@@ -132,6 +133,14 @@ export const Agencies = () => {
                                 </Alert>
                             }
                             {
+                                searchParams.has("agencyId") &&
+                                <Alert className="w-full text-black bg-white" variant="default">
+                                    <AlertCircleIcon/>
+                                    <AlertTitle className="">You are currently viewing a single agency. <a className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => navigate("/agencies")}>Clear Selection</a></AlertTitle>
+                                    
+                                </Alert>
+                            }
+                            {
                                 ((auth.admin != null && auth.admin != null) && (auth.admin || auth.agent)) &&
                                 <Button onClick={() => { setCreatingAgency(!creatingAgency) }} variant="outline" className="w-full my-4">Create a new agency</Button>
                             }
@@ -140,7 +149,7 @@ export const Agencies = () => {
                                     <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
                                 </>
                             }
-                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
                         </div> 
                     </div>
 

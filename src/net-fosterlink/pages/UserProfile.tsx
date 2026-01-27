@@ -122,7 +122,7 @@ export const UserProfile = () => {
   };
 
   const handleAgencyClick = () => {
-    navigate(`/agencies/#${profileMetadata?.agencyId}`);
+    navigate(`/agencies/?agencyId=${profileMetadata?.agencyId}`);
   };
 
   if (loading) {
