@@ -12,6 +12,7 @@ export interface ThreadApiType {
     search: (searchBy: SearchBy, searchTerm: string) => Promise<ThreadSearchResponse>,
     rand: () => Promise<ErrorWrapper<ThreadModel[]>>,
     randForUser: (userId: number) => Promise<ErrorWrapper<ThreadModel[]>>,
+    getThreads: (orderBy: "most liked" | "oldest" | "newest", count: number) => Promise<ErrorWrapper<ThreadModel[]>>,
     getReplies: (threadId: number) => Promise<ErrorWrapper<ReplyModel[]>>,
     searchById: (threadId: number) => Promise<ErrorWrapper<ThreadModel | undefined>>,
     replyTo: (content: string, threadId: number) => Promise<ErrorWrapper<ReplyModel | undefined>>,
@@ -75,6 +76,20 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                             return {data: undefined, error: "User not found!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be logged in to view threads!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
+        },
+        getThreads: async(orderBy: "most liked" | "oldest" | "newest", count: number): Promise<ErrorWrapper<ThreadModel[]>> => {
+            try {
+                const res = await auth.api.get(`/threads/getThreads?orderBy=${encodeURIComponent(orderBy)}&count=${count}`)
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }

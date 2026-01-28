@@ -6,12 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { VerifiedCheck } from "../VerifiedCheck";
+import type { AuthContextType } from "@/net-fosterlink/backend/AuthContext";
+import { useState } from "react";
+import { threadApi } from "@/net-fosterlink/backend/api/ThreadApi";
 
 interface ThreadPreviewProps {
-    thread: ThreadModel
+    thread: ThreadModel,
+    auth: AuthContextType
 }
 
-export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread }) => {
+export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }) => {
+  const [isLiked, setIsLiked] = useState<boolean>(thread.liked);
   const formatDate = (jsonDate: Date) => {
     const date = new Date(jsonDate)
     const now = new Date();
@@ -34,6 +39,20 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread }) => {
   const goToProfile = (e: React.MouseEvent) => {
     e.stopPropagation()
     navigate(`/users/${thread.author.id}`)
+  }
+  const likeThread = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (auth.isLoggedIn()) {
+      thread.likeCount += isLiked ? -1 : 1
+      setIsLiked(!isLiked)
+      threadApi(auth).likeThread(thread.id).then(res => {
+        if (res.isError) {
+          // Revert the like count change on error
+          thread.likeCount += isLiked ? 1 : -1
+          setIsLiked(!isLiked)
+        }
+      })
+    }
   }
 
   return (
@@ -71,7 +90,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread }) => {
         </div>
         
         <div className="text-xs text-gray-400">
-          {thread.likeCount} posts
+          {thread.userPostCount} posts
         </div>
       </div>
 
@@ -101,18 +120,21 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1.5 rounded-full transition-colors">
-              <MessageCircle className="h-5 w-5 text-gray-600" />
-              <span className="text-sm text-gray-700 font-medium">
-                {0} {/* TODO */}
+            <button className="flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1.5 rounded-full transition-colors disabled:fg-gray-400 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()}>
+              <MessageCircle className="h-5 w-5" stroke={auth.isLoggedIn() ? "rgb(99, 99, 99)" : "#888888ff"} />
+              <span className="text-sm disabled:text-gray-500 text-gray-700 font-medium">
+                {thread.commentCount}
               </span>
             </button>
-            <button className="flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1.5 rounded-full transition-colors">
-              <Heart className="h-5 w-5 text-gray-600" />
-              <span className="text-sm text-gray-700 font-medium">
-                {thread.likeCount}
-              </span>
-            </button>
+            <button className="flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1 rounded transition-colors disabled:fg-gray-400 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()} onClick={e => likeThread(e)}>
+                {isLiked ? <>
+                  <Heart fill="#ff0000ff" className="h-4 w-4 text-red-600"/>
+                  <span color="#ff0000ff" className="text-sm text-red-700">{thread.likeCount}</span>
+                </> : <>
+                  <Heart className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">{thread.likeCount}</span>
+                </>}
+              </button>
           </div>
         </div>
       </div>

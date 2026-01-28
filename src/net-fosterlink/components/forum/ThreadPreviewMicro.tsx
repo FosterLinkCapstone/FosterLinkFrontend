@@ -13,7 +13,7 @@ export const ThreadPreviewMicro = ({ thread } : {thread: ThreadModel}) => {
       <div className="text-xs text-gray-500">Posted at {new Date(thread.createdAt).toLocaleDateString()}</div>
       <div className="flex gap-3 text-xs text-gray-600 mt-1">
         <span>Like count: {thread.likeCount}</span>
-        <span>Comment count: {0 /* TODO */}</span>
+        <span>Comment count: {thread.commentCount}</span>
       </div>
     </Card>
   );

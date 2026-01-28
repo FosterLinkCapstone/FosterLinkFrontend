@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
@@ -20,44 +18,70 @@ export const Threads = () => {
   const [searchBy, setSearchBy] = useState<string>(SearchBy.THREAD_TITLE);
   const [orderBy, setOrderBy] = useState<OrderBy>("newest");
   const [threads, setThreads] = useState<ThreadModel[]>([])
-    const [searchParams, _] = useSearchParams()
+  const [searchParams] = useSearchParams()
+  const [searching, setSearching] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
   const [creating, setCreating] = useState<boolean>(searchParams.get("creating") === "true")
   const auth = useAuth()
-  const threadApiRef = threadApi(auth)
+  const threadApiRef = useRef(threadApi(auth))
   const navigate = useNavigate()
 
-  useEffect(() => { // potential issue: filling data on empty search
-    if (threads.length == 0) {
-        threadApiRef.rand().then(res => {
-            if (!res.isError && res.data) {
-                setThreads(res.data)
-            }
-        })
+  const orderByToApi = (o: OrderBy): "most liked" | "oldest" | "newest" => {
+    switch (o) {
+      case "likes":
+        return "most liked";
+      case "oldest":
+        return "oldest";
+      case "newest":
+      default:
+        return "newest";
     }
-  }, [])
+  };
 
-  const displayThreads = useMemo(() => {
-    const result = [...threads];
-    result.sort((a, b) => {
-      if (orderBy === "likes") {
-        return b.likeCount - a.likeCount;
-      }
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return orderBy === "newest" ? dateB - dateA : dateA - dateB;
-    });
-    return result;
-  }, [threads, orderBy]);
+  const loadThreads = useCallback(async (o: OrderBy) => {
+    const res = await threadApiRef.current.getThreads(orderByToApi(o), 10);
+    if (!res.isError && res.data) {
+      setThreads(res.data);
+    }
+  }, [threadApiRef]);
+
+  useEffect(() => {
+    if (threads.length === 0 && !searching) {
+      loadThreads(orderBy);
+    }
+  }, [loadThreads, orderBy, threads.length]);
+
+  useEffect(() => {
+    // Only refetch when order changes AND search is empty.
+    if (!searching && searchText.trim() === "") {
+      loadThreads(orderBy);
+    } else {
+          const result = [...threads];
+          result.sort((a, b) => {
+            if (orderBy === "likes") {
+              return b.likeCount - a.likeCount;
+            }
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return orderBy === "newest" ? dateB - dateA : dateA - dateB;
+        });
+        setThreads(result);
+    }
+  }, [orderBy, searchText, loadThreads, searching]);
+
+  const displayThreads = useMemo(() => threads, [threads]);
 
   const doSearch = async () => {
     if (searchText.trim() !== "" && searchBy !== "") {
-        const res = await threadApiRef.search(SearchBy[searchBy as keyof typeof SearchBy], searchText)
+      setSearching(true)
+        const res = await threadApiRef.current.search(SearchBy[searchBy as keyof typeof SearchBy], searchText)
         if (res.errorMessage && res.errorMessage != "") {
             setError(res.errorMessage)
         } else {
             setThreads(res.response ?? [])
         }
+    } else {
+      setSearching(false)
     }
   }
   const onThreadCreate = (newThread: ThreadModel) => {
@@ -73,20 +97,6 @@ export const Threads = () => {
       
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-3 mb-6">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Filters
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Most Recent</DropdownMenuItem>
-              <DropdownMenuItem>Most Popular</DropdownMenuItem>
-              <DropdownMenuItem>Most Comments</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           <Input
             type="text"
             placeholder="Enter search text..."
@@ -135,7 +145,7 @@ export const Threads = () => {
               creating && <CreateThreadCardWide onCancel={() => setCreating(false)} onCreate={onThreadCreate}/>
             }
             {
-                displayThreads.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : displayThreads.map(t => <ThreadPreviewWide key={t.id} thread={t}/>)
+                displayThreads.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : displayThreads.map(t => <ThreadPreviewWide key={t.id} thread={t} auth={auth}/>)
             }
         </div>
       </div>
