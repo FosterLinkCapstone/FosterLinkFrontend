@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 
-export const DummyAgency = () => {
+export const DummyAgency = ({ref} : {ref: React.RefObject<HTMLDivElement | null>}) => {
   return (
-    <Card className="w-full h-fit max-w-4xl mx-auto">
+    <Card ref={ref} className="w-full h-fit max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-gray-200">
           <h2 className="text-2xl font-bold mb-4 text-center">Caring Hearts Foster Agency</h2>

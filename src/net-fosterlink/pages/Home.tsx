@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DummyThread } from '../components/dummy/DummyThread';
 import { DummyFaq } from '../components/dummy/DummyFaq';
@@ -9,23 +9,56 @@ import { useAuth } from '../backend/AuthContext';
 export const Home = () => {
   const [currentModule, setCurrentModule] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const [mod1Height, setMod1Height] = useState<number>(0);
+  const [mod2Height, setMod2Height] = useState<number>(0);
+  const [mod3Height, setMod3Height] = useState<number>(0);
+
+  useEffect(() => {
+    setMod1Height(mod1Ref.current ? mod1Ref.current.clientHeight : 0)
+  }, [setMod1Height])
+  useEffect(() => {
+    setMod2Height(mod2Ref.current ? mod2Ref.current.clientHeight : 0)
+  }, [setMod2Height])
+  useEffect(() => {
+    setMod3Height(mod3Ref.current ? mod3Ref.current.clientHeight : 0)
+  }, [setMod3Height])
+
+  const currentHeight = () => {
+    switch (currentModule) {
+      case 0:
+        return mod1Height;
+      case 1:
+        return mod2Height;
+      case 2:
+        return mod3Height;
+      default:
+        return 0;
+    }
+  }
+
+  const mod1Ref = useRef<HTMLDivElement>(null);
+  const mod2Ref = useRef<HTMLDivElement>(null);
+  const mod3Ref = useRef<HTMLDivElement>(null);
+
+
   const auth = useAuth()
 
   const modules = [
     {
       title: 'Module 1: Forums',
       paragraph: 'The forum is our approach to connecting existing foster parents with prospective ones. It will act as a way for those more knowledgeable in the specifics of foster care to share their ideas, skills and wisdom with those looking to add to their knowledge base.',
-      card: <DummyThread />
+      card: <DummyThread ref={mod1Ref} />
     },
     {
       title: 'Module 2: FAQ',
       paragraph: 'The FAQ is our way of creating an objective, immutable source of general foster knowledge. Through a comprehensive verification process, we intend to have a solid foundation of articulate FAQ response authors, so that curious foster parents can have a source of information that they can trust. We will also allow anyone to submit suggestions for FAQ articles, which will allow our knowledge base to be tailored to answer the questions that are most needed.',
-      card: <DummyFaq />
+      card: <DummyFaq ref={mod2Ref} />
     },
     {
       title: 'Module 3: Agencies',
       paragraph: 'As an organization designed to promote knowledge of foster care, we are also invested in promoting other organizations with similar goals to us. The agencies module is our way of allowing representatives of other organizations (known locally as "agencies") to promote their websites and businesses. We believe that creating a network of individuals who care about providing accurate information about foster care will help boost confidence in new parents.',
-      card: <DummyAgency />
+      card: <DummyAgency ref={mod3Ref} />
     }
   ];
 
@@ -69,7 +102,7 @@ export const Home = () => {
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div 
-              className="overflow-hidden transition-all duration-500 ease-in-out"
+              className="overflow-hidden transition-all duration-500 ease-in-out"  
             >
               <div 
                 className="transition-transform duration-500 ease-in-out flex"
@@ -82,7 +115,7 @@ export const Home = () => {
                   >
                     <h2 className="text-3xl font-bold mb-6 text-gray-900">{module.title}</h2>
                     <p className="text-gray-700 mb-8 leading-relaxed">{module.paragraph}</p>
-                    <div className="mb-8">
+                    <div className='transition-all duration-500 ease-in-out' style={{ height: `${currentHeight() + 20}px` }}>
                       {module.card}
                     </div>
                   </div>

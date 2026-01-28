@@ -27,7 +27,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
     if (days === 1) return 'Yesterday';
     if (days < 7) return `${days} days ago`;
     
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `on ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
 
   const navigate = useNavigate()
@@ -106,7 +106,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
         <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-auto">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-gray-500">
-              Posted on {formatDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              Posted {formatDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
             {thread.tags && thread.tags.slice(0, 3).map((tag, index) => (
               <Badge 

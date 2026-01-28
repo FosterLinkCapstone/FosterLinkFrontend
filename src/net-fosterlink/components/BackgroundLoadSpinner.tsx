@@ -1,7 +1,7 @@
 import { Check } from "lucide-react"
 import { useEffect, useState } from "react"
 
-export const BackgroundLoadSpinner = ({loading} : {loading: boolean}) => {
+export const BackgroundLoadSpinner = ({loading, className} : {loading: boolean, className?: string}) => {
   const [visible, setVisible] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
 
@@ -20,12 +20,12 @@ export const BackgroundLoadSpinner = ({loading} : {loading: boolean}) => {
   if (visible) {
     if (loading) {
       return (
-        <div className="size-8 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin"></div>
+        <div className={`size-8 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin ${className}`}></div>
       )
     }
     if (!loading) {
       return (
-        <Check className="size-8 stroke-green-600 stroke-[2.5]" />
+        <Check className={`size-8 stroke-green-600 stroke-[2.5] ${className}`} />
       )
     }
   } else return null

@@ -25,15 +25,18 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [otherThreads, setOtherThreads] = useState<ThreadModel[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [replies, setReplies] = useState<ReplyModel[]>([])
+  const [loadingReplies, setLoadingReplies] = useState<boolean>(true)
   const auth = useAuth()
   const [isLiked, setIsLiked] = useState<boolean>(thread.liked)
   const threadApiRef = threadApi(auth)
   const navigate = useNavigate()
 
   useEffect(() => {
+    setLoadingReplies(true)
     threadApiRef.getReplies(thread.id).then(res => {
         if (!res.isError && res.data) {
             setReplies(res.data)
+            setLoadingReplies(false)
         }
     })
     threadApiRef.randForUser(thread.author.id).then(res => {
@@ -105,8 +108,19 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
         window.location.href = `/threads`
       })
     }
-
   }
+    const formatDate = (jsonDate: Date) => {
+    const date = new Date(jsonDate)
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    
+    return `on ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  };
   const handleCancelReply = () => {
     setReplyText('');
     setReplyingTo(null);
@@ -173,7 +187,9 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
               {thread.author.verified && (
                 <VerifiedCheck className="h-4 w-4" />
               )}
-              <span>Posted at {thread.createdAt.toLocaleString()}</span>
+              <span>
+                Posted {formatDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           </div>
 
@@ -197,17 +213,24 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             </div>
           </Card>
               {
-                auth.isLoggedIn() && (auth.admin || auth.getUserInfo()!.id === thread.author.id) &&
-                <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={deleteThread}>Delete</Button> 
-              }
-              {
-                auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id && (
+                auth.isLoggedIn() && (
                   <div className="flex items-center gap-1.5">
-                    <Button variant="outline" className="mb-4" onClick={() => setEditing(!editing)}>
-                      {editing ? 'Cancel' : 'Edit Thread'}
-                    </Button>
                     {
-                      editing && <Button variant="outline" className="mb-4" onClick={submitEdit}>Submit</Button>
+                      (auth.admin || auth.getUserInfo()!.id === thread.author.id) &&
+                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={deleteThread}>Delete</Button> 
+                    }
+                    {
+                      auth.getUserInfo()!.id === thread.author.id && (
+                        <>
+                          <Button variant="outline" className="mb-4" onClick={() => setEditing(!editing)}>
+                            {editing ? 'Cancel' : 'Edit Thread'}
+                          </Button>
+                          {
+                            editing && <Button variant="outline" className="mb-4" onClick={submitEdit}>Submit</Button>
+                          }
+                        </>
+
+                      )
                     }
                     <BackgroundLoadSpinner loading={loading} />
                   </div> 
@@ -227,9 +250,12 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
           <div>
             <h2 className="text-xl font-semibold mb-4">Replies</h2>
             {
-              replies.length === 0 ? (
-                <p className="text-gray-500">No replies yet. Be the first to reply!</p>
-              ) : 
+              loadingReplies ? (
+                <BackgroundLoadSpinner className="self-center justify-self-center" loading={loadingReplies}/>
+              ) : (
+              replies.length === 0 ? 
+                (<p className="text-gray-500">No replies yet. Be the first to reply!</p>)
+              : 
                 replies.map(r => 
                     <ReplyCard 
                       key={r.id}
@@ -239,6 +265,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       onReplyDelete={handleReplyDelete}
                     />
                 )
+              )
             }
 
             {(replyingTo && auth.isLoggedIn()) && (

@@ -2,9 +2,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { ChevronDown } from "lucide-react";
 
-export const DummyFaq = () => {
+export const DummyFaq = ({ref} : {ref: React.RefObject<HTMLDivElement | null>}) => {
   return (
-    <Card className="mb-4 overflow-hidden hover:shadow-md transition-shadow">
+    <Card ref={ref} className="mb-4 overflow-hidden hover:shadow-md transition-shadow">
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="w-10 ml-4"></div>

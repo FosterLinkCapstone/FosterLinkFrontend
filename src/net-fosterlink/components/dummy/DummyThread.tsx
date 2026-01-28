@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Heart, MessageCircle } from "lucide-react";
 import { VerifiedCheck } from "../VerifiedCheck";
 
-export const DummyThread = () => {
+export const DummyThread = ({ref} : {ref: React.RefObject<HTMLDivElement | null>}) => {
   return (
-    <Card className="flex overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200">
+    <Card ref={ref} className="flex overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200">
       <div className="flex flex-col items-center p-6 border-r border-gray-200 bg-gray-50/50 min-w-[180px]">
         <Avatar className="h-16 w-16 mb-3">
           <AvatarFallback className="bg-blue-100 text-blue-700 text-lg">
