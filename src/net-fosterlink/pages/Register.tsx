@@ -91,7 +91,7 @@ export const Register = () => {
             </CardContent>
             <CardFooter className="flex-col gap-2">
                 <Button type="button" onClick={submitRegister} variant="outline" className="w-full">
-                    Login
+                    Register
                 </Button>
                 {
                     error != "" && <Alert variant="destructive">

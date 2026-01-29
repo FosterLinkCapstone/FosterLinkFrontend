@@ -15,6 +15,7 @@ export interface FaqApiType {
     getRequests: () => Promise<ErrorWrapper<FaqRequestModel[]>>
     answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
     createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
+    allAuthor: (userId: number) => Promise<ErrorWrapper<FaqModel[]>>
 }
 
 export const faqApi = (auth: AuthContextType): FaqApiType => {
@@ -161,6 +162,22 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 }
             }
             return {data: undefined, error: "Internal client error", isError: true}
+        },
+        allAuthor: async(userId: number): Promise<ErrorWrapper<FaqModel[]>> => {
+            try {
+                const res = await auth.api.get(`/faq/allAuthor?userId=${userId}`)
+                return {isError: false, error: undefined, data: res.data}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 404:
+                            return {data: undefined, isError: true, error: "User not found or has no FAQ responses!"}
+                        default:
+                            return {data: undefined, isError: true, error: "Internal server error"}
+                    }
+                }
+            }
+            return {data: undefined, isError: true, error: "Internal client error"}
         }
     }
 }

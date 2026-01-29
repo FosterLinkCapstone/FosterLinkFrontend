@@ -60,7 +60,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
       className="flex overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
       onClick={goToThread}
     >
-      <div className="flex flex-col items-center p-6 border-r border-gray-200 bg-gray-50/50 min-w-[180px]">
+      <div className="flex flex-col items-center mx-6 py-2 rounded-md bg-[#f2f2f2] min-w-[180px]">
         <button
           type="button"
           onClick={goToProfile}
@@ -94,7 +94,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
         </div>
       </div>
 
-      <div className="flex-1 p-6 flex flex-col">
+      <div className="flex-1 px-6 flex flex-col">
         <h3 className="text-xl font-semibold mb-2 text-gray-900">
           {thread.title}
         </h3>
@@ -104,19 +104,25 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
         </p>
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-auto">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-gray-500">
+          <div className="flex items-start gap-2 flex-wrap flex-col">
+                        <span className="text-xs text-gray-500">
               Posted {formatDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
+            <div className="flex flex-row gap-2 items-center">
             {thread.tags && thread.tags.slice(0, 3).map((tag, index) => (
               <Badge 
                 key={index} 
                 variant="secondary"
-                className="text-xs px-2 py-0.5"
+                className="text-xs bg-gray-300 px-2 py-0.5"
               >
                 {tag}
               </Badge>
             ))}
+            {thread.tags && thread.tags.length > 3 && (
+              <span className="text-xs text-gray-500">... and {thread.tags.length - 3} more</span>
+            )}
+            </div>
+
           </div>
 
           <div className="flex items-center gap-4">

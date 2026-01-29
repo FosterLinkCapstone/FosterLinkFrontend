@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
@@ -8,6 +9,7 @@ import { threadApi } from "../backend/api/ThreadApi";
 import type { ThreadModel } from "../backend/models/ThreadModel";
 import { SearchBy } from "../backend/models/api/SearchBy";
 import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
+import { ThreadPreviewSkeleton } from "../components/forum/ThreadPreviewSkeleton";
 import { CreateThreadCardWide } from "../components/forum/CreateThreadCardWide";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -22,6 +24,7 @@ export const Threads = () => {
   const [searching, setSearching] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
   const [creating, setCreating] = useState<boolean>(searchParams.get("creating") === "true")
+  const [loading, setLoading] = useState<boolean>(true)
   const auth = useAuth()
   const threadApiRef = useRef(threadApi(auth))
   const navigate = useNavigate()
@@ -42,6 +45,7 @@ export const Threads = () => {
     const res = await threadApiRef.current.getThreads(orderByToApi(o), 10);
     if (!res.isError && res.data) {
       setThreads(res.data);
+      setLoading(false);
     }
   }, [threadApiRef]);
 
@@ -89,6 +93,33 @@ export const Threads = () => {
     navigate(`/threads/thread/${newThread.id}`)
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+          <Navbar userInfo={auth.getUserInfo()} />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex gap-3 mb-6">
+            <Skeleton className="h-9 flex-1 rounded-md" />
+            <Skeleton className="h-9 min-w-[120px] w-[120px] rounded-md" />
+            <Skeleton className="h-9 min-w-[120px] w-[120px] rounded-md" />
+            <Skeleton className="h-9 w-[80px] rounded-md" />
+          </div>
+          {auth.isLoggedIn() && (
+            <div className="max-w-7xl mb-6">
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          )}
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <ThreadPreviewSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">

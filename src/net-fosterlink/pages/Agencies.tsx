@@ -134,7 +134,7 @@ export const Agencies = () => {
                             }
                             {
                                 searchParams.has("agencyId") &&
-                                <Alert className="w-full text-black bg-white" variant="default">
+                                <Alert className="w-full text-black bg-yellow-200" variant="default">
                                     <AlertCircleIcon/>
                                     <AlertTitle className="">You are currently viewing a single agency. <a className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => navigate("/agencies")}>Clear Selection</a></AlertTitle>
                                     

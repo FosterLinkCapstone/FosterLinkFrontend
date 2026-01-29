@@ -15,6 +15,8 @@ import { getInitials } from "../util/StringUtil";
 import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { userApi } from "../backend/api/UserApi";
 import { VerifiedCheck } from "../components/VerifiedCheck";
+import type { FaqModel } from "../backend/models/FaqModel";
+import { faqApi } from "../backend/api/FaqApi";
 
 type OrderBy = "newest" | "oldest" | "likes";
 
@@ -23,6 +25,7 @@ export const UserProfile = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const threadApiRef = useMemo(() => threadApi(auth), [auth]);
+  const [faqResponses, setFaqResponses] = useState<FaqModel[]>([]);
 
   const [profileMetadata, setProfileMetadata] = useState<ProfileMetadataModel | null>(null);
 
@@ -69,6 +72,11 @@ export const UserProfile = () => {
 
     }).finally(() => {
       setLoading(false);
+    });
+    faqApi(auth).allAuthor(numericUserId).then(res => {
+      if (!res.isError && res.data) {
+        setFaqResponses(res.data);
+      }
     });
   }, [numericUserId]);
 
@@ -196,7 +204,7 @@ export const UserProfile = () => {
             {(profileMetadata?.agencyName !== null) && (
               <Badge
                 className="px-4 py-1 rounded-full border-blue-400 bg-blue-100 text-blue-800 cursor-pointer"
-                title={profileMetadata?.agencyName ? `User is an agent of ${profileMetadata.agencyName}` : undefined}
+                title={profileMetadata?.agencyName ? `User is an agent of ${profileMetadata.agencyName}${profileMetadata.agencyCount > 1 ? ` + ${profileMetadata.agencyCount - 1} more` : ''}` : undefined}
                 onClick={handleAgencyClick}
               >
                 Agency Rep
@@ -275,6 +283,37 @@ export const UserProfile = () => {
             ))
           )}
         </div>
+
+        {faqResponses.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4">FAQ Responses</h2>
+            <div className="space-y-3">
+              {faqResponses.map((faq) => (
+                <Card
+                  key={faq.id}
+                  className="p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold mb-2">{faq.title}</h3>
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                        {faq.summary}
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate(`/faq?openId=${faq.id}`)}
+                        className="text-sm"
+                      >
+                        View More
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+        
       </div>
     </div>
   );

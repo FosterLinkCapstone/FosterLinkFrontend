@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { ReplyCard } from "../components/forum/ReplyCard";
 import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
 import { useEffect, useState } from "react";
@@ -170,7 +171,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
         <div className="flex-1">
           <div className="mb-4">
             <h1 className="text-3xl font-bold mb-2">{thread.title}</h1>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 pb-2 text-sm text-gray-600">
               <button
                 type="button"
                 onClick={() => navigate(`/users/${thread.author.id}`)}
@@ -190,6 +191,11 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
               <span>
                 Posted {formatDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </span>
+            </div>
+            <div className="flex flex-row">
+              {thread.tags && thread.tags.map((tag, index) => (
+                <Badge key={index} variant="secondary" className="text-xs bg-gray-300 px-2 py-0.5 mr-2">{tag}</Badge>
+              ))}
             </div>
           </div>
 

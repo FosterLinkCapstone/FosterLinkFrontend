@@ -6,5 +6,7 @@ export interface ProfileMetadataModel {
     faqAuthor: boolean,
     agencyId: string | null,
     agencyName: string | null,
+    firstAgencyName: string | null,
+    agencyCount: number,
     user: UserModel
 }

@@ -18,7 +18,7 @@ export interface ThreadApiType {
     replyTo: (content: string, threadId: number) => Promise<ErrorWrapper<ReplyModel | undefined>>,
     likeReply: (replyId: number) => Promise<ErrorWrapper<boolean>>,
     likeThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
-    createThread: (title: string, content: string) => Promise<CreateThreadResponse>,
+    createThread: (title: string, content: string, tags: string[]) => Promise<CreateThreadResponse>,
     editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>,
     deleteThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     editReplyContent: (replyId: number, newContent: string) => Promise<ErrorWrapper<ReplyModel|undefined>>,
@@ -188,8 +188,8 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
             }
             return {data: undefined, error: "Internal client error", isError: true}
         },
-        createThread: async(title: string, content: string): Promise<CreateThreadResponse> => { // TODO implement tags
-            const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: []})
+        createThread: async(title: string, content: string, tags: string[]): Promise<CreateThreadResponse> => { // TODO implement tags
+            const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: tags})
                 try {
                     return {thread: res.data, error: undefined}
                 } catch (err: any) {
