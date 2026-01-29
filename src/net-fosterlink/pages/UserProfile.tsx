@@ -135,12 +135,12 @@ export const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+      <div className="min-h-screen bg-background">
+        <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
           <Navbar userInfo={auth.getUserInfo()} />
         </div>
         <div className="flex items-center justify-center py-24">
-          <span className="text-gray-500">Loading profile...</span>
+          <span className="text-muted-foreground">Loading profile...</span>
         </div>
       </div>
     );
@@ -148,20 +148,20 @@ export const UserProfile = () => {
 
   if (error || !profileMetadata?.user) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+      <div className="min-h-screen bg-background">
+        <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
           <Navbar userInfo={auth.getUserInfo()} />
         </div>
         <div className="flex items-center justify-center py-24">
-          <span className="text-red-500">{error || "User not found."}</span>
+          <span className="text-destructive">{error || "User not found."}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+    <div className="min-h-screen bg-background">
+      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()} />
       </div>
 
@@ -169,7 +169,7 @@ export const UserProfile = () => {
         <div className="flex flex-col items-center text-center mb-10">
           <Avatar className="h-28 w-28 mb-4">
             <AvatarImage src={profileMetadata.user.profilePictureUrl} alt={profileMetadata.user.username} />
-            <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
+            <AvatarFallback className="bg-primary/10 text-primary text-2xl">
               {getInitials(profileMetadata.user.fullName)}
             </AvatarFallback>
           </Avatar>
@@ -181,10 +181,10 @@ export const UserProfile = () => {
             )}
           </div>
 
-          <div className="text-gray-600 mb-2">@{profileMetadata.user.username}</div>
+          <div className="text-muted-foreground mb-2">@{profileMetadata.user.username}</div>
 
           <div
-            className="text-sm text-gray-500 mb-4"
+            className="text-sm text-muted-foreground mb-4"
             title={getJoinedTooltip()}
           >
             {getJoinedText()}
@@ -192,18 +192,18 @@ export const UserProfile = () => {
 
           <div className="flex flex-wrap justify-center gap-2">
             {profileMetadata?.admin && (
-              <Badge className="px-4 py-1 rounded-full border-yellow-400 bg-yellow-100 text-yellow-800">
+              <Badge className="px-4 py-1 rounded-full border-amber-400 dark:border-amber-600 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">
                 Administrator
               </Badge>
             )}
             {(profileMetadata?.faqAuthor) && (
-              <Badge className="px-4 py-1 rounded-full border-green-400 bg-green-100 text-green-800">
+              <Badge className="px-4 py-1 rounded-full border-emerald-400 dark:border-emerald-600 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200">
                 FAQ Author
               </Badge>
             )}
             {(profileMetadata?.agencyName !== null) && (
               <Badge
-                className="px-4 py-1 rounded-full border-blue-400 bg-blue-100 text-blue-800 cursor-pointer"
+                className="px-4 py-1 rounded-full border-primary/50 bg-primary/10 text-primary cursor-pointer"
                 title={profileMetadata?.agencyName ? `User is an agent of ${profileMetadata.agencyName}${profileMetadata.agencyCount > 1 ? ` + ${profileMetadata.agencyCount - 1} more` : ''}` : undefined}
                 onClick={handleAgencyClick}
               >
@@ -217,7 +217,7 @@ export const UserProfile = () => {
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
             <form className="flex-1 flex items-center gap-2" onSubmit={handleSearchSubmit}>
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search posts by title..."
                   value={searchDraft}
@@ -229,7 +229,7 @@ export const UserProfile = () => {
                 Search
               </Button>
             </form>
-            <div className="w-full md:w-48 bg-white">
+            <div className="w-full md:w-48">
               <Select
                 value={orderBy}
                 onValueChange={(value: OrderBy) => setOrderBy(value)}
@@ -237,7 +237,7 @@ export const UserProfile = () => {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Order By" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-popover text-popover-foreground">
                   <SelectItem value="newest">Newest first</SelectItem>
                   <SelectItem value="oldest">Oldest first</SelectItem>
                   <SelectItem value="likes">Most liked</SelectItem>
@@ -249,7 +249,7 @@ export const UserProfile = () => {
 
         <div className="space-y-3">
           {displayThreads.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-muted-foreground py-8">
               {
                 searchText !== "" ? "No posts found matching your search." : "This user hasn't posted any threads yet."
               }
@@ -264,11 +264,11 @@ export const UserProfile = () => {
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <h3 className="text-lg text-left font-semibold mb-1">{t.title}</h3>
-                    <p className="text-sm text-left text-gray-600 line-clamp-2">
+                    <p className="text-sm text-left text-muted-foreground line-clamp-2">
                       {t.content}
                     </p>
                   </div>
-                  <div className="text-right text-xs text-gray-500">
+                  <div className="text-right text-xs text-muted-foreground">
                     <div>
                       {new Date(t.createdAt).toLocaleDateString()}{" "}
                       {new Date(t.createdAt).toLocaleTimeString([], {
@@ -296,7 +296,7 @@ export const UserProfile = () => {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold mb-2">{faq.title}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                         {faq.summary}
                       </p>
                       <Button

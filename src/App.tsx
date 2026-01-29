@@ -1,4 +1,5 @@
 import './App.css'
+import { ThemeProvider } from './ThemeProvider'
 import { AuthProvider } from './net-fosterlink/backend/AuthContext'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { Home } from './net-fosterlink/pages/Home'
@@ -27,6 +28,7 @@ function App() {
 
   return (
     <>
+        <ThemeProvider>
         <BrowserRouter>
           <AuthProvider apiUrl={import.meta.env.VITE_API_URL} mapsApiKey={import.meta.env.VITE_MAPS_API_KEY}>
             <Routes>
@@ -44,6 +46,7 @@ function App() {
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        </ThemeProvider>
         <GlobalStyle/>
     </>
   )

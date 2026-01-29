@@ -31,8 +31,8 @@ export const ThreadLoader = ({preloadedThread = undefined} : {preloadedThread: T
             return <NotFound/>
         }
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div>
         );
     } else {

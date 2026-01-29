@@ -12,7 +12,7 @@ export const VerifiedCheck: React.FC<VerifiedCheckProps> = ({ className }) => {
       aria-label="Verified user"
     >
       <CheckCircle2
-        className="h-full w-full text-gray fill-blue-500"
+        className="h-full w-full text-muted-foreground fill-primary"
         aria-hidden="true"
         focusable={false}
       />

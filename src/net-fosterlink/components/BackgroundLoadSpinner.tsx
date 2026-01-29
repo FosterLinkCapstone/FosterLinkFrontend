@@ -20,7 +20,7 @@ export const BackgroundLoadSpinner = ({loading, className} : {loading: boolean, 
   if (visible) {
     if (loading) {
       return (
-        <div className={`size-8 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin ${className}`}></div>
+        <div className={`size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin ${className}`}></div>
       )
     }
     if (!loading) {

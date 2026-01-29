@@ -1,34 +1,41 @@
-
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { ListItem } from "./ListItem";
 import { Link } from "react-router";
 import { useAuth } from "../backend/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { UserModel } from "../backend/models/UserModel";
 import { AgentOnlyBadge } from "./AgentOnlyBadge";
 import { AdminOnlyBadge } from "./AdminOnlyBadge";
 import { FaqAuthorOnlyBadge } from "./FaqAuthorOnlyBadge";
+import { useTheme } from "@/ThemeProvider";
+import { Moon, Sun, Monitor } from "lucide-react";
 
 export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
   const auth = useAuth();
+  const { theme, setTheme } = useTheme();
+
+  const cycleTheme = () => {
+    setTheme(theme === "light" ? "dark" : theme === "dark" ? "system" : "light");
+  };
 
   return (
-    <nav className="bg-white shadow-sm border-b w-full border-gray-200">
+    <nav className="bg-background shadow-sm border-b w-full border-border">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
+          <Link to="/" className="text-2xl font-bold text-primary hover:text-primary/90 transition-colors">
             FosterLink
           </Link>
           
           <div className="flex items-center gap-6">
             <NavigationMenu>
               <NavigationMenuList className="flex gap-6">
-                <Link className="hover:text-blue-600 transition-colors bg-transparent text-black text-semibold" to="/">Home</Link>
+                <Link className="hover:text-primary transition-colors bg-transparent text-foreground font-semibold" to="/">Home</Link>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-gray-600 hover:text-blue-600 transition-colors bg-transparent">
+                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
                     Forum
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent className="bg-white text-black">
+                  <NavigationMenuContent className="bg-popover text-popover-foreground">
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       <ListItem href="/threads" title="View threads">
                         View threads made by other users. Includes searching and filtering!
@@ -43,10 +50,10 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-gray-600 hover:text-blue-600 transition-colors bg-transparent">
+                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
                     FAQ
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent className="bg-white text-black">
+                  <NavigationMenuContent className="bg-popover text-popover-foreground">
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       <ListItem href="/faq" title="View all FAQs">
                         View a list of all FAQs, including summaries. Supports sharing!
@@ -80,10 +87,10 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-gray-600 hover:text-blue-600 transition-colors bg-transparent">
+                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
                     Agencies
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent className="bg-white text-black">
+                  <NavigationMenuContent className="bg-popover text-popover-foreground">
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       <ListItem href="/agencies" title="View All Agencies">
                         View a list of every agency, their locations, mission statements, and agent information.
@@ -110,10 +117,10 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-gray-600 hover:text-blue-600 transition-colors bg-transparent">
+                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
                     My Account
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent className="bg-white text-black">
+                  <NavigationMenuContent className="bg-popover text-popover-foreground">
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       {auth.isLoggedIn() ? (
                         <li className="list-none">
@@ -147,6 +154,22 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={cycleTheme}
+              aria-label={`Theme: ${theme}. Click to switch.`}
+              className="shrink-0"
+            >
+              {theme === "light" ? (
+                <Sun className="h-5 w-5" />
+              ) : theme === "dark" ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Monitor className="h-5 w-5" />
+              )}
+            </Button>
 
             {userInfo && auth.isLoggedIn() && (
               <Badge variant="outline" className="ml-4">

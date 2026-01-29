@@ -79,9 +79,9 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
 
   return (
     <Card 
-      className="flex overflow-hidden border border-gray-200"
+      className="flex overflow-hidden border border-border"
     >
-      <div className="flex flex-col items-center p-6 border-r gap-6 border-gray-200 bg-gray-50/50 min-w-[180px]">
+      <div className="flex flex-col items-center p-6 border-r gap-6 border-border bg-muted/50 min-w-[180px]">
         <Input
             type="text"
             placeholder="Enter title"
@@ -105,14 +105,14 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
                   <InputGroupInput placeholder="Enter tags..." value={tagFieldText} onChange={e => onTagTextChange(e.target.value)}/>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="bg-white" align="start">
+              <TooltipContent className="bg-popover text-popover-foreground" align="start">
                 <p>{errorTooltipText}</p>
               </TooltipContent>
             </Tooltip>
             <InputGroupAddon>
               {
               tags.map((tag, i) => {
-                return <Badge key={i} variant="default" title="Click to remove" className="text-white cursor-pointer bg-blue-500 text-white" onClick={() =>removeTag(tag)}>{tag}&nbsp;<CircleX/></Badge>
+                return <Badge key={i} variant="default" title="Click to remove" className="cursor-pointer bg-primary text-primary-foreground" onClick={() =>removeTag(tag)}>{tag}&nbsp;<CircleX/></Badge>
               })
               }
             </InputGroupAddon>
@@ -120,7 +120,7 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
         </TooltipProvider>
         {
             error != "" &&
-            <h3 className="text-l font-semibold mb-2 text-red-500">{error}</h3>
+            <h3 className="text-l font-semibold mb-2 text-destructive">{error}</h3>
 
         }
         <div className="w-full flex flex-row align-center gap-2 justify-center">

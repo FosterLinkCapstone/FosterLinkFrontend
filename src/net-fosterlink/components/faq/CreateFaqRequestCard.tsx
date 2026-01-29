@@ -11,7 +11,7 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit }: { open: b
     const [noContentError, setSuggestionNoContentError] = useState<boolean>(false)
     return (
         <Dialog onOpenChange={onOpenChange} open={open}>
-            <DialogContent className="bg-white w-full mx-2">
+            <DialogContent className="bg-background w-full mx-2">
                 <DialogHeader>
                     <DialogTitle>Suggest a new FAQ response</DialogTitle>
                 </DialogHeader>

@@ -80,7 +80,7 @@ export const Agencies = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background">
             { createError &&
             <StatusDialog open={createError != null}
                 onOpenChange={() => setCreateError(null)}
@@ -113,13 +113,13 @@ export const Agencies = () => {
                 isSuccess={false}
             />
             }
-            <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+            <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
                 <Navbar userInfo={auth.getUserInfo()} />
             </div>
             {
                 agencies == null ?
-                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                        <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+                    <div className="min-h-screen bg-background flex items-center justify-center">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
                     </div>
                     :
                     <div className="w-screen h-full items-center justify-items-center">
@@ -127,16 +127,16 @@ export const Agencies = () => {
                         <div className="w-fit h-full flex flex-col items-center gap-2 pb-3">
                             {
                                 auth.admin &&
-                                <Alert className='w-full text-black bg-yellow-200' variant="destructive">
+                                <Alert className='w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700' variant="default">
                                     <AlertCircleIcon />
-                                    <AlertTitle>There are {pendingCount} pending agencies. <Link className="text-blue-600 hover:text-blue-800" to="/agencies/pending">See more</Link></AlertTitle>
+                                    <AlertTitle>There are {pendingCount} pending agencies. <Link className="text-primary hover:text-primary/90 font-medium" to="/agencies/pending">See more</Link></AlertTitle>
                                 </Alert>
                             }
                             {
                                 searchParams.has("agencyId") &&
-                                <Alert className="w-full text-black bg-yellow-200" variant="default">
+                                <Alert className="w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700" variant="default">
                                     <AlertCircleIcon/>
-                                    <AlertTitle className="">You are currently viewing a single agency. <a className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => navigate("/agencies")}>Clear Selection</a></AlertTitle>
+                                    <AlertTitle className="">You are currently viewing a single agency. <a className="text-primary hover:text-primary/90 cursor-pointer font-medium" onClick={() => navigate("/agencies")}>Clear Selection</a></AlertTitle>
                                     
                                 </Alert>
                             }

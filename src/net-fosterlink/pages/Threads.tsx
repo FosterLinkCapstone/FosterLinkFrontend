@@ -95,8 +95,8 @@ export const Threads = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+      <div className="min-h-screen bg-background">
+        <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
           <Navbar userInfo={auth.getUserInfo()} />
         </div>
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -121,8 +121,8 @@ export const Threads = () => {
     );
   }
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+    <div className="min-h-screen bg-background">
+      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
       
@@ -140,7 +140,7 @@ export const Threads = () => {
             <SelectTrigger className="w-auto min-w-[120px]">
               <SelectValue placeholder="Search By" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent className="bg-popover text-popover-foreground">
               <SelectItem value="THREAD_TITLE">Thread Title</SelectItem>
               <SelectItem value="THREAD_CONTENT">Thread Content</SelectItem>
               <SelectItem value="USERNAME">Username</SelectItem>
@@ -152,7 +152,7 @@ export const Threads = () => {
             <SelectTrigger className="w-auto min-w-[120px]">
               <SelectValue placeholder="Order By" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent className="bg-popover text-popover-foreground">
               <SelectItem value="newest">Newest first</SelectItem>
               <SelectItem value="oldest">Oldest first</SelectItem>
               <SelectItem value="likes">Most liked</SelectItem>

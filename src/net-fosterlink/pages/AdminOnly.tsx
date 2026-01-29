@@ -6,8 +6,8 @@ import { Navigate } from "react-router";
 export const AdminOnly = ({ children }: {children: ReactNode}) => {
     const auth = useAuth()
 
-    return auth.admin == null ? (auth.isLoggedIn() ? <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+    return auth.admin == null ? (auth.isLoggedIn() ? <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div> : <Navigate to="/login" replace/>) : (auth.admin ? children : <Navigate to="/login" replace />)
 
 }

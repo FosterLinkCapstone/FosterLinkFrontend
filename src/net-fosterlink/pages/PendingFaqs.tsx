@@ -76,20 +76,20 @@ export const PendingFaqs = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
                   <StatusDialog open={approvedOrDenied != ''}
                         onOpenChange={() => setApprovedOrDenied('')}
                         title={`Successfully ${approvedOrDenied} FAQ response`}
                         subtext=""
                         isSuccess={true}
                 />
-      <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-1 text-center">Frequently Asked Questions (pending)</h1>
-        <Link to="/faq" className="text-blue-600 hover:text-blue-800">Go back</Link>
+        <Link to="/faq" className="text-primary hover:text-primary/90">Go back</Link>
         <div className="mb-6"></div> {/* spacer */}
         
         {faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (

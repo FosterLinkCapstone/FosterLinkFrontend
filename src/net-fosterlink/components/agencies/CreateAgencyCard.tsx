@@ -83,10 +83,10 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
   };
 
   return (
-    <Card className="mb-4 p-6 flex flex-col w-full gap-4 overflow-hidden hover:shadow-md bg-white transition-shadow">
+    <Card className="mb-4 p-6 flex flex-col w-full gap-4 overflow-hidden hover:shadow-md transition-shadow">
       <h3 className="text-xl font-semibold text-center mb-2">Create New Agency</h3>
       <div className="w-full items-center">
-        <Badge variant="default" className="text-center bg-gray-200">Creating as {auth.getUserInfo()?.fullName}</Badge>
+        <Badge variant="secondary" className="text-center bg-muted">Creating as {auth.getUserInfo()?.fullName}</Badge>
       </div>
 
       <div className="space-y-2">

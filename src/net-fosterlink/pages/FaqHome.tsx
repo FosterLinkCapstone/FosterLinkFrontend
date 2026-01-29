@@ -156,7 +156,7 @@ export const FaqHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
       <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={"FAQ response successfully removed"} subtext='Moved back to pending requests'/>
@@ -171,16 +171,16 @@ export const FaqHome = () => {
       <CreateFaqRequestCard open={creatingSuggestion} onOpenChange={() => {
           setCreatingSuggestion(false)
         }} onSubmit={submitNewRequest}/>
-      <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
         {
-          (auth.faqAuthor || auth.admin) && <Alert variant="destructive" className='w-full mb-6 text-black bg-yellow-200'>
+          (auth.faqAuthor || auth.admin) && <Alert variant="default" className='w-full mb-6 bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700'>
             <AlertCircleIcon/>
-            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved responses and {unapprovedFaqs.countDenied} denied responses. {auth.admin && <Link to="/faq/pending" className='text-blue-600'>View pending responses</Link>}</AlertTitle>
+            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved responses and {unapprovedFaqs.countDenied} denied responses. {auth.admin && <Link to="/faq/pending" className='text-primary hover:text-primary/90 font-medium'>View pending responses</Link>}</AlertTitle>
           </Alert>
         }
         {
@@ -197,7 +197,7 @@ export const FaqHome = () => {
         }
 
         { createError && 
-          <Alert variant="destructive" className='text-red-600 bg-red-200 mb-6'>
+          <Alert variant="destructive" className='text-destructive bg-destructive/10 border-destructive/30 mb-6'>
             <AlertCircleIcon/>
             <AlertTitle>{createError?.error}</AlertTitle>
           </Alert>

@@ -5,7 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 
 const ConfirmDialog = ({ show, proceed, message }: ConfirmDialogProps<{ message: string }, boolean>) => (
   <Dialog open={show} onOpenChange={(open) => !open && proceed(false)}>
-    <DialogContent className="sm:max-w-md bg-white" showCloseButton={false}>
+    <DialogContent className="sm:max-w-md bg-background" showCloseButton={false}>
       <DialogHeader>
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">

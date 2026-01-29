@@ -39,7 +39,7 @@ export const Login = () => {
 <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Login to your account</CardTitle>
-                <CardDescription>Or, <Link to="/register" className="text-blue-600 hover:text-blue-800">sign up</Link></CardDescription>
+                <CardDescription>Or, <Link to="/register" className="text-primary hover:text-primary/90">sign up</Link></CardDescription>
             </CardHeader>
             <CardContent>
                 <form>

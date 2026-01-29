@@ -35,15 +35,15 @@ export const CreateFaqCard = ({
     const [open, setOpen] = useState(false)
 
     if (requests == null) return (
-        <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md bg-white transition-shadow">
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+        <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md transition-shadow">
+        <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div>
         </Card>
     )
 
     return (
-        <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md bg-white transition-shadow">
+        <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md transition-shadow">
             <h3 className="text-xl font-semibold text-center mb-2">Create New FAQ Response</h3>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
@@ -57,7 +57,7 @@ export const CreateFaqCard = ({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[800px] p-0 bg-white">
+                <PopoverContent className="w-[800px] p-0 bg-popover text-popover-foreground">
                     <Command>
                         <CommandInput 
                             placeholder="Search or type custom title..." 
@@ -88,7 +88,7 @@ export const CreateFaqCard = ({
                                     />
                                     <div className="flex-1">
                                         <div>{request.suggestion}</div>
-                                        <div className="text-xs text-gray-500">
+                                        <div className="text-xs text-muted-foreground">
                                             Suggested by {request.suggestingUsername}
                                         </div>
                                     </div>

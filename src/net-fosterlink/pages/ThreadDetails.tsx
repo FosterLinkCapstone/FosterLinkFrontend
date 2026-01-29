@@ -135,14 +135,14 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
     setReplies(replies.filter(r => r.id !== replyId))
   };
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+    <div className="min-h-screen bg-background">
+      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
         <div className="w-80 space-y-4">
-          <Card className="p-4">
+          <Card className="p-4 border-border">
             <h3 className="font-semibold mb-3">Reply</h3>
             <Textarea
               placeholder="Enter reply here..."
@@ -156,7 +156,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             </Button>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 border-border">
             <h3 className="font-semibold mb-3">Other Threads From This User</h3>
             <div className="max-h-[400px] overflow-y-auto">
                 {
@@ -171,15 +171,15 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
         <div className="flex-1">
           <div className="mb-4">
             <h1 className="text-3xl font-bold mb-2">{thread.title}</h1>
-            <div className="flex items-center gap-2 pb-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
               <button
                 type="button"
                 onClick={() => navigate(`/users/${thread.author.id}`)}
-                className="flex items-center gap-2 hover:text-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-400 rounded-full px-1"
+                className="flex items-center gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring rounded-full px-1"
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={thread.author.profilePictureUrl} />
-                  <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
                     {getInitials(thread.author.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -194,12 +194,12 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             </div>
             <div className="flex flex-row">
               {thread.tags && thread.tags.map((tag, index) => (
-                <Badge key={index} variant="secondary" className="text-xs bg-gray-300 px-2 py-0.5 mr-2">{tag}</Badge>
+                <Badge key={index} variant="secondary" className="text-xs bg-muted px-2 py-0.5 mr-2">{tag}</Badge>
               ))}
             </div>
           </div>
 
-          <Card className="p-6 mb-6">
+          <Card className="p-6 mb-6 border-border">
             <div className=" max-w-none">
               {
                 editing ? (
@@ -213,7 +213,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                     id="editedContent"
                   />
                 ) : (
-                  <p className="whitespace-pre-wrap text-gray-700">{thread.content}</p>
+                  <p className="whitespace-pre-wrap text-foreground">{thread.content}</p>
                 )
               }
             </div>
@@ -244,13 +244,13 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                 )
               }
 
-            <button className="flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1 rounded transition-colors disabled:fg-gray-400 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()} onClick={likeThread}>
+            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()} onClick={likeThread}>
                 {isLiked ? <>
-                  <Heart fill="#ff0000ff" className="h-4 w-4 text-red-600"/>
-                  <span color="#ff0000ff" className="text-sm text-red-700">{thread.likeCount}</span>
+                  <Heart fill="currentColor" className="h-4 w-4 text-destructive"/>
+                  <span className="text-sm text-destructive">{thread.likeCount}</span>
                 </> : <>
-                  <Heart className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{thread.likeCount}</span>
+                  <Heart className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{thread.likeCount}</span>
                 </>}
               </button>
           <div>
@@ -260,7 +260,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                 <BackgroundLoadSpinner className="self-center justify-self-center" loading={loadingReplies}/>
               ) : (
               replies.length === 0 ? 
-                (<p className="text-gray-500">No replies yet. Be the first to reply!</p>)
+                (<p className="text-muted-foreground">No replies yet. Be the first to reply!</p>)
               : 
                 replies.map(r => 
                     <ReplyCard 
@@ -275,11 +275,11 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             }
 
             {(replyingTo && auth.isLoggedIn()) && (
-              <Card className="p-4 mb-4 border-2 border-blue-200">
+              <Card className="p-4 mb-4 border-2 border-primary/30">
                 <div className="flex gap-4">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={auth.getUserInfo()!.profilePictureUrl} />
-                    <AvatarFallback className="bg-blue-100 text-blue-700">
+                    <AvatarFallback className="bg-primary/10 text-primary">
                       {getInitials(auth.getUserInfo()!.fullName)}
                     </AvatarFallback>
                   </Avatar>
@@ -290,7 +290,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       {auth.getUserInfo()!.verified && (
                         <VerifiedCheck className="h-4 w-4" />
                       )}
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                         Member since {new Date(auth.getUserInfo()!.createdAt).getFullYear()}
                       </span>
                     </div>
