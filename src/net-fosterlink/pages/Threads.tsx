@@ -12,6 +12,7 @@ import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
 import { ThreadPreviewSkeleton } from "../components/forum/ThreadPreviewSkeleton";
 import { CreateThreadCardWide } from "../components/forum/CreateThreadCardWide";
 import { useNavigate, useSearchParams } from "react-router";
+import { Paginator } from "../components/Paginator";
 
 type OrderBy = "newest" | "oldest" | "likes";
 
@@ -20,10 +21,12 @@ export const Threads = () => {
   const [searchBy, setSearchBy] = useState<string>(SearchBy.THREAD_TITLE);
   const [orderBy, setOrderBy] = useState<OrderBy>("newest");
   const [threads, setThreads] = useState<ThreadModel[]>([])
+  const [totalPages, setTotalPages] = useState(1)
   const [searchParams] = useSearchParams()
   const [searching, setSearching] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
   const [creating, setCreating] = useState<boolean>(searchParams.get("creating") === "true")
+  const [currentPage, setCurrentPage] = useState<number>(1)
   const [loading, setLoading] = useState<boolean>(true)
   const auth = useAuth()
   const threadApiRef = useRef(threadApi(auth))
@@ -42,9 +45,11 @@ export const Threads = () => {
   };
 
   const loadThreads = useCallback(async (o: OrderBy) => {
-    const res = await threadApiRef.current.getThreads(orderByToApi(o), 10);
+    const res = await threadApiRef.current.getThreads(orderByToApi(o), 0);
     if (!res.isError && res.data) {
-      setThreads(res.data);
+      setThreads(res.data.threads);
+      setTotalPages(res.data.totalPages);
+      setCurrentPage(1);
       setLoading(false);
     }
   }, [threadApiRef]);
@@ -58,6 +63,7 @@ export const Threads = () => {
   useEffect(() => {
     // Only refetch when order changes AND search is empty.
     if (!searching && searchText.trim() === "") {
+      setCurrentPage(1);
       loadThreads(orderBy);
     } else {
           const result = [...threads];
@@ -69,6 +75,7 @@ export const Threads = () => {
             const dateB = new Date(b.createdAt).getTime();
             return orderBy === "newest" ? dateB - dateA : dateA - dateB;
         });
+        setCurrentPage(1);
         setThreads(result);
     }
   }, [orderBy, searchText, loadThreads, searching]);
@@ -77,12 +84,16 @@ export const Threads = () => {
 
   const doSearch = async () => {
     if (searchText.trim() !== "" && searchBy !== "") {
-      setSearching(true)
-        const res = await threadApiRef.current.search(SearchBy[searchBy as keyof typeof SearchBy], searchText)
+        setSearching(true)
+        setCurrentPage(1)
+        const res = await threadApiRef.current.search(SearchBy[searchBy as keyof typeof SearchBy], searchText, 0)
         if (res.errorMessage && res.errorMessage != "") {
             setError(res.errorMessage)
+            setTotalPages(1)
         } else {
-            setThreads(res.response ?? [])
+            const list = res.response ?? []
+            setThreads(list)
+            setTotalPages(list.length >= 10 ? 2 : 1)
         }
     } else {
       setSearching(false)
@@ -179,6 +190,36 @@ export const Threads = () => {
                 displayThreads.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : displayThreads.map(t => <ThreadPreviewWide key={t.id} thread={t} auth={auth}/>)
             }
         </div>
+        {(searching ? (
+          <Paginator<ThreadModel[]>
+            pageCount={totalPages}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            onDataChanged={setThreads}
+            onPageChanged={async (pageNum) => {
+              const res = await threadApiRef.current.search(SearchBy[searchBy as keyof typeof SearchBy], searchText, pageNum - 1);
+              const data = res.response ?? [];
+              setTotalPages(data.length >= 10 ? pageNum + 1 : pageNum);
+              return data;
+            }}
+          />
+        ) : (
+          <Paginator<ThreadModel[]>
+            pageCount={totalPages}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            onDataChanged={setThreads}
+            onPageChanged={async (pageNum) => {
+              const res = await threadApiRef.current.getThreads(orderByToApi(orderBy), pageNum - 1);
+              const payload = res.data;
+              const data = payload?.threads ?? [];
+              if (payload) {
+                setTotalPages(payload.totalPages);
+              }
+              return data;
+            }}
+          />
+        ))}
       </div>
     </div>
   );

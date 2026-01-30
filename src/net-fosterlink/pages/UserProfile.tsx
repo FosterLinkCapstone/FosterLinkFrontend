@@ -17,6 +17,8 @@ import { userApi } from "../backend/api/UserApi";
 import { VerifiedCheck } from "../components/VerifiedCheck";
 import type { FaqModel } from "../backend/models/FaqModel";
 import { faqApi } from "../backend/api/FaqApi";
+import { Paginator } from "../components/Paginator";
+import type { GetThreadsResponse } from "../backend/models/api/GetThreadsResponse";
 
 type OrderBy = "newest" | "oldest" | "likes";
 
@@ -30,6 +32,7 @@ export const UserProfile = () => {
   const [profileMetadata, setProfileMetadata] = useState<ProfileMetadataModel | null>(null);
 
   const [threads, setThreads] = useState<ThreadModel[]>([]);
+  const [threadsTotalPages, setThreadsTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +40,7 @@ export const UserProfile = () => {
   const [searchDraft, setSearchDraft] = useState<string>("");
   const [searchText, setSearchText] = useState<string>(""); // applied value
   const [orderBy, setOrderBy] = useState<OrderBy>("newest");
+  const [threadsCurrentPage, setThreadsCurrentPage] = useState<number>(1);
 
   const numericUserId = useMemo(() => {
     if (!userId) return null;
@@ -56,7 +60,7 @@ export const UserProfile = () => {
 
     Promise.all([
       userApi(auth).getProfileMetadata(numericUserId),
-      threadApiRef.randForUser(numericUserId)
+      threadApiRef.searchByUser(numericUserId, 0)
     ]).then(([profileMetadataRes, threadRes]) => {
         if (!profileMetadataRes.isError && profileMetadataRes.data) {
           setProfileMetadata(profileMetadataRes.data);
@@ -64,7 +68,8 @@ export const UserProfile = () => {
           setError(error !== null ? (error + " | ") : "" + profileMetadataRes.error || "Unable to load detailed user info.");
         }
       if (!threadRes.isError && threadRes.data) {
-        setThreads(threadRes.data); 
+        setThreads(threadRes.data.threads);
+        setThreadsTotalPages(threadRes.data.totalPages);
         } else {
           setError(error !== null ? (error + " | ") : "" + threadRes.error || "Unable to load user posts.");
         }
@@ -80,7 +85,7 @@ export const UserProfile = () => {
     });
   }, [numericUserId]);
 
-  const displayThreads = useMemo(() => {
+  const filteredSortedThreads = useMemo(() => {
     let result = [...threads];
 
     if (searchText.trim() !== "") {
@@ -100,9 +105,13 @@ export const UserProfile = () => {
     return result;
   }, [threads, searchText, orderBy]);
 
+  // Server-side pagination: totalPages from API; display = filter/sort current page only
+  const displayThreads = filteredSortedThreads;
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchText(searchDraft.trim());
+    setThreadsCurrentPage(1);
   };
 
   const getJoinedText = () => {
@@ -232,7 +241,10 @@ export const UserProfile = () => {
             <div className="w-full md:w-48">
               <Select
                 value={orderBy}
-                onValueChange={(value: OrderBy) => setOrderBy(value)}
+                onValueChange={(value: OrderBy) => {
+                  setOrderBy(value);
+                  setThreadsCurrentPage(1);
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Order By" />
@@ -283,6 +295,25 @@ export const UserProfile = () => {
             ))
           )}
         </div>
+
+        <Paginator<GetThreadsResponse>
+          pageCount={threadsTotalPages}
+          currentPage={threadsCurrentPage}
+          setCurrentPage={setThreadsCurrentPage}
+          onDataChanged={(data) => {
+            setThreads(data.threads);
+            setThreadsTotalPages(data.totalPages);
+          }}
+          onPageChanged={async (pageNumber) => {
+            const threadRes = await threadApiRef.searchByUser(numericUserId!, pageNumber - 1);
+            if (!threadRes.isError && threadRes.data) {
+              return threadRes.data;
+            } else {
+              setError(error !== null ? (error + " | ") : "" + threadRes.error || "Unable to load user posts.");
+              return { threads: [], totalPages: 1 };
+            }
+          }}
+        />
 
         {faqResponses.length > 0 && (
           <div className="mt-8">

@@ -1,6 +1,7 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
 import type { AuthContextType } from "../AuthContext";
 import type { CreateThreadResponse } from "../models/api/CreateThreadResponse";
+import type { GetThreadsResponse } from "../models/api/GetThreadsResponse";
 import type { SearchBy } from "../models/api/SearchBy";
 import type { ThreadSearchResponse } from "../models/api/ThreadSearchResponse";
 import type { ReplyModel } from "../models/ReplyModel";
@@ -9,10 +10,10 @@ import type { ThreadModel } from "../models/ThreadModel";
 // TODO implement error wrapper everywhere necessary 
 
 export interface ThreadApiType {
-    search: (searchBy: SearchBy, searchTerm: string) => Promise<ThreadSearchResponse>,
+    search: (searchBy: SearchBy, searchTerm: string, pageNumber?: number) => Promise<ThreadSearchResponse>,
     rand: () => Promise<ErrorWrapper<ThreadModel[]>>,
     randForUser: (userId: number) => Promise<ErrorWrapper<ThreadModel[]>>,
-    getThreads: (orderBy: "most liked" | "oldest" | "newest", count: number) => Promise<ErrorWrapper<ThreadModel[]>>,
+    getThreads: (orderBy: "most liked" | "oldest" | "newest", pageNumber: number) => Promise<ErrorWrapper<GetThreadsResponse>>,
     getReplies: (threadId: number) => Promise<ErrorWrapper<ReplyModel[]>>,
     searchById: (threadId: number) => Promise<ErrorWrapper<ThreadModel | undefined>>,
     replyTo: (content: string, threadId: number) => Promise<ErrorWrapper<ReplyModel | undefined>>,
@@ -23,15 +24,17 @@ export interface ThreadApiType {
     deleteThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     editReplyContent: (replyId: number, newContent: string) => Promise<ErrorWrapper<ReplyModel|undefined>>,
     deleteReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
+    searchByUser: (userId: number, pageNumber: number) => Promise<ErrorWrapper<GetThreadsResponse>>
 }
 
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
     return {
-        search: async(searchBy: SearchBy, searchTerm: string): Promise<ThreadSearchResponse> => {
+        search: async(searchBy: SearchBy, searchTerm: string, pageNumber = 0): Promise<ThreadSearchResponse> => {
             try {
                 const res = await auth.api.post("/threads/search", {
                     searchBy: searchBy,
-                    searchTerm: searchTerm
+                    searchTerm: searchTerm,
+                    pageNumber
                 })
                 return {response: res.data, errorMessage: undefined}
             } catch (err: any) {
@@ -83,9 +86,9 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
             }
             return {data: undefined, error: "Internal client error", isError: true}
         },
-        getThreads: async(orderBy: "most liked" | "oldest" | "newest", count: number): Promise<ErrorWrapper<ThreadModel[]>> => {
+        getThreads: async(orderBy: "most liked" | "oldest" | "newest", pageNumber: number): Promise<ErrorWrapper<GetThreadsResponse>> => {
             try {
-                const res = await auth.api.get(`/threads/getThreads?orderBy=${encodeURIComponent(orderBy)}&count=${count}`)
+                const res = await auth.api.get(`/threads/getThreads?orderBy=${encodeURIComponent(orderBy)}&pageNumber=${pageNumber}`)
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
@@ -282,7 +285,22 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                     }
                 }
                 return {data: false, error: "Internal server error", isError: true}
+            },
+            searchByUser: async(userId: number, pageNumber: number): Promise<ErrorWrapper<GetThreadsResponse>> => {
+                try {
+                    const res = await auth.api.get(`/threads/search-by-user?userId=${userId}&pageNumber=${pageNumber}`)
+                    return { data: res.data, error: undefined, isError: false }
+                } catch (err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 404:
+                                return {data: undefined, error: "User not found!", isError: true}
+                            default:
+                                return {data: undefined, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: undefined, error: "Internal client error", isError: true}
             }
-        }
-    
+        }    
     }
