@@ -1,4 +1,5 @@
 import './App.css'
+import { ThemeProvider } from './ThemeProvider'
 import { AuthProvider } from './net-fosterlink/backend/AuthContext'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { Home } from './net-fosterlink/pages/Home'
@@ -12,6 +13,8 @@ import { AdminOnly } from './net-fosterlink/pages/AdminOnly'
 import { PendingFaqs } from './net-fosterlink/pages/PendingFaqs'
 import { Agencies } from './net-fosterlink/pages/Agencies'
 import { PendingAgencies } from './net-fosterlink/pages/PendingAgencies'
+import { NotFound } from './net-fosterlink/pages/NotFound'
+import { UserProfile } from './net-fosterlink/pages/UserProfile'
 
 function App() {
 
@@ -25,6 +28,7 @@ function App() {
 
   return (
     <>
+        <ThemeProvider>
         <BrowserRouter>
           <AuthProvider apiUrl={import.meta.env.VITE_API_URL} mapsApiKey={import.meta.env.VITE_MAPS_API_KEY}>
             <Routes>
@@ -37,9 +41,12 @@ function App() {
               <Route path="/faq/pending" element={<AdminOnly><PendingFaqs/></AdminOnly>}/>
               <Route path="/agencies" element={<Agencies/>}/>
               <Route path="/agencies/pending" element={<AdminOnly><PendingAgencies/></AdminOnly>}/>
+              <Route path="/users/:userId" element={<UserProfile/>}/>
+              <Route path="*" element={<NotFound/>}/>
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        </ThemeProvider>
         <GlobalStyle/>
     </>
   )

@@ -3,14 +3,16 @@ import type { AuthContextType } from "../AuthContext";
 import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { LoginResponse } from "../models/api/LoginResponse";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
+import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 
 export interface UserApiType {
     login: (email: string, password: string) => Promise<LoginResponse>,
-    getInfo: () => Promise<UserInfoResponse>,
+    getInfo: () => Promise<ErrorWrapper<UserInfoResponse>>,
     register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<{error: string | undefined, jwt: string}>
-    isAdmin: () => Promise<boolean>
-    isFaqAuthor: () => Promise<boolean>
-    getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>
+    isAdmin: () => Promise<ErrorWrapper<boolean>>
+    isFaqAuthor: () => Promise<ErrorWrapper<boolean>>
+    getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
+    getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -51,19 +53,30 @@ export const userApi = (auth: AuthContextType): UserApiType => {
             }
         }
         },
-        getInfo: async (): Promise<UserInfoResponse> => {
+        getInfo: async (): Promise<ErrorWrapper<UserInfoResponse>> => {
             try {
                 const res = await auth.api.get(`/users/getInfo`)
                 return {
-                    found: true,
-                    user: res.data
+                    data: {
+                        found: true,
+                        user: res.data
+                    },
+                    error: undefined,
+                    isError: false
                 }
-            } catch(err) {
-                return {
-                    found: false,
-                    user: undefined
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 401:
+                            return {data: {found: false, user: undefined}, error: "You must be logged in to view your info!", isError: true}
+                        case 404:
+                            return {data: {found: false, user: undefined}, error: "User not found!", isError: true}
+                        default:
+                            return {data: {found: false, user: undefined}, error: "Internal server error", isError: true}
+                    }
                 }
             }
+            return {data: {found: false, user: undefined}, error: "Internal client error", isError: true}
         },
         register: async (info: {firstName: string, lastName: string, username: string, email: string, password: string}): Promise<{error: string | undefined, jwt: string}> => {
             
@@ -102,13 +115,37 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 }
             }
         },
-        isAdmin: async(): Promise<boolean> => {
-            const res = await auth.api.get("/users/isAdmin")
-            return res.data
+        isAdmin: async(): Promise<ErrorWrapper<boolean>> => {
+            try {
+                const res = await auth.api.get("/users/isAdmin")
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 401:
+                            return {data: undefined, error: "You must be logged in to check admin status!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        isFaqAuthor: async(): Promise<boolean> => {
-            const res = await auth.api.get("/users/isFaqAuthor")
-            return res.data
+        isFaqAuthor: async(): Promise<ErrorWrapper<boolean>> => {
+            try {
+                const res = await auth.api.get("/users/isFaqAuthor")
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 401:
+                            return {data: undefined, error: "You must be logged in to check FAQ author status!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
         getAgentInfo: async(userId: number): Promise<ErrorWrapper<AgentInfoModel>> => {
             try {
@@ -125,7 +162,24 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 }
             }
             return {isError: true, error: "Internal server error", data: undefined}
+        },
+        getProfileMetadata: async(userId: number): Promise<ErrorWrapper<ProfileMetadataModel>> => {
+            try {
+                const res = await auth.api.get(`/users/profileMetadata?userId=${userId}`)
+                return {isError: false, error: undefined, data: res.data}
+            } catch (err: any) {
+                if (err.response) {
+                    switch (err.response.status) {
+                        case 404:
+                            return {isError: true, error: "Could not find that user!", data: undefined}
+                        default:
+                            return {isError: true, error: "Internal server error", data: undefined}
+                    }
+                }
+            }
+            return {isError: true, error: "Internal server error", data: undefined}
         }
+
     }
     
     }

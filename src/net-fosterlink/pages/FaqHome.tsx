@@ -43,11 +43,13 @@ export const FaqHome = () => {
     
   useEffect(() => {
         faqApiRef.getAll().then(res => {
-            setFaqs(res)
-            const opened = searchParams.get("openId")
-            if (opened != null) {
-                const faq = res.find(f => f.id == +opened)
-                if (faq) handleShowDetail(faq)
+            if (!res.isError && res.data) {
+                setFaqs(res.data)
+                const opened = searchParams.get("openId")
+                if (opened != null) {
+                    const faq = res.data.find(f => f.id == +opened)
+                    if (faq) handleShowDetail(faq)
+                }
             }
         })
     }, [])
@@ -71,8 +73,8 @@ export const FaqHome = () => {
   };
 
   const onRemove = (id: number) => {
-    faqApiRef.approve(id, false).then(t => {
-        if (t) {
+    faqApiRef.approve(id, false).then(res => {
+        if (!res.isError && res.data) {
           setFaqs(faqs.filter(f => f.id !== id))
           setFaqRemoved(true)
         }
@@ -81,9 +83,11 @@ export const FaqHome = () => {
 
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
-        faqApiRef.getContent(faq.id).then(c => {
-          faqContent.current = c
-          setDetailFaq(faq);
+        faqApiRef.getContent(faq.id).then(res => {
+          if (!res.isError && res.data) {
+            faqContent.current = res.data
+            setDetailFaq(faq);
+          }
         })
     } else setDetailFaq(faq)
   };
@@ -94,7 +98,9 @@ export const FaqHome = () => {
       const req = requests?.find(r => r.id === answeringId)
       if (req && req.suggestion === title) {
         faqApiRef.answerRequest(req.id).then(res => {
-          if (!res) setCreateError({data: undefined, isError: true, error: "Internal server error answering request"})
+          if (res.isError) {
+            setCreateError({data: undefined, isError: true, error: res.error || "Internal server error answering request"})
+          }
         })
       }
     }
@@ -124,10 +130,10 @@ export const FaqHome = () => {
     if (suggestion !== "") {
     faqApiRef.createRequest(suggestion).then(res => {
       setCreatingSuggestion(false)
-      if (res) {
+      if (!res.isError && res.data) {
         setSuggestionCreationError('')
       } else {
-        setSuggestionCreationError('Please try again later') // TODO
+        setSuggestionCreationError(res.error || 'Please try again later')
       }
     })
     }
@@ -150,7 +156,7 @@ export const FaqHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
       <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={"FAQ response successfully removed"} subtext='Moved back to pending requests'/>
@@ -165,16 +171,16 @@ export const FaqHome = () => {
       <CreateFaqRequestCard open={creatingSuggestion} onOpenChange={() => {
           setCreatingSuggestion(false)
         }} onSubmit={submitNewRequest}/>
-      <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
         {
-          (auth.faqAuthor || auth.admin) && <Alert variant="destructive" className='w-full mb-6 text-black bg-yellow-200'>
+          (auth.faqAuthor || auth.admin) && <Alert variant="default" className='w-full mb-6 bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700'>
             <AlertCircleIcon/>
-            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved responses and {unapprovedFaqs.countDenied} denied responses. {auth.admin && <Link to="/faq/pending" className='text-blue-600'>View pending responses</Link>}</AlertTitle>
+            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved responses and {unapprovedFaqs.countDenied} denied responses. {auth.admin && <Link to="/faq/pending" className='text-primary hover:text-primary/90 font-medium'>View pending responses</Link>}</AlertTitle>
           </Alert>
         }
         {
@@ -191,7 +197,7 @@ export const FaqHome = () => {
         }
 
         { createError && 
-          <Alert variant="destructive" className='text-red-600 bg-red-200 mb-6'>
+          <Alert variant="destructive" className='text-destructive bg-destructive/10 border-destructive/30 mb-6'>
             <AlertCircleIcon/>
             <AlertTitle>{createError?.error}</AlertTitle>
           </Alert>

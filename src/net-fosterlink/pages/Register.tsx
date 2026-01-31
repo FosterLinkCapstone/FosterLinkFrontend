@@ -46,7 +46,7 @@ export const Register = () => {
         <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Register for a new account!</CardTitle>
-                <CardDescription>Or, <Link className="text-blue-600 hover:text-blue-800" to="/login">login</Link></CardDescription>
+                <CardDescription>Or, <Link className="text-primary hover:text-primary/90" to="/login">login</Link></CardDescription>
             </CardHeader>
             <CardContent>
                 <form>
@@ -91,7 +91,7 @@ export const Register = () => {
             </CardContent>
             <CardFooter className="flex-col gap-2">
                 <Button type="button" onClick={submitRegister} variant="outline" className="w-full">
-                    Login
+                    Register
                 </Button>
                 {
                     error != "" && <Alert variant="destructive">

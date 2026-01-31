@@ -19,13 +19,15 @@ export const PendingAgencies = () => {
     const agencyApiRef = agencyApi(auth)
     useEffect(() => {
         agencyApiRef.getPending().then(res => {
-            setAgencies(res)
+            if (!res.isError && res.data) {
+                setAgencies(res.data)
+            }
         })
     }, [])
 
     const onApprove = (id: number, approve: boolean) => {
         agencyApiRef.approve(id, approve).then(res => {
-            if (res == true) {
+            if (!res.isError && res.data) {
                 if (approve) {
                     setAgencies(agencies?.filter(a => a.id !== id) ?? [])
                 } else {
@@ -46,7 +48,7 @@ export const PendingAgencies = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background">
                   <StatusDialog open={approvedOrDenied != ''}
                         onOpenChange={() => setApprovedOrDenied('')}
                         title={`Successfully ${approvedOrDenied} agency`}
@@ -59,18 +61,18 @@ export const PendingAgencies = () => {
                         subtext="Please try again later"
                         isSuccess={false}
                 />
-            <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+            <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
                 <Navbar userInfo={auth.getUserInfo()} />
             </div>
             {
                 agencies == null ?
-                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                        <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+                    <div className="min-h-screen bg-background flex items-center justify-center">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
                     </div>
                     :
                     <div className="w-screen h-full items-center justify-items-center mt-2">
                          <h1 className="text-3xl font-bold mb-2 text-center">Agencies (pending)</h1>
-                         <Link className="text-blue-600 hover:text-blue-800" to="/agencies">Go back</Link>
+                         <Link className="text-primary hover:text-primary/90" to="/agencies">Go back</Link>
                         <div className="mt-6 w-fit h-full flex flex-col items-center gap-6 pb-3">
                             {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <div className="flex flex-col w-full gap-1">
                                 {

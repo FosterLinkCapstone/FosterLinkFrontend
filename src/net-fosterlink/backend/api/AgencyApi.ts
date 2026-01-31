@@ -4,39 +4,81 @@ import type { AgencyModel } from "../models/AgencyModel";
 import type { CreateAgencyModel } from "../models/api/CreateAgencyModel";
 
 export interface AgencyApiType {
-    getAll: () => Promise<AgencyModel[]>
-    getPending: () => Promise<AgencyModel[]>
-    approve: (id: number, approved: boolean) => Promise<boolean>
-    countPending: () => Promise<number>
+    getAll: () => Promise<ErrorWrapper<AgencyModel[]>>
+    getPending: () => Promise<ErrorWrapper<AgencyModel[]>>
+    approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
+    countPending: () => Promise<ErrorWrapper<number>>
     create: (createModel: CreateAgencyModel) => Promise<ErrorWrapper<AgencyModel>>
 }
 
 export const agencyApi = (auth: AuthContextType): AgencyApiType => {
 
     return {
-        getAll: async (): Promise<AgencyModel[]> => {
-            const res = await auth.api.get('/agencies/all')
-            return res.data
+        getAll: async (): Promise<ErrorWrapper<AgencyModel[]>> => {
+            try {
+                const res = await auth.api.get('/agencies/all')
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to view agencies!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        getPending: async (): Promise<AgencyModel[]> => {
-            const res = await auth.api.get("/agencies/pending")
-            return res.data
+        getPending: async (): Promise<ErrorWrapper<AgencyModel[]>> => {
+            try {
+                const res = await auth.api.get("/agencies/pending")
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "Only administrators can view pending agencies!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        approve: async (id: number, approved: boolean): Promise<boolean> => {
+        approve: async (id: number, approved: boolean): Promise<ErrorWrapper<boolean>> => {
             try {
                 await auth.api.post("/agencies/approve", {id: id, approved: approved})
-                return true
-            } catch(err: any) {
-                return false
+                return {data: true, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "Only administrators can approve agencies!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Agency not found!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
             }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
-        countPending: async (): Promise<number> => {
+        countPending: async (): Promise<ErrorWrapper<number>> => {
             try {
                 const res = await auth.api.get("/agencies/pending/count")
-                return res.data
-            } catch (err:any) {
-                return 0
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "Only administrators can count pending agencies!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
             }
+            return {data: undefined, error: "Internal client error", isError: true}
         },
         create: async (createModel: CreateAgencyModel): Promise<ErrorWrapper<AgencyModel>> => {
             try {

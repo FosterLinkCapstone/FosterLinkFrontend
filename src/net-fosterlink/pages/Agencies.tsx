@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { CreateAgencyCard } from "../components/agencies/CreateAgencyCard"
 import type { CreateAgencyModel } from "../backend/models/api/CreateAgencyModel"
 import { Alert, AlertTitle } from "@/components/ui/alert"
-import { Link, useSearchParams } from "react-router"
+import { Link, useNavigate, useSearchParams } from "react-router"
 import type { ErrorWrapper } from "../util/ErrorWrapper"
 import { StatusDialog } from "../components/StatusDialog"
 
@@ -23,11 +23,20 @@ export const Agencies = () => {
     const [createSuccess, setCreateSuccess] = useState<boolean>(false)
     const [removeSuccess, setRemoveSuccess] = useState<boolean>(false)
     const [removeError, setRemoveError] = useState<boolean>(false)
+    const navigate = useNavigate()
+
+    const highlightedAgencyId = useMemo(() => {
+        if (!searchParams.has("agencyId")) return null
+        const id = Number(searchParams.get("agencyId"))
+        return Number.isNaN(id) ? null : id
+    }, [searchParams])
 
     const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
     useEffect(() => {
         agencyApiRef.getAll().then(res => {
-            setAgencies(res)
+            if (!res.isError && res.data) {
+                setAgencies(res.data)
+            }
         })
 
     }, [])
@@ -42,7 +51,9 @@ export const Agencies = () => {
                 setCreatingAgency(searchParams.get("creating") === "true")
             }
             agencyApiRef.countPending().then(res => {
-                setPendingCount(res)
+                if (!res.isError && res.data !== undefined) {
+                    setPendingCount(res.data)
+                }
             })
         }
     }, [auth.admin])
@@ -59,7 +70,7 @@ export const Agencies = () => {
     }
     const onRemove = (agencyId: number) => {
         agencyApiRef.approve(agencyId, false).then(res => {
-            if (res) {
+            if (!res.isError && res.data) {
                 setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
                 setRemoveSuccess(true)
             } else {
@@ -69,7 +80,7 @@ export const Agencies = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background">
             { createError &&
             <StatusDialog open={createError != null}
                 onOpenChange={() => setCreateError(null)}
@@ -102,13 +113,13 @@ export const Agencies = () => {
                 isSuccess={false}
             />
             }
-            <div className="bg-white border-b border-gray-200 h-16 flex items-center justify-center text-gray-400">
+            <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
                 <Navbar userInfo={auth.getUserInfo()} />
             </div>
             {
                 agencies == null ?
-                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                        <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
+                    <div className="min-h-screen bg-background flex items-center justify-center">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
                     </div>
                     :
                     <div className="w-screen h-full items-center justify-items-center">
@@ -116,9 +127,17 @@ export const Agencies = () => {
                         <div className="w-fit h-full flex flex-col items-center gap-2 pb-3">
                             {
                                 auth.admin &&
-                                <Alert className='w-full text-black bg-yellow-200' variant="destructive">
+                                <Alert className='w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700' variant="default">
                                     <AlertCircleIcon />
-                                    <AlertTitle>There are {pendingCount} pending agencies. <Link className="text-blue-600 hover:text-blue-800" to="/agencies/pending">See more</Link></AlertTitle>
+                                    <AlertTitle>There are {pendingCount} pending agencies. <Link className="text-primary hover:text-primary/90 font-medium" to="/agencies/pending">See more</Link></AlertTitle>
+                                </Alert>
+                            }
+                            {
+                                searchParams.has("agencyId") &&
+                                <Alert className="w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700" variant="default">
+                                    <AlertCircleIcon/>
+                                    <AlertTitle className="">You are currently viewing a single agency. <a className="text-primary hover:text-primary/90 cursor-pointer font-medium" onClick={() => navigate("/agencies")}>Clear Selection</a></AlertTitle>
+                                    
                                 </Alert>
                             }
                             {
@@ -130,7 +149,7 @@ export const Agencies = () => {
                                     <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
                                 </>
                             }
-                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <AgencyCard onRemove={onRemove} agency={a} />)}
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
                         </div> 
                     </div>
 

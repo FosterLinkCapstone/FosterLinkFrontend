@@ -9,6 +9,7 @@ export interface ThreadModel {
     author: UserModel
     likeCount: number,
     liked: boolean,
-    // TODO: comment count (backend update)
+    commentCount: number,
+    userPostCount: number,
     tags: string[]
 }

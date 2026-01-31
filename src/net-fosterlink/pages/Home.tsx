@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DummyThread } from '../components/dummy/DummyThread';
 import { DummyFaq } from '../components/dummy/DummyFaq';
@@ -9,23 +9,56 @@ import { useAuth } from '../backend/AuthContext';
 export const Home = () => {
   const [currentModule, setCurrentModule] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const [mod1Height, setMod1Height] = useState<number>(0);
+  const [mod2Height, setMod2Height] = useState<number>(0);
+  const [mod3Height, setMod3Height] = useState<number>(0);
+
+  useEffect(() => {
+    setMod1Height(mod1Ref.current ? mod1Ref.current.clientHeight : 0)
+  }, [setMod1Height])
+  useEffect(() => {
+    setMod2Height(mod2Ref.current ? mod2Ref.current.clientHeight : 0)
+  }, [setMod2Height])
+  useEffect(() => {
+    setMod3Height(mod3Ref.current ? mod3Ref.current.clientHeight : 0)
+  }, [setMod3Height])
+
+  const currentHeight = () => {
+    switch (currentModule) {
+      case 0:
+        return mod1Height;
+      case 1:
+        return mod2Height;
+      case 2:
+        return mod3Height;
+      default:
+        return 0;
+    }
+  }
+
+  const mod1Ref = useRef<HTMLDivElement>(null);
+  const mod2Ref = useRef<HTMLDivElement>(null);
+  const mod3Ref = useRef<HTMLDivElement>(null);
+
+
   const auth = useAuth()
 
   const modules = [
     {
       title: 'Module 1: Forums',
       paragraph: 'The forum is our approach to connecting existing foster parents with prospective ones. It will act as a way for those more knowledgeable in the specifics of foster care to share their ideas, skills and wisdom with those looking to add to their knowledge base.',
-      card: <DummyThread />
+      card: <DummyThread ref={mod1Ref} />
     },
     {
       title: 'Module 2: FAQ',
       paragraph: 'The FAQ is our way of creating an objective, immutable source of general foster knowledge. Through a comprehensive verification process, we intend to have a solid foundation of articulate FAQ response authors, so that curious foster parents can have a source of information that they can trust. We will also allow anyone to submit suggestions for FAQ articles, which will allow our knowledge base to be tailored to answer the questions that are most needed.',
-      card: <DummyFaq />
+      card: <DummyFaq ref={mod2Ref} />
     },
     {
       title: 'Module 3: Agencies',
       paragraph: 'As an organization designed to promote knowledge of foster care, we are also invested in promoting other organizations with similar goals to us. The agencies module is our way of allowing representatives of other organizations (known locally as "agencies") to promote their websites and businesses. We believe that creating a network of individuals who care about providing accurate information about foster care will help boost confidence in new parents.',
-      card: <DummyAgency />
+      card: <DummyAgency ref={mod3Ref} />
     }
   ];
 
@@ -44,22 +77,19 @@ export const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-background bg-gradient-to-b from-blue-50/80 to-background dark:from-transparent dark:to-transparent">
         <Navbar userInfo={auth.getUserInfo()}/>
 
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">FosterLink</h1>
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+        <div className="max-w-4xl mx-auto px-4 pb-10 text-center">
+          <h1 className="text-6xl font-bold mb-6">FosterLink</h1>
           <p className="text-xl leading-relaxed">
             Welcome to FosterLink! Our goal is to connect experienced foster parents with prospective foster parents, and to provide a unified resource hub for all things related to foster care. We believe that providing a one-stop-shop for foster information will promote increased awareness of what is needed to provide the highest quality care for children in need.
           </p>
         </div>
-      </div>
-
-      <div className="bg-gray-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Multi-Modal Approach</h2>
-          <p className="text-lg text-gray-300">
+          <p className="text-xl leading-relaxed">
             Our solution takes a multi-modal approach. This website is comprised of 3 modules: a forum, a FAQ, and a hub for agencies.
           </p>
         </div>
@@ -67,9 +97,9 @@ export const Home = () => {
 
       <div className="py-16">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-card text-card-foreground rounded-lg shadow-lg border border-border p-8">
             <div 
-              className="overflow-hidden transition-all duration-500 ease-in-out"
+              className="overflow-hidden transition-all duration-500 ease-in-out"  
             >
               <div 
                 className="transition-transform duration-500 ease-in-out flex"
@@ -80,9 +110,9 @@ export const Home = () => {
                     key={index} 
                     className="w-full flex-shrink-0 px-1"
                   >
-                    <h2 className="text-3xl font-bold mb-6 text-gray-900">{module.title}</h2>
-                    <p className="text-gray-700 mb-8 leading-relaxed">{module.paragraph}</p>
-                    <div className="mb-8">
+                    <h2 className="text-3xl font-bold mb-6 text-foreground">{module.title}</h2>
+                    <p className="text-muted-foreground mb-8 leading-relaxed">{module.paragraph}</p>
+                    <div className='transition-all duration-500 ease-in-out' style={{ height: `${currentHeight() + 20}px` }}>
                       {module.card}
                     </div>
                   </div>
@@ -94,7 +124,7 @@ export const Home = () => {
               <button
                 onClick={prevModule}
                 disabled={isAnimating}
-                className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Previous module"
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -113,7 +143,7 @@ export const Home = () => {
                     }}
                     disabled={isAnimating}
                     className={`w-3 h-3 rounded-full transition-colors ${
-                      index === currentModule ? 'bg-blue-600' : 'bg-gray-300'
+                      index === currentModule ? 'bg-primary' : 'bg-muted-foreground/40'
                     }`}
                     aria-label={`Go to module ${index + 1}`}
                   />
@@ -123,31 +153,31 @@ export const Home = () => {
               <button
                 onClick={nextModule}
                 disabled={isAnimating}
-                className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Next module"
               >
                 <ChevronRight className="h-6 w-6" />
               </button>
             </div>
 
-            <div className="text-center text-gray-600 mt-4">
+            <div className="text-center text-muted-foreground mt-4">
               {currentModule + 1} / {modules.length}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12">
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12 dark:from-purple-700 dark:to-pink-700">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold mb-4">Want to promote your agency or write FAQ responses?</h2>
           <p className="text-lg mb-6">Message us at placeholder@email.com</p>
         </div>
       </div>
 
-      <div className="bg-white py-8 border-t border-gray-200">
+      <div className="bg-background py-8 border-t border-border">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-gray-600">
-            We want your feedback! Report bugs or leave a comment about your experience here: <a target="_blank" href="https://forms.office.com/r/ehsghCatqK" className="text-blue-600 hover:text-blue-800 underline">feedback form</a>
+          <p className="text-muted-foreground">
+            We want your feedback! Report bugs or leave a comment about your experience here: <a target="_blank" href="https://forms.office.com/r/ehsghCatqK" className="text-primary hover:text-primary/90 underline">feedback form</a>
           </p>
         </div>
       </div>

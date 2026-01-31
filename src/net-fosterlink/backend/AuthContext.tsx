@@ -36,6 +36,35 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
         cfg.headers.Authorization = `Bearer ${token}`
         return cfg
     })
+
+    const updateToken = (newToken: string | null) => {
+        setToken(newToken)
+        if (newToken) sessionStorage.setItem("jwt", newToken)
+        else sessionStorage.removeItem("jwt")
+    }
+
+    const forceLogout = () => {
+        updateToken(null)
+        setAdmin(false)
+        setAgent(false)
+        setFaqAuthor(false)
+        currentUserInfo.current = undefined
+        navigate("/")
+    }
+
+    api.interceptors.response.use(
+        (res) => res,
+        (err) => {
+            const status = err?.response?.status
+            const url = err?.config?.url ?? ""
+            const isLoginRequest = String(url).includes("/users/login")
+            if (status === 401 && !isLoginRequest) {
+                forceLogout()
+            }
+            return Promise.reject(err)
+        }
+    )
+
     useEffect(() => {
         if (token != null) {
             api.get(`/users/getInfo`).then(res => {
@@ -58,19 +87,8 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
     const getMapsApiKey = () => {
         return mapsApiKey
     }
-    const updateToken = (newToken: string | null) => {
-        setToken(newToken)
-        if (newToken) sessionStorage.setItem("jwt", newToken)
-        else sessionStorage.removeItem("jwt")
-    };
     const logout = () => {
-        api.post("/users/logout").then(() => {
-            updateToken(null)
-            setAdmin(false)
-            setAgent(false)
-            setFaqAuthor(false)
-            navigate("/")
-        })
+        api.post("/users/logout").then(forceLogout).catch(forceLogout)
     }
     const setUserInfo = (user: UserModel) => {
         currentUserInfo.current = user
