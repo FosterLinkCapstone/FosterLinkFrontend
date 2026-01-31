@@ -8,17 +8,20 @@ import { Alert, AlertTitle } from "@/components/ui/alert"
 import { AlertCircleIcon } from "lucide-react"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate, useSearchParams } from "react-router"
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 
 export const Login = () => {
     const [searchParams, _] = useSearchParams()
     const email = useRef<string>("")
     const password = useRef<string>("")
     const [error, setError] = useState<string>("")
+    const [loading, setLoading] = useState<boolean>(false)
     const auth = useAuth()
     const userApiRef = userApi(auth)
     const navigate = useNavigate()
 
     const submitLogin = () => {
+        setLoading(true)
         setError("")
         if (email.current != "" && password.current != "") {
             userApiRef.login(email.current, password.current).then(res => {
@@ -28,7 +31,7 @@ export const Login = () => {
                     auth.setToken(res.jwt)
                     navigate(searchParams.has("currentPage") ? searchParams.get("currentPage")! : "/")
                 }
-            })
+            }).finally(() => { setLoading(false) })
         } else {
             setError("Field must not be empty!")
         }
@@ -56,8 +59,8 @@ export const Login = () => {
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitLogin} className="w-full">
-                    Login
+                <Button type="button" onClick={submitLogin} className="w-full" disabled={loading}>
+                    {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Login"}
                 </Button>
                 {
                     error != "" && <Alert variant="destructive">

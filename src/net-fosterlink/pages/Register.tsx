@@ -9,6 +9,7 @@ import { AlertCircleIcon } from "lucide-react"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate } from "react-router"
 import { PhoneNumberInput } from "../components/PhoneNumberInput"
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 
 export const Register = () => {
     const username = useRef<string>("")
@@ -20,10 +21,12 @@ export const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState<string>("")
     const navigate = useNavigate()
     const [error, setError] = useState<string>("")
+    const [loading, setLoading] = useState<boolean>(false)
     const auth = useAuth()
     const userApiRef = userApi(auth)
 
     const submitRegister = () => {
+        setLoading(true)
         userApiRef.register({
             firstName: firstName.current,
             lastName: lastName.current,
@@ -38,7 +41,7 @@ export const Register = () => {
                 auth.setToken(res.jwt)
                 navigate("/")
             }
-        })
+        }).finally(() => { setLoading(false) })
     }
 
     return (
@@ -90,8 +93,8 @@ export const Register = () => {
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitRegister} variant="outline" className="w-full">
-                    Register
+                <Button type="button" onClick={submitRegister} variant="outline" className="w-full" disabled={loading || (password != confirmPassword)}>
+                    {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Register"}
                 </Button>
                 {
                     error != "" && <Alert variant="destructive">
