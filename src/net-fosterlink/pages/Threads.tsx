@@ -54,11 +54,11 @@ export const Threads = () => {
     }
   }, [threadApiRef]);
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (threads.length === 0 && !searching) {
       loadThreads(orderBy);
     }
-  }, [loadThreads, orderBy, threads.length]);
+  }, [loadThreads, orderBy, threads.length]);*/
 
   useEffect(() => {
     // Only refetch when order changes AND search is empty.
@@ -92,6 +92,14 @@ export const Threads = () => {
             setTotalPages(1)
         } else {
             const list = res.response ?? []
+            list.sort((a, b) => {
+              if (orderBy === "likes") {
+                return b.likeCount - a.likeCount;
+              }
+              const dateA = new Date(a.createdAt).getTime();
+              const dateB = new Date(b.createdAt).getTime();
+              return orderBy === "newest" ? dateB - dateA : dateA - dateB;
+            });
             setThreads(list)
             setTotalPages(list.length >= 10 ? 2 : 1)
         }

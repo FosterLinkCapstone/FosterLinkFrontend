@@ -15,6 +15,7 @@ import { StatusDialog } from '../components/StatusDialog';
 import type { ApprovalCheckModel } from '../backend/models/ApprovalCheckModel';
 import { CreateFaqRequestCard } from '../components/faq/CreateFaqRequestCard';
 import type { FaqRequestModel } from '../backend/models/FaqRequestModel';
+import { FaqCardSkeleton } from '../components/faq/FaqCardSkeleton';
 
 export const FaqHome = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -36,12 +37,15 @@ export const FaqHome = () => {
   const [createFailureDialogOpen, setCreateFailureDialogOpen] = useState<boolean>(false)
   const [faqRemoved, setFaqRemoved] = useState<boolean>(false)
 
+  const [loading, setLoading] = useState<boolean>(true)
+
   const [unapprovedFaqs, setUnapprovedFaqs] = useState<ApprovalCheckModel>({countDenied: 0, countPending: 0})
   
   const auth = useAuth()
   const faqApiRef = faqApi(auth);
     
   useEffect(() => {
+    setLoading(true)
         faqApiRef.getAll().then(res => {
             if (!res.isError && res.data) {
                 setFaqs(res.data)
@@ -51,7 +55,7 @@ export const FaqHome = () => {
                     if (faq) handleShowDetail(faq)
                 }
             }
-        })
+        }).finally(() => { setLoading(false) })
     }, [])
     useEffect(() => {
       if (auth.admin || auth.faqAuthor) {
@@ -201,7 +205,16 @@ export const FaqHome = () => {
             <AlertTitle>{createError?.error}</AlertTitle>
           </Alert>
         }
-        {faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
+
+        { loading &&
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <FaqCardSkeleton key={i} />
+            ))}
+          </div>
+        }
+
+        {!loading && faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
             <FaqCard
                 key={faq.id}
                 faq={faq}

@@ -7,6 +7,7 @@ import { Navbar } from "../components/Navbar";
 import { FaqDialog } from "../components/faq/FaqDialog";
 import { PendingFaqCard } from "../components/faq/PendingFaqCard";
 import { StatusDialog } from "../components/StatusDialog";
+import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 
 export const PendingFaqs = () => {
       const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -15,9 +16,11 @@ export const PendingFaqs = () => {
   const faqContent = useRef<string>('')
   const [faqs, setFaqs] = useState<PendingFaqModel[]>([])
   const [approvedOrDenied, setApprovedOrDenied] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(true)
   const auth = useAuth()
   const faqApiRef = faqApi(auth);
     useEffect(() => {
+        setLoading(true)
         faqApiRef.getPending().then(res => {
             if (!res.isError && res.data) {
                 setFaqs(res.data)
@@ -27,7 +30,7 @@ export const PendingFaqs = () => {
                     if (faq) handleShowDetail(faq)
                 }
             }
-        })
+        }).finally(() => { setLoading(false) })
     }, [])
 
   const handleExpand = (id: number) => {
@@ -92,6 +95,12 @@ export const PendingFaqs = () => {
         <Link to="/faq" className="text-primary hover:text-primary/90">Go back</Link>
         <div className="mb-6"></div> {/* spacer */}
         
+        {loading && <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <FaqCardSkeleton key={i} />
+            ))}
+          </div>}
+
         {faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
             <PendingFaqCard
                 key={faq.id}

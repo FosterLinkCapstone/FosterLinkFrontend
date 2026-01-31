@@ -25,10 +25,10 @@ export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: F
     
     return (
     <Dialog open={!!detailFaq} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 bg-background rounded-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 bg-background rounded-3xl border-border">
           {detailFaq && (
             <div className="flex flex-col h-full">
-              <DialogHeader className="p-6 pb-4 border-b">
+              <DialogHeader className="p-6 pb-4 border-border">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-3">{detailFaq.title}</h2>
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
