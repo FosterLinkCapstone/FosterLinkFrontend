@@ -6,6 +6,7 @@ import type { FaqModel } from "@/net-fosterlink/backend/models/FaqModel";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 
 interface FaqCardProps {
     faq: FaqModel;
@@ -32,7 +33,7 @@ export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onS
           <div className="flex-1 text-center">
             <h3 className="text-xl font-semibold mb-2">{faq.title}</h3>
             <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-              <button onClick={() => navigate(`/users/${faq.author.id}`)} className="flex flex-row gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring">
+              <button onClick={() => navigate(buildProfileUrl(faq.author))} className="flex flex-row gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring">
                 <span>By</span>
                 <Avatar className="h-5 w-5">
                   <AvatarImage src={faq.author.profilePictureUrl} />

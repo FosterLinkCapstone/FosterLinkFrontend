@@ -11,6 +11,7 @@ import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { confirm } from "../ConfirmDialog";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 import { useNavigate } from "react-router";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { VerifiedCheck } from "../VerifiedCheck";
 
 interface ReplyCardProps {
@@ -84,7 +85,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
         <div className="flex flex-col items-center">
           <button
             type="button"
-            onClick={() => navigate(`/users/${reply.author.id}`)}
+            onClick={() => navigate(buildProfileUrl(reply.author))}
             className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <Avatar className="h-12 w-12">
@@ -100,7 +101,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
           <div className="flex items-center gap-2 mb-2">
             <button
               type="button"
-              onClick={() => navigate(`/users/${reply.author.id}`)}
+              onClick={() => navigate(buildProfileUrl(reply.author))}
               className="font-semibold hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring rounded-full px-1"
             >
               {reply.author.username}

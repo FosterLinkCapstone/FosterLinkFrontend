@@ -5,6 +5,7 @@ import { useAuth } from "../backend/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { UserModel } from "../backend/models/UserModel";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { AgentOnlyBadge } from "./AgentOnlyBadge";
 import { AdminOnlyBadge } from "./AdminOnlyBadge";
 import { FaqAuthorOnlyBadge } from "./FaqAuthorOnlyBadge";
@@ -125,7 +126,7 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                       {auth.isLoggedIn() ? (
                         <li className="list-none">
                           {userInfo && (
-                            <ListItem href={`/users/${userInfo.id}`} title="My Profile">
+                            <ListItem href={buildProfileUrl(userInfo)} title="My Profile">
                               View your public profile and posts
                             </ListItem>
                           )}

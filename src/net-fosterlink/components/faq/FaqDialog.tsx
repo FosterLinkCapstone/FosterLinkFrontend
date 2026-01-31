@@ -5,6 +5,7 @@ import { getInitials } from "@/net-fosterlink/util/StringUtil"
 import { Check, Share2 } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router"
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil"
 
 export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: FaqModel | null, handleOpenChange: () => void, content: string}) => {
     const [shareSuccess, setShareSuccess] = useState(false)
@@ -31,7 +32,7 @@ export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: F
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-3">{detailFaq.title}</h2>
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <button onClick={() => navigate(`/users/${detailFaq.author.id}`)} className="flex flex-row gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring">
+                  <button onClick={() => navigate(buildProfileUrl(detailFaq.author))} className="flex flex-row gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring">
                 <span>By</span>
                 <Avatar className="h-5 w-5">
                   <AvatarImage src={detailFaq.author.profilePictureUrl} />

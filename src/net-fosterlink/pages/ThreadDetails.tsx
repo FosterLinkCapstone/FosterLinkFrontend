@@ -17,6 +17,7 @@ import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 import { confirm } from "../components/ConfirmDialog";
 import { useNavigate } from "react-router";
 import { VerifiedCheck } from "../components/VerifiedCheck";
+import { buildProfileUrl } from "../util/UserUtil";
 
 export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [replyText, setReplyText] = useState('');
@@ -174,7 +175,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
               <button
                 type="button"
-                onClick={() => navigate(`/users/${thread.author.id}`)}
+                onClick={() => navigate(buildProfileUrl(thread.author))}
                 className="flex items-center gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring rounded-full px-1"
               >
                 <Avatar className="h-6 w-6">

@@ -5,6 +5,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { VerifiedCheck } from "../VerifiedCheck";
 import type { AuthContextType } from "@/net-fosterlink/backend/AuthContext";
 import { useState } from "react";
@@ -38,7 +39,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
 
   const goToProfile = (e: React.MouseEvent) => {
     e.stopPropagation()
-    navigate(`/users/${thread.author.id}`)
+    navigate(buildProfileUrl(thread.author))
   }
   const likeThread = (e: React.MouseEvent) => {
     e.stopPropagation()
