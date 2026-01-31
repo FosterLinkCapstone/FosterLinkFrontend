@@ -58,7 +58,7 @@ export const Agencies = () => {
         }
     }, [auth.admin])
 
-    const handleCreateAgency = (agency: CreateAgencyModel) => {
+    const handleCreateAgency = async (agency: CreateAgencyModel) => {
         agencyApiRef.create(agency).then(res => {
             if (res.isError) {
                 setCreateError(res)

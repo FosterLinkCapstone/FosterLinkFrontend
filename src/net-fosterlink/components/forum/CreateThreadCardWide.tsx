@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { CircleX } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 
 
 export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void, onCreate: (thread: ThreadModel) => void}) => {
@@ -20,22 +21,29 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
   const [tagFieldText, setTagFieldText] = useState<string>('')
   const [showErrorTooltip, setShowErrorTooltip] = useState<boolean>(false)
   const [errorTooltipText, setErrorTooltipText] = useState<string>('')
+  const [createLoading, setCreateLoading] = useState<boolean>(false)
   const auth = useAuth()
   const threadApiRef = threadApi(auth)
 
     const createThread = () => {
-        if (title == '') {
-            setError("Please enter a title!")
-            return
-        }
-        if (content == '') {
-            setError("Please enter some content!")
-            return
-        }
-        threadApiRef.createThread(title, content, tags).then(res => {
-            if (res.thread) onCreate(res.thread)
-            else setError(res.error!)
+      if (title === '') {
+        setError("Please enter a title!");
+        return;
+      }
+      if (content === '') {
+        setError("Please enter some content!");
+        return;
+      }
+      setError('');
+      setCreateLoading(true);
+      threadApiRef.createThread(title, content, tags)
+        .then(res => {
+          if (res.thread) onCreate(res.thread);
+          else setError(res.error ?? 'Failed to create thread');
         })
+        .finally(() => {
+            setCreateLoading(false)
+        });
     }
     const removeTag = (tagToRemove: string) => {
       setTags(tags.filter(tag => tag != tagToRemove));
@@ -124,7 +132,7 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
 
         }
         <div className="w-full flex flex-row align-center gap-2 justify-center">
-            <Button type="button" className="w-100 !border-1" onClick={createThread}>Create</Button>
+            <Button type="button" className="w-100 !border-1" onClick={createThread} disabled={createLoading}>{createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create"}</Button>
             <Button type="button" className="w-100 !border-1" onClick={onCancel}>Cancel</Button>
         </div>
       </div>

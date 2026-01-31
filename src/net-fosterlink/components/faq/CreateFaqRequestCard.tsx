@@ -5,10 +5,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertCircleIcon } from "lucide-react"
 import { useState } from "react"
+import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
-export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmit: (suggestion: string) => void }) => {
+export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmit: (suggestion: string) => Promise<void> }) => {
     const [suggestionText, setSuggestionText] = useState<string>('')
     const [noContentError, setSuggestionNoContentError] = useState<boolean>(false)
+    const [submitLoading, setSubmitLoading] = useState<boolean>(false)
+
+    const submit = () => {
+        setSubmitLoading(true)
+        onSubmit(suggestionText).finally(() => {
+            setSuggestionText('')
+            setSubmitLoading(false)
+        })
+    }
     return (
         <Dialog onOpenChange={onOpenChange} open={open}>
             <DialogContent className="bg-background w-full mx-2">
@@ -37,12 +47,11 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit }: { open: b
                     </DialogClose>
                     <Button variant="outline" onClick={() => {
                         if (suggestionText !== '') {
-                            onSubmit(suggestionText)
-                            setSuggestionText('')
+                            submit()
                         } else {
                             setSuggestionNoContentError(true)
                         }
-                    }}>Submit</Button>
+                    }} disabled={submitLoading}>{submitLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}</Button>
                 </DialogFooter>
 
             </DialogContent>

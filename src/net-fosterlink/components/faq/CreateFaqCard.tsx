@@ -18,13 +18,14 @@ import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import type { FaqRequestModel } from "@/net-fosterlink/backend/models/FaqRequestModel"
+import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
 export const CreateFaqCard = ({
     handleSubmitResponse, 
     handleClose,
     requests
 } : {
-    handleSubmitResponse: (title: string, summary: string, content: string, answeringId: number) => void, 
+    handleSubmitResponse: (title: string, summary: string, content: string, answeringId: number) => Promise<void>, 
     handleClose: () => void,
     requests: FaqRequestModel[] | null
 }) => {
@@ -33,6 +34,19 @@ export const CreateFaqCard = ({
     const [newFaqSummary, setNewFaqSummary] = useState('')
     const [newFaqContent, setNewFaqContent] = useState('')
     const [open, setOpen] = useState(false)
+    const [createLoading, setCreatingLoading] = useState(false)
+
+    const create = () => {
+        setCreatingLoading(true)
+        handleSubmitResponse(newFaqTitle, newFaqSummary, newFaqContent, answeringId).finally(() => {
+            setNewFaqTitle('')
+            setNewFaqSummary('')
+            setNewFaqContent('')
+            setAnsweringId(-1)
+            setCreatingLoading(false)
+        })
+    }
+
 
     if (requests == null) return (
         <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md transition-shadow">
@@ -101,24 +115,23 @@ export const CreateFaqCard = ({
             
             <Input 
                 onChange={(e) => setNewFaqSummary(e.target.value)} 
+                value={newFaqSummary}
                 type="text" 
                 placeholder="FAQ Summary. Typically 2-3 sentences"
             />
             <Textarea 
                 onChange={(e) => setNewFaqContent(e.target.value)} 
+                value={newFaqContent}
                 placeholder="FAQ Content. Typically an in depth answer to the question."
             />
             <Button 
                 onClick={() => {
-                    handleSubmitResponse(newFaqTitle, newFaqSummary, newFaqContent, answeringId)
-                    setNewFaqTitle('')
-                    setNewFaqSummary('')
-                    setNewFaqContent('')
-                    setAnsweringId(-1)
+                    create()
                 }} 
                 variant="outline"
+                disabled={createLoading}
             >
-                Submit
+                {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create FAQ Response"}
             </Button>
             <Button onClick={() => handleClose()} variant="outline">Cancel</Button>
         </Card>

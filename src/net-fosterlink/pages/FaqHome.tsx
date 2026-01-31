@@ -92,8 +92,7 @@ export const FaqHome = () => {
     } else setDetailFaq(faq)
   };
 
-  const handleSubmitFaqResponse = (title: string, summary: string, content: string, answeringId: number) => {
-    
+  const handleSubmitFaqResponse = async (title: string, summary: string, content: string, answeringId: number) => {
     if (answeringId !== -1) {
       const req = requests?.find(r => r.id === answeringId)
       if (req && req.suggestion === title) {
@@ -126,7 +125,7 @@ export const FaqHome = () => {
     })
   }
 
-  const submitNewRequest = (suggestion: string) => {
+  const submitNewRequest = async (suggestion: string) => {
     if (suggestion !== "") {
     faqApiRef.createRequest(suggestion).then(res => {
       setCreatingSuggestion(false)
