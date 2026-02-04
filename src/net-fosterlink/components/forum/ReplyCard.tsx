@@ -27,6 +27,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
   const [isLiked, setIsLiked] = useState<boolean>(reply.liked)
   const [editing, setEditing] = useState<boolean>(false)
   const [editedContent, setEditedContent] = useState<string>(reply.content)
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({})
   const [loading, setLoading] = useState<boolean>(false)
   const navigate = useNavigate()
 
@@ -49,6 +50,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
   }
 
   const submitEdit = () => {
+    setFieldErrors({})
     setLoading(true)
     threadApiRef.editReplyContent(reply.id, editedContent).then(res => {
       setLoading(false)
@@ -58,6 +60,10 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
         if (onReplyUpdate) {
           onReplyUpdate(res.data)
         }
+      } else if (res.validationErrors) {
+        const next: { [key: string]: string } = {}
+        res.validationErrors.forEach(e => { next[e.field] = e.message })
+        setFieldErrors(next)
       }
     })
   }
@@ -116,13 +122,16 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
 
           {
             editing ? (
-              <Textarea
-                value={editedContent}
-                onChange={(e) => {
-                  setEditedContent(e.target.value)
-                }}
-                className="w-full min-h-[100px] mb-3"
-              />
+              <div className="grid gap-2 mb-3">
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => {
+                    setEditedContent(e.target.value)
+                  }}
+                  className="w-full min-h-[100px]"
+                />
+                <span className="text-red-500">{fieldErrors["content"]}</span>
+              </div>
             ) : (
               <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
             )

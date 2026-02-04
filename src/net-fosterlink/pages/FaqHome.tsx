@@ -24,6 +24,7 @@ export const FaqHome = () => {
 
   const [creatingSuggestion, setCreatingSuggestion] = useState(searchParams.get("suggesting") === "true")
   const [suggestionCreationError, setSuggestionCreationError] = useState<string | null>(null)
+  const [suggestionFieldErrors, setSuggestionFieldErrors] = useState<{[key: string]: string}>({})
 
   const [creating, setCreating] = useState(false)
   const [requests, setRequests] = useState<FaqRequestModel[] | null>(null)
@@ -131,14 +132,20 @@ export const FaqHome = () => {
 
   const submitNewRequest = async (suggestion: string) => {
     if (suggestion !== "") {
-    faqApiRef.createRequest(suggestion).then(res => {
-      setCreatingSuggestion(false)
-      if (!res.isError && res.data) {
-        setSuggestionCreationError('')
-      } else {
-        setSuggestionCreationError(res.error || 'Please try again later')
-      }
-    })
+      setSuggestionFieldErrors({})
+      faqApiRef.createRequest(suggestion).then(res => {
+        if (!res.isError && res.data) {
+          setCreatingSuggestion(false)
+          setSuggestionCreationError('')
+        } else {
+          setSuggestionCreationError(res.error || 'Please try again later')
+          if (res.validationErrors) {
+            const next: { [key: string]: string } = {}
+            res.validationErrors.forEach(e => { next[e.field] = e.message })
+            setSuggestionFieldErrors(next)
+          }
+        }
+      })
     }
   }
 
@@ -171,9 +178,15 @@ export const FaqHome = () => {
           <StatusDialog open={true} isSuccess={true} onOpenChange={() => setSuggestionCreationError(null)} title="FAQ Request Created!" subtext=''/>
         )
       }
-      <CreateFaqRequestCard open={creatingSuggestion} onOpenChange={() => {
+      <CreateFaqRequestCard
+        open={creatingSuggestion}
+        onOpenChange={() => {
           setCreatingSuggestion(false)
-        }} onSubmit={submitNewRequest}/>
+          setSuggestionFieldErrors({})
+        }}
+        onSubmit={submitNewRequest}
+        serverFieldErrors={Object.keys(suggestionFieldErrors).length > 0 ? suggestionFieldErrors : undefined}
+      />
       <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>
@@ -190,10 +203,17 @@ export const FaqHome = () => {
           (auth.faqAuthor || auth.admin) && <Button className="w-full mb-6" variant='outline' onClick={handleCreateFaq}>Create</Button>
         }
         {
-          creating && <CreateFaqCard handleSubmitResponse={handleSubmitFaqResponse} handleClose={() => {
-          setCreating(false)
-          setCreateError(undefined)
-          }} requests={requests}/>
+          creating && <CreateFaqCard
+            handleSubmitResponse={handleSubmitFaqResponse}
+            handleClose={() => {
+              setCreating(false)
+              setCreateError(undefined)
+            }}
+            requests={requests}
+            serverFieldErrors={createError?.validationErrors
+              ? Object.fromEntries(createError.validationErrors.map(e => [e.field, e.message]))
+              : undefined}
+          />
         }
         {
           (auth.isLoggedIn()) && <Button className='w-full mb-6' variant="outline" onClick={() => setCreatingSuggestion(true)}>Suggest a new FAQ response</Button>

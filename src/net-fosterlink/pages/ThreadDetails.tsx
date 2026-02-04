@@ -21,6 +21,8 @@ import { buildProfileUrl } from "../util/UserUtil";
 
 export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [replyText, setReplyText] = useState('');
+  const [replyFieldErrors, setReplyFieldErrors] = useState<{[key: string]: string}>({});
+  const [replyError, setReplyError] = useState<string>('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean>(false);
   const [editedContent, setEditedContent] = useState<string>(thread.content);
@@ -55,6 +57,8 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
 
   const handleSubmitNewReply = () => {
     if (auth.isLoggedIn()) {
+      setReplyError('');
+      setReplyFieldErrors({});
       if (replyText != '' && thread) {
         threadApiRef.replyTo(replyText, thread.id).then(res => {
           if (!res.isError && res.data) {
@@ -62,20 +66,19 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             setReplyText('');
             setReplyingTo(null);
           } else {
-            const oldContent = replyText
-            setReplyText(res.error || "Internal server error... please try again later!")
-            setTimeout(() => setReplyText(oldContent), 3000)
+            setReplyError(res.error || "Internal server error... please try again later!");
+            if (res.validationErrors) {
+              const next: { [key: string]: string } = {};
+              res.validationErrors.forEach(e => { next[e.field] = e.message; });
+              setReplyFieldErrors(next);
+            }
           }
         })
       } else {
-          const oldContent = replyText
-          setReplyText("Please enter something!")
-          setTimeout(() => setReplyText(oldContent), 3000)
+        setReplyError("Please enter something!");
       }
     } else {
-      const oldContent = replyText
-      setReplyText("Please log in")
-      setTimeout(() => setReplyText(oldContent), 3000)
+      setReplyError("Please log in");
     }
   };
   const likeThread = () => {
@@ -145,13 +148,17 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
         <div className="w-80 space-y-4">
           <Card className="p-4 border-border">
             <h3 className="font-semibold mb-3">Reply</h3>
-            <Textarea
-              placeholder="Enter reply here..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              className="mb-3 min-h-[120px]"
-              disabled={!auth.isLoggedIn()}
-            />
+            <div className="grid gap-2 mb-3">
+              <Textarea
+                placeholder="Enter reply here..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                className="min-h-[120px]"
+                disabled={!auth.isLoggedIn()}
+              />
+              <span className="text-red-500">{replyFieldErrors["content"]}</span>
+            </div>
+            {replyError && <p className="text-red-500 text-sm mb-2">{replyError}</p>}
             <Button onClick={handleSubmitNewReply} className="w-full" disabled={!auth.isLoggedIn()}>
               Submit
             </Button>
@@ -296,13 +303,16 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       </span>
                     </div>
 
-                    <Textarea
-                      placeholder="Enter text here"
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      className="mb-3 min-h-[100px]"
-                    />
-
+                    <div className="grid gap-2 mb-3">
+                      <Textarea
+                        placeholder="Enter text here"
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                      <span className="text-red-500">{replyFieldErrors["content"]}</span>
+                    </div>
+                    {replyError && <p className="text-red-500 text-sm mb-2">{replyError}</p>}
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" onClick={handleCancelReply}>
                         Cancel

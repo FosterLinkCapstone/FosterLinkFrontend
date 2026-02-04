@@ -1,4 +1,5 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper"
+import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError"
 import type { AuthContextType } from "../AuthContext"
 import type { FaqModel } from "../models/FaqModel"
 import type { PendingFaqModel } from "../models/PendingFaqModel"
@@ -96,10 +97,20 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 return {data: res.data, isError: false, error: undefined}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, isError: true, error: validationError, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch (err.response.status) {
+                        case 400:
+                            return {data: undefined, isError: true, error: "Invalid FAQ data. Please check your inputs."}
                         case 403:
                             console.error("Unauthorized: only users marked as faq authors can create faq responses!")
                             return {data: undefined, isError: true, error: "Only FAQ authors can create FAQ responses!"}
+                        default:
+                            return {data: undefined, isError: true, error: "Internal server error"}
                     }
                 }
             }
@@ -151,11 +162,17 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 }
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "You must be logged in to create FAQ requests!", isError: true}
                         case 400:
                             return {data: undefined, error: "Invalid request content!", isError: true}
+                        case 403:
+                            return {data: undefined, error: "You must be logged in to create FAQ requests!", isError: true}
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }

@@ -1,4 +1,5 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
+import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError";
 import type { AuthContextType } from "../AuthContext";
 import type { CreateThreadResponse } from "../models/api/CreateThreadResponse";
 import type { GetThreadsResponse } from "../models/api/GetThreadsResponse";
@@ -38,12 +39,18 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 })
                 return {response: res.data, errorMessage: undefined}
             } catch (err: any) {
-                if (err.repsonse) {
-                    switch (err.response.code) {
+                if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {response: [], errorMessage: validationError}
+                    }
+                    
+                    switch (err.response.status) {
                         case 404:
                             return {response: [], errorMessage: "There is no user with that username!"}
                         case 400:
-                            return {response: [], errorMessage: "Incorrect search by syntadx"}
+                            return {response: [], errorMessage: "Invalid search parameters"}
                         default:
                             return {response: [], errorMessage: "Internal server error. Please try again later."}
                     }
@@ -141,13 +148,19 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
+                        case 400:
+                            return {data: undefined, error: "Invalid reply content!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be logged in to reply!", isError: true}
                         case 404:
                             return {data: undefined, error: "Thread not found!", isError: true}
-                        case 400:
-                            return {data: undefined, error: "Invalid reply content!", isError: true}
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }
@@ -191,23 +204,29 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
             }
             return {data: undefined, error: "Internal client error", isError: true}
         },
-        createThread: async(title: string, content: string, tags: string[]): Promise<CreateThreadResponse> => { // TODO implement tags
-            const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: tags})
-                try {
-                    return {thread: res.data, error: undefined}
-                } catch (err: any) {
-                    if (err.response) {
-                        switch(err.response.status) {
-                            case 403:
-                                return {thread: undefined, error: "You must be logged in to do that!"}
-                            case 400:
-                                return {thread: undefined, error: "Your post content or title was too long!"} // TODO assuming that this will be a thing that gets added eventually
-                            default:
-                                return {thread: undefined, error: "Internal server error"}
-                        }
+        createThread: async(title: string, content: string, tags: string[]): Promise<CreateThreadResponse> => {
+            try {
+                const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: tags})
+                return {thread: res.data, error: undefined}
+            } catch (err: any) {
+                if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {thread: undefined, error: validationError, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
+                    switch(err.response.status) {
+                        case 400:
+                            return {thread: undefined, error: "Invalid thread data. Please check your inputs."}
+                        case 403:
+                            return {thread: undefined, error: "You must be logged in to do that!"}
+                        default:
+                            return {thread: undefined, error: "Internal server error"}
                     }
                 }
-                return {thread: undefined, error: "Internal client error"}
+            }
+            return {thread: undefined, error: "Internal client error"}
         },
         editThreadContent: async(threadId: number, newContent: string): Promise<ErrorWrapper<ThreadModel|undefined>> => {
             try {
@@ -215,9 +234,19 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
+                        case 400:
+                            return {data: undefined, error: "Invalid thread content!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be the thread author to do that!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Thread not found!", isError: true}
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }
@@ -253,7 +282,15 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
+                        case 400:
+                            return {data: undefined, error: "Invalid reply content!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be the reply author to do that!", isError: true}
                         case 404:

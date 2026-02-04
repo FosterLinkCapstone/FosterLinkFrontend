@@ -146,7 +146,13 @@ export const Agencies = () => {
                             }
                             {
                                 creatingAgency && <>
-                                    <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
+                                    <CreateAgencyCard
+                                        handleSubmit={handleCreateAgency}
+                                        handleClose={() => setCreatingAgency(false)}
+                                        serverFieldErrors={createError?.validationErrors
+                                            ? Object.fromEntries(createError.validationErrors.map(e => [e.field, e.message]))
+                                            : undefined}
+                                    />
                                 </>
                             }
                             {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}

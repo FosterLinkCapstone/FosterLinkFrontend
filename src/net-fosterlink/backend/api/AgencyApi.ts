@@ -1,4 +1,5 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
+import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError";
 import type { AuthContextType } from "../AuthContext";
 import type { AgencyModel } from "../models/AgencyModel";
 import type { CreateAgencyModel } from "../models/api/CreateAgencyModel";
@@ -86,9 +87,15 @@ export const agencyApi = (auth: AuthContextType): AgencyApiType => {
                 return {data: res.data, isError: false, error: undefined}
             } catch(err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, isError: true, error: validationError, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch (err.response.status) {
                         case 400:
-                            return {data: undefined, isError: true, error: "Invalid address! Please try again..."}
+                            return {data: undefined, isError: true, error: "Invalid agency data! Please check your inputs."}
                         case 502:
                             return {data: undefined, isError: true, error: "There was an issue validating that address. Please try again later"}
                         case 403:

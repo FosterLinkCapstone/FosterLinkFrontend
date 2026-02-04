@@ -7,7 +7,7 @@ import { AlertCircleIcon } from "lucide-react"
 import { useState } from "react"
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
-export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmit: (suggestion: string) => Promise<void> }) => {
+export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverFieldErrors }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmit: (suggestion: string) => Promise<void>, serverFieldErrors?: { [key: string]: string } }) => {
     const [suggestionText, setSuggestionText] = useState<string>('')
     const [noContentError, setSuggestionNoContentError] = useState<boolean>(false)
     const [submitLoading, setSubmitLoading] = useState<boolean>(false)
@@ -32,6 +32,7 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit }: { open: b
                             setSuggestionText(e.target.value)
                             if (suggestionText !== '') setSuggestionNoContentError(false)
                         }} id="suggestion" name="suggestion" placeholder="Enter here. Your suggestion will be used as the title to the response." />
+                        <span className="text-red-500">{serverFieldErrors?.suggested ?? serverFieldErrors?.suggestion}</span>
                     </div>
                 </div>
                 {
