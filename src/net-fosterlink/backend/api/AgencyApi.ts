@@ -3,10 +3,11 @@ import { extractValidationError, getValidationErrors } from "@/net-fosterlink/ut
 import type { AuthContextType } from "../AuthContext";
 import type { AgencyModel } from "../models/AgencyModel";
 import type { CreateAgencyModel } from "../models/api/CreateAgencyModel";
+import type { GetAgenciesResponse } from "../models/api/GetAgenciesResponse";
 
 export interface AgencyApiType {
-    getAll: () => Promise<ErrorWrapper<AgencyModel[]>>
-    getPending: () => Promise<ErrorWrapper<AgencyModel[]>>
+    getAll: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
+    getPending: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
     approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     countPending: () => Promise<ErrorWrapper<number>>
     create: (createModel: CreateAgencyModel) => Promise<ErrorWrapper<AgencyModel>>
@@ -15,9 +16,9 @@ export interface AgencyApiType {
 export const agencyApi = (auth: AuthContextType): AgencyApiType => {
 
     return {
-        getAll: async (): Promise<ErrorWrapper<AgencyModel[]>> => {
+        getAll: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
             try {
-                const res = await auth.api.get('/agencies/all')
+                const res = await auth.api.get(`/agencies/all?pageNumber=${pageNumber}`)
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
@@ -31,9 +32,9 @@ export const agencyApi = (auth: AuthContextType): AgencyApiType => {
             }
             return {data: undefined, error: "Internal client error", isError: true}
         },
-        getPending: async (): Promise<ErrorWrapper<AgencyModel[]>> => {
+        getPending: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
             try {
-                const res = await auth.api.get("/agencies/pending")
+                const res = await auth.api.get(`/agencies/pending?pageNumber=${pageNumber}`)
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {

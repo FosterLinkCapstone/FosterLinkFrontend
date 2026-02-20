@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Paginator } from "../components/Paginator"
 import type { AgencyModel } from "../backend/models/AgencyModel"
 import { agencyApi } from "../backend/api/AgencyApi"
 import { useAuth } from "../backend/AuthContext"
@@ -17,6 +18,8 @@ export const Agencies = () => {
     const auth = useAuth()
     const [searchParams, _] = useSearchParams()
     const [agencies, setAgencies] = useState<AgencyModel[] | null>(null)
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [totalPages, setTotalPages] = useState<number>(1)
     const [pendingCount, setPendingCount] = useState(0)
     const [creatingAgency, setCreatingAgency] = useState<boolean>(false)
     const [createError, setCreateError] = useState<ErrorWrapper<AgencyModel> | null>(null)
@@ -33,9 +36,11 @@ export const Agencies = () => {
 
     const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
     useEffect(() => {
-        agencyApiRef.getAll().then(res => {
+        agencyApiRef.getAll(0).then(res => {
             if (!res.isError && res.data) {
-                setAgencies(res.data)
+                setAgencies(res.data.agencies)
+                setTotalPages(res.data.totalPages)
+                setCurrentPage(1)
             }
         })
 
@@ -156,6 +161,22 @@ export const Agencies = () => {
                                 </>
                             }
                             {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
+                            {!searchParams.has("agencyId") && (
+                                <Paginator<AgencyModel[]>
+                                    pageCount={totalPages}
+                                    currentPage={currentPage}
+                                    setCurrentPage={setCurrentPage}
+                                    onDataChanged={setAgencies}
+                                    onPageChanged={async (pageNum) => {
+                                        const res = await agencyApiRef.getAll(pageNum - 1);
+                                        if (res.data) {
+                                            setTotalPages(res.data.totalPages);
+                                            return res.data.agencies;
+                                        }
+                                        return [];
+                                    }}
+                                />
+                            )}
                         </div> 
                     </div>
 

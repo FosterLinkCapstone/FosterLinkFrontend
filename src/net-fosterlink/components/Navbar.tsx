@@ -173,7 +173,7 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
             </Button>
 
             {userInfo && auth.isLoggedIn() && (
-              <Badge variant="outline" className="ml-4">
+              <Badge variant="outline" className="ml-4 dark:bg-muted/80 dark:border-border">
                 Logged in as {userInfo.username}
               </Badge>
             )}

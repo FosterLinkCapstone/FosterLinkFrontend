@@ -8,6 +8,7 @@ import { FaqDialog } from "../components/faq/FaqDialog";
 import { PendingFaqCard } from "../components/faq/PendingFaqCard";
 import { StatusDialog } from "../components/StatusDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
+import { Paginator } from "../components/Paginator";
 
 export const PendingFaqs = () => {
       const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -15,18 +16,22 @@ export const PendingFaqs = () => {
   const [detailFaq, setDetailFaq] = useState<PendingFaqModel | null>(null);
   const faqContent = useRef<string>('')
   const [faqs, setFaqs] = useState<PendingFaqModel[]>([])
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [totalPages, setTotalPages] = useState<number>(1)
   const [approvedOrDenied, setApprovedOrDenied] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(true)
   const auth = useAuth()
   const faqApiRef = faqApi(auth);
     useEffect(() => {
         setLoading(true)
-        faqApiRef.getPending().then(res => {
+        faqApiRef.getPending(0).then(res => {
             if (!res.isError && res.data) {
-                setFaqs(res.data)
+                setFaqs(res.data.faqs)
+                setTotalPages(res.data.totalPages)
+                setCurrentPage(1)
                 const opened = searchParams.get("openId")
                 if (opened != null) {
-                    const faq = res.data.find(f => f.id == +opened)
+                    const faq = res.data.faqs.find(f => f.id == +opened)
                     if (faq) handleShowDetail(faq)
                 }
             }
@@ -113,6 +118,21 @@ export const PendingFaqs = () => {
                 onDeny={handleDeny}
             />
         ))}
+
+        <Paginator<PendingFaqModel[]>
+          pageCount={totalPages}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          onDataChanged={setFaqs}
+          onPageChanged={async (pageNum) => {
+            const res = await faqApiRef.getPending(pageNum - 1);
+            if (res.data) {
+              setTotalPages(res.data.totalPages);
+              return res.data.faqs;
+            }
+            return [];
+          }}
+        />
       </div>
       <FaqDialog detailFaq={detailFaq ? {id: detailFaq.id, title: detailFaq.title, summary: detailFaq.summary, createdAt: detailFaq.createdAt, updatedAt: detailFaq.updatedAt, author: detailFaq.author, approvedByUsername: detailFaq?.deniedByUsername ?? ''} : null} content={faqContent.current} handleOpenChange={handleCloseDetail}/>  
     </div>

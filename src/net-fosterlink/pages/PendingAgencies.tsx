@@ -9,18 +9,23 @@ import { Button } from "@/components/ui/button"
 import { StatusDialog } from "../components/StatusDialog"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Link } from "react-router"
+import { Paginator } from "../components/Paginator"
 
 export const PendingAgencies = () => {
     const auth = useAuth()
     const [agencies, setAgencies] = useState<AgencyModel[] | null>(null)
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [totalPages, setTotalPages] = useState<number>(1)
     const [approvedOrDenied, setApprovedOrDenied] = useState('')
     const [isError, setIsError] = useState<boolean>(false)
 
     const agencyApiRef = agencyApi(auth)
     useEffect(() => {
-        agencyApiRef.getPending().then(res => {
+        agencyApiRef.getPending(0).then(res => {
             if (!res.isError && res.data) {
-                setAgencies(res.data)
+                setAgencies(res.data.agencies)
+                setTotalPages(res.data.totalPages)
+                setCurrentPage(1)
             }
         })
     }, [])
@@ -77,19 +82,33 @@ export const PendingAgencies = () => {
                             {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <div className="flex flex-col w-full gap-1">
                                 {
                                     a.approved == 3 &&
-                                        <Alert className="bg-red-300 text-red-900" variant="destructive">
+                                        <Alert className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70" variant="destructive">
                                             <AlertCircleIcon/>
                                             <AlertTitle>Denied by {a.approvedByUsername}</AlertTitle>
                                         </Alert>
                                 }
                                 <AgencyCard onRemove={() => {return}} agency={a} /> {/* pending card will never call remove */}
                                 <div className="w-full flex flex-col mt-1 gap-2">
-                                    <Button variant="outline" onClick={() => onApprove(a.id, true)} className="bg-green-200 text-green-800">Approve</Button>
+                                    <Button variant="outline" onClick={() => onApprove(a.id, true)} className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70">Approve</Button>
                                     {
-                                        a.approved !== 3 && <Button variant="outline" onClick={() => onApprove(a.id, false)} className="bg-red-200 text-red-800">Deny</Button>
+                                        a.approved !== 3 && <Button variant="outline" onClick={() => onApprove(a.id, false)} className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70">Deny</Button>
                                     }
                                 </div>
                             </div>)}
+                            <Paginator<AgencyModel[]>
+                                pageCount={totalPages}
+                                currentPage={currentPage}
+                                setCurrentPage={setCurrentPage}
+                                onDataChanged={setAgencies}
+                                onPageChanged={async (pageNum) => {
+                                    const res = await agencyApiRef.getPending(pageNum - 1);
+                                    if (res.data) {
+                                        setTotalPages(res.data.totalPages);
+                                        return res.data.agencies;
+                                    }
+                                    return [];
+                                }}
+                            />
                         </div>
                     </div>
             }

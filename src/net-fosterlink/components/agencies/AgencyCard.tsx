@@ -25,7 +25,7 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
           <h2 className="text-2xl font-bold mb-4 text-center">{agency.agencyName}</h2>
           {
             (agency.approved == 2 && auth.admin) && 
-            <Button variant="outline" className="bg-red-200 text-red-400" onClick={() => onRemove(agency.id)}>Remove</Button>
+            <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)}>Remove</Button>
           }
           <div className="bg-muted rounded-lg p-4 mb-4">
             <p className="text-foreground leading-relaxed">

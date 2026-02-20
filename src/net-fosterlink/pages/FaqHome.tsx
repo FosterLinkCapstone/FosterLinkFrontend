@@ -16,6 +16,7 @@ import type { ApprovalCheckModel } from '../backend/models/ApprovalCheckModel';
 import { CreateFaqRequestCard } from '../components/faq/CreateFaqRequestCard';
 import type { FaqRequestModel } from '../backend/models/FaqRequestModel';
 import { FaqCardSkeleton } from '../components/faq/FaqCardSkeleton';
+import { Paginator } from '../components/Paginator';
 
 export const FaqHome = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -33,6 +34,8 @@ export const FaqHome = () => {
   const faqContent = useRef<string>('')
 
   const [faqs, setFaqs] = useState<FaqModel[]>([])
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [totalPages, setTotalPages] = useState<number>(1)
   const [createError, setCreateError] = useState<ErrorWrapper<undefined> | undefined>(undefined)
   const [createSuccessDialogOpen, setCreateSuccessDialogOpen] = useState<boolean>(false)
   const [createFailureDialogOpen, setCreateFailureDialogOpen] = useState<boolean>(false)
@@ -47,12 +50,14 @@ export const FaqHome = () => {
     
   useEffect(() => {
     setLoading(true)
-        faqApiRef.getAll().then(res => {
+        faqApiRef.getAll(0).then(res => {
             if (!res.isError && res.data) {
-                setFaqs(res.data)
+                setFaqs(res.data.faqs)
+                setTotalPages(res.data.totalPages)
+                setCurrentPage(1)
                 const opened = searchParams.get("openId")
                 if (opened != null) {
-                    const faq = res.data.find(f => f.id == +opened)
+                    const faq = res.data.faqs.find(f => f.id == +opened)
                     if (faq) handleShowDetail(faq)
                 }
             }
@@ -246,6 +251,21 @@ export const FaqHome = () => {
                 onRemove={onRemove}
             />
         ))}
+
+        <Paginator<FaqModel[]>
+          pageCount={totalPages}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          onDataChanged={setFaqs}
+          onPageChanged={async (pageNum) => {
+            const res = await faqApiRef.getAll(pageNum - 1);
+            if (res.data) {
+              setTotalPages(res.data.totalPages);
+              return res.data.faqs;
+            }
+            return [];
+          }}
+        />
         
       </div>
       <FaqDialog detailFaq={detailFaq} content={faqContent.current} handleOpenChange={handleCloseDetail}/>  
