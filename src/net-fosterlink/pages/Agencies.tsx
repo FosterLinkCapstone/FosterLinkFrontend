@@ -124,7 +124,7 @@ export const Agencies = () => {
                     :
                     <div className="w-screen h-full items-center justify-items-center">
                         <h1 className="text-3xl font-bold my-2 text-center">Agencies</h1>
-                        <div className="w-fit h-full flex flex-col items-center gap-2 pb-3">
+                        <div className="w-7xl mx-auto h-full flex flex-col items-center gap-2 pb-3">
                             {
                                 auth.admin &&
                                 <Alert className='w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700' variant="default">
