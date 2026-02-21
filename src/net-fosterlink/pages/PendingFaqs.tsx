@@ -13,8 +13,6 @@ import { StatusDialog } from "../components/StatusDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 import { Paginator } from "../components/Paginator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { AlertCircleIcon } from "lucide-react";
 import { confirm } from "../components/ConfirmDialog";
 
 const TAB_PENDING = "pending";
