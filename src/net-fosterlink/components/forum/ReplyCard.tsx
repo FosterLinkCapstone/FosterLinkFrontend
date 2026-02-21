@@ -13,15 +13,18 @@ import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 import { useNavigate } from "react-router";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { VerifiedCheck } from "../VerifiedCheck";
+import { HiddenReplyCard } from "./HiddenReplyCard";
 
 interface ReplyCardProps {
   reply: ReplyModel;
   onReply: (username: string) => void;
   onReplyUpdate?: (updatedReply: ReplyModel) => void;
   onReplyDelete?: (replyId: number) => void;
+  onReplyRestore?: (replyId: number) => void;
+  onReplyHide?: (replyId: number, hiddenBy: string) => void;
 }
 
-export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpdate, onReplyDelete }) => {
+export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpdate, onReplyDelete, onReplyRestore, onReplyHide }) => {
   const auth = useAuth()
   const threadApiRef = threadApi(auth)
   const [isLiked, setIsLiked] = useState<boolean>(reply.liked)
@@ -35,13 +38,22 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  if (reply.postMetadata?.hidden && auth.admin) {
+    return (
+      <HiddenReplyCard
+        reply={reply}
+        onReplyDelete={onReplyDelete}
+        onReplyRestore={onReplyRestore}
+      />
+    )
+  }
+
   const likeReply = () => {
     if (auth.isLoggedIn()) {
       setIsLiked(!isLiked)
       reply.likeCount += isLiked ? -1 : 1
       threadApiRef.likeReply(reply.id).then(res => {
         if (res.isError) {
-          // Revert the like count change on error
           setIsLiked(!isLiked)
           reply.likeCount += isLiked ? 1 : -1
         }
@@ -85,6 +97,23 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
     }
   }
 
+  const hideReply = async () => {
+    setLoading(true)
+    const res = await confirm({
+      message: 'Are you sure you want to hide this reply? It will only be visible to administrators.',
+    })
+    if (res) {
+      threadApiRef.hideReply(reply.id, true).then(result => {
+        setLoading(false)
+        if (!result.isError && onReplyHide) {
+          onReplyHide(reply.id, auth.getUserInfo()!.username)
+        }
+      })
+    } else {
+      setLoading(false)
+    }
+  }
+
   return (
     <Card className="p-4 mb-4 border-border">
       <div className="flex gap-4">
@@ -120,29 +149,29 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
             </span>
           </div>
 
-          {
-            editing ? (
-              <div className="grid gap-2 mb-3">
-                <Textarea
-                  value={editedContent}
-                  onChange={(e) => {
-                    setEditedContent(e.target.value)
-                  }}
-                  className="w-full min-h-[100px]"
-                />
-                <span className="text-red-500">{fieldErrors["content"]}</span>
-              </div>
-            ) : (
-              <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
-            )
-          }
+          {editing ? (
+            <div className="grid gap-2 mb-3">
+              <Textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="w-full min-h-[100px]"
+              />
+              <span className="text-red-500">{fieldErrors["content"]}</span>
+            </div>
+          ) : (
+            <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
+          )}
 
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               Posted at {formatDate(new Date(reply.createdAt))}
             </span>
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()} onClick={likeReply}>
+              <button
+                className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75"
+                disabled={!auth.isLoggedIn()}
+                onClick={likeReply}
+              >
                 {isLiked ? <>
                   <Heart fill="currentColor" className="h-4 w-4 text-destructive"/>
                   <span className="text-sm text-destructive">{reply.likeCount}</span>
@@ -151,35 +180,43 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                   <span className="text-sm text-muted-foreground">{reply.likeCount}</span>
                 </>}
               </button>
-              { auth.isLoggedIn() && <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => onReply(reply.author.username)}
-              >
-                Reply
-              </Button> }
-
+              {auth.isLoggedIn() && (
+                <Button variant="ghost" size="sm" onClick={() => onReply(reply.author.username)}>
+                  Reply
+                </Button>
+              )}
             </div>
           </div>
-          <div className="flex flex-row gap-2">
-              {
-            auth.isLoggedIn() && (auth.admin || auth.getUserInfo()!.id === reply.author.id) &&
-            <div className="mt-2 flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="bg-red-200 text-red-400" 
-                onClick={deleteReply}
-              >
-                Delete
-              </Button>
-            </div>
-          }
-          {
-            auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id && (
+
+          <div className="flex flex-row gap-2 flex-wrap">
+            {auth.isLoggedIn() && auth.admin && (
               <div className="mt-2 flex items-center gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-red-200 text-red-400"
+                  onClick={hideReply}
+                >
+                  Hide
+                </Button>
+              </div>
+            )}
+            {auth.isLoggedIn() && !auth.admin && auth.getUserInfo()!.id === reply.author.id && (
+              <div className="mt-2 flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-red-200 text-red-400"
+                  onClick={deleteReply}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
+            {auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id && (
+              <div className="mt-2 flex items-center gap-2">
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     if (editing) {
@@ -192,19 +229,14 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                 >
                   {editing ? 'Cancel' : 'Edit'}
                 </Button>
-                {
-                  editing && <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={submitEdit}
-                  >
+                {editing && (
+                  <Button variant="outline" size="sm" onClick={submitEdit}>
                     Submit
                   </Button>
-                }
+                )}
               </div>
-            )
-          }
-          <BackgroundLoadSpinner loading={loading} />
+            )}
+            <BackgroundLoadSpinner loading={loading} />
           </div>
         </div>
       </div>

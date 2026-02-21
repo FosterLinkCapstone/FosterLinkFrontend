@@ -102,13 +102,13 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
       setLoading(false)
     })
   }
-  const deleteThread = async () => {
+  const hideThread = async () => {
     setLoading(true)
     const res = await confirm({
       message: 'Are you sure you want to delete this thread?',
     })
     if (res) {
-      threadApiRef.deleteThread(thread.id).then(() => {
+      threadApiRef.setThreadHidden(thread.id, true).then(() => {
         setLoading(false)
         window.location.href = `/threads`
       })
@@ -137,6 +137,17 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
 
   const handleReplyDelete = (replyId: number) => {
     setReplies(replies.filter(r => r.id !== replyId))
+  };
+
+  const handleReplyRestore = (replyId: number) => {
+    setReplies(replies.map(r => r.id === replyId ? { ...r, postMetadata: undefined } : r))
+  };
+
+  const handleReplyHide = (replyId: number, hiddenBy: string) => {
+    setReplies(replies.map(r => r.id === replyId
+      ? { ...r, postMetadata: { id: r.postMetadata?.id ?? 0, hidden: true, userDeleted: false, locked: false, verified: false, hiddenBy } }
+      : r
+    ))
   };
   return (
     <div className="min-h-screen bg-background">
@@ -231,7 +242,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                   <div className="flex items-center gap-1.5">
                     {
                       (auth.admin || auth.getUserInfo()!.id === thread.author.id) &&
-                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={deleteThread}>Delete</Button> 
+                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={hideThread}>{auth.admin ? "Hide" : "Delete"}</Button> 
                     }
                     {
                       auth.getUserInfo()!.id === thread.author.id && (
@@ -277,6 +288,8 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       onReply={handleReply}
                       onReplyUpdate={handleReplyUpdate}
                       onReplyDelete={handleReplyDelete}
+                      onReplyRestore={handleReplyRestore}
+                      onReplyHide={handleReplyHide}
                     />
                 )
               )

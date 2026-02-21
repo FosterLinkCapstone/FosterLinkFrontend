@@ -13,10 +13,11 @@ import { threadApi } from "@/net-fosterlink/backend/api/ThreadApi";
 
 interface ThreadPreviewProps {
     thread: ThreadModel,
-    auth: AuthContextType
+    auth: AuthContextType,
+    basePath?: string
 }
 
-export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }) => {
+export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, basePath = "/threads/thread/" }) => {
   const [isLiked, setIsLiked] = useState<boolean>(thread.liked);
   const formatDate = (jsonDate: Date) => {
     const date = new Date(jsonDate)
@@ -34,7 +35,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
   const navigate = useNavigate()
 
   const goToThread = () => {
-    navigate(`/threads/thread/${thread.id}`)
+    navigate(`${basePath}${thread.id}`)
   }
 
   const goToProfile = (e: React.MouseEvent) => {

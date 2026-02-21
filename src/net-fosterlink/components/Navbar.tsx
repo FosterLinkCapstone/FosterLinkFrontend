@@ -46,6 +46,16 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                           Create a new thread. Create a title and some content!
                         </ListItem>
                       )}
+                      {
+                        auth.admin && (
+                          <ListItem href="/threads/hidden" title="Hidden Threads">
+                            <div className="flex flex-col items-center">
+                              <AdminOnlyBadge /> 
+                              <span>Review and restore or permanently delete hidden threads.</span>
+                            </div>
+                          </ListItem>
+                        )
+                      }
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
