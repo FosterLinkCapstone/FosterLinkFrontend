@@ -46,6 +46,16 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                           Create a new thread. Create a title and some content!
                         </ListItem>
                       )}
+                      {
+                        auth.admin && (
+                          <ListItem href="/threads/hidden" title="Hidden Threads">
+                            <div className="flex flex-col items-center">
+                              <AdminOnlyBadge /> 
+                              <span>Review and restore or permanently delete hidden threads.</span>
+                            </div>
+                          </ListItem>
+                        )
+                      }
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -173,7 +183,7 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
             </Button>
 
             {userInfo && auth.isLoggedIn() && (
-              <Badge variant="outline" className="ml-4">
+              <Badge variant="outline" className="ml-4 dark:bg-muted/80 dark:border-border">
                 Logged in as {userInfo.username}
               </Badge>
             )}

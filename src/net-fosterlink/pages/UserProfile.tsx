@@ -270,7 +270,7 @@ export const UserProfile = () => {
               )}
               {profileMetadata.agencyName !== null && (
                 <Badge
-                  className="px-4 py-1 rounded-full border-primary/50 bg-primary/10 text-primary cursor-pointer"
+                  className="px-4 py-1 rounded-full border-primary/50 bg-primary/10 text-primary cursor-pointer dark:bg-primary/30 dark:text-primary-foreground dark:border-primary/60"
                   title={profileMetadata.agencyName ? `User is an agent of ${profileMetadata.agencyName}${profileMetadata.agencyCount > 1 ? ` + ${profileMetadata.agencyCount - 1} more` : ''}` : undefined}
                   onClick={handleAgencyClick}
                 >

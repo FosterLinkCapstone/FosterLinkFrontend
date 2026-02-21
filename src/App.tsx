@@ -15,6 +15,8 @@ import { Agencies } from './net-fosterlink/pages/Agencies'
 import { PendingAgencies } from './net-fosterlink/pages/PendingAgencies'
 import { NotFound } from './net-fosterlink/pages/NotFound'
 import { UserProfile } from './net-fosterlink/pages/UserProfile'
+import { HiddenThreads } from './net-fosterlink/pages/HiddenThreads'
+import { HiddenThreadLoader } from './net-fosterlink/pages/HiddenThreadLoader'
 
 function App() {
 
@@ -37,6 +39,8 @@ function App() {
               <Route path="/register" element={<Register/>}/>
               <Route path="/threads" element={<Threads/>}/>
               <Route path="/threads/thread/:threadId" element={<ThreadLoader preloadedThread={undefined}/>}></Route>
+              <Route path="/threads/hidden" element={<AdminOnly><HiddenThreads/></AdminOnly>}/>
+              <Route path="/threads/hidden/thread/:threadId" element={<AdminOnly><HiddenThreadLoader/></AdminOnly>}/>
               <Route path="/faq" element={<FaqHome/>}/>
               <Route path="/faq/pending" element={<AdminOnly><PendingFaqs/></AdminOnly>}/>
               <Route path="/agencies" element={<Agencies/>}/>

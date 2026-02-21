@@ -1,13 +1,14 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
+import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError";
 import type { AuthContextType } from "../AuthContext";
 import type { CreateThreadResponse } from "../models/api/CreateThreadResponse";
+import type { GetHiddenThreadsResponse } from "../models/api/GetHiddenThreadsResponse";
 import type { GetThreadsResponse } from "../models/api/GetThreadsResponse";
 import type { SearchBy } from "../models/api/SearchBy";
 import type { ThreadSearchResponse } from "../models/api/ThreadSearchResponse";
 import type { ReplyModel } from "../models/ReplyModel";
 import type { ThreadModel } from "../models/ThreadModel";
-
-// TODO implement error wrapper everywhere necessary 
+import type { HiddenThreadModel } from "../models/HiddenThreadModel";
 
 export interface ThreadApiType {
     search: (searchBy: SearchBy, searchTerm: string, pageNumber?: number) => Promise<ThreadSearchResponse>,
@@ -21,10 +22,15 @@ export interface ThreadApiType {
     likeThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     createThread: (title: string, content: string, tags: string[]) => Promise<CreateThreadResponse>,
     editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>,
-    deleteThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     editReplyContent: (replyId: number, newContent: string) => Promise<ErrorWrapper<ReplyModel|undefined>>,
     deleteReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
+    hideReply: (replyId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
+    deleteHiddenReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
     searchByUser: (userId: number, pageNumber: number) => Promise<ErrorWrapper<GetThreadsResponse>>
+    getHiddenThreads: (hiddenThreadType: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenThreadsResponse>>
+    setThreadHidden: (threadId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>,
+    getHiddenThread: (threadId: number) => Promise<ErrorWrapper<HiddenThreadModel | undefined>>,
+    deleteHiddenThread: (threadId: number) => Promise<ErrorWrapper<boolean>>
 }
 
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
@@ -38,12 +44,18 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 })
                 return {response: res.data, errorMessage: undefined}
             } catch (err: any) {
-                if (err.repsonse) {
-                    switch (err.response.code) {
+                if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {response: [], errorMessage: validationError}
+                    }
+                    
+                    switch (err.response.status) {
                         case 404:
                             return {response: [], errorMessage: "There is no user with that username!"}
                         case 400:
-                            return {response: [], errorMessage: "Incorrect search by syntadx"}
+                            return {response: [], errorMessage: "Invalid search parameters"}
                         default:
                             return {response: [], errorMessage: "Internal server error. Please try again later."}
                     }
@@ -141,13 +153,19 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
+                        case 400:
+                            return {data: undefined, error: "Invalid reply content!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be logged in to reply!", isError: true}
                         case 404:
                             return {data: undefined, error: "Thread not found!", isError: true}
-                        case 400:
-                            return {data: undefined, error: "Invalid reply content!", isError: true}
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }
@@ -191,23 +209,29 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
             }
             return {data: undefined, error: "Internal client error", isError: true}
         },
-        createThread: async(title: string, content: string, tags: string[]): Promise<CreateThreadResponse> => { // TODO implement tags
-            const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: tags})
-                try {
-                    return {thread: res.data, error: undefined}
-                } catch (err: any) {
-                    if (err.response) {
-                        switch(err.response.status) {
-                            case 403:
-                                return {thread: undefined, error: "You must be logged in to do that!"}
-                            case 400:
-                                return {thread: undefined, error: "Your post content or title was too long!"} // TODO assuming that this will be a thing that gets added eventually
-                            default:
-                                return {thread: undefined, error: "Internal server error"}
-                        }
+        createThread: async(title: string, content: string, tags: string[]): Promise<CreateThreadResponse> => {
+            try {
+                const res = await auth.api.post(`/threads/create`, {title: title, content: content, tags: tags})
+                return {thread: res.data, error: undefined}
+            } catch (err: any) {
+                if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {thread: undefined, error: validationError, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
+                    switch(err.response.status) {
+                        case 400:
+                            return {thread: undefined, error: "Invalid thread data. Please check your inputs."}
+                        case 403:
+                            return {thread: undefined, error: "You must be logged in to do that!"}
+                        default:
+                            return {thread: undefined, error: "Internal server error"}
                     }
                 }
-                return {thread: undefined, error: "Internal client error"}
+            }
+            return {thread: undefined, error: "Internal client error"}
         },
         editThreadContent: async(threadId: number, newContent: string): Promise<ErrorWrapper<ThreadModel|undefined>> => {
             try {
@@ -215,9 +239,19 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
+                        case 400:
+                            return {data: undefined, error: "Invalid thread content!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be the thread author to do that!", isError: true}
+                        case 404:
+                            return {data: undefined, error: "Thread not found!", isError: true}
                         default:
                             return {data: undefined, error: "Internal server error", isError: true}
                     }
@@ -225,35 +259,21 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
             }
             return {data: undefined, error: "Internal client error", isError: true}
         },
-        deleteThread: async(threadId: number): Promise<ErrorWrapper<boolean>> => {
-            try {
-                const res = await auth.api.delete(`/threads/delete?threadId=${threadId}`)
-                if (res.status == 200) {
-                    return {data: true, error: undefined, isError: false}
-                }
-                return {data: false, error: "Internal server error", isError: true}
-            } catch(err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: false, error: "You must be the thread author to do that!", isError: true}
-                        case 404:
-                            return {data: false, error: "Thread not found!", isError: true}
-                        default:
-                            return {data: false, error: "Internal server error", isError: true}
-                        }
-                    }
-                }
-                return {data: false, error: "Internal server error", isError: true}
-            }
-        ,
         editReplyContent: async(replyId: number, newContent: string): Promise<ErrorWrapper<ReplyModel|undefined>> => {
             try {
                 const res = await auth.api.put(`/threads/replies/update`, {replyId: replyId, content: newContent})
                 return {data: res.data, error: undefined, isError: false}
             } catch (err: any) {
                 if (err.response) {
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    if (validationError) {
+                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
+                    }
+                    
                     switch(err.response.status) {
+                        case 400:
+                            return {data: undefined, error: "Invalid reply content!", isError: true}
                         case 403:
                             return {data: undefined, error: "You must be the reply author to do that!", isError: true}
                         case 404:
@@ -286,6 +306,42 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 }
                 return {data: false, error: "Internal server error", isError: true}
             },
+            hideReply: async(replyId: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
+                try {
+                    await auth.api.post(`/threads/replies/hide?replyId=${replyId}&hidden=${hidden}`)
+                    return {data: true, error: undefined, isError: false}
+                } catch(err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 403:
+                                return {data: false, error: "You do not have permission to do that!", isError: true}
+                            case 404:
+                                return {data: false, error: "Reply not found!", isError: true}
+                            default:
+                                return {data: false, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: false, error: "Internal client error", isError: true}
+            },
+            deleteHiddenReply: async(replyId: number): Promise<ErrorWrapper<boolean>> => {
+                try {
+                    await auth.api.delete(`/threads/replies/hidden/delete?replyId=${replyId}`)
+                    return {data: true, error: undefined, isError: false}
+                } catch(err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 403:
+                                return {data: false, error: "You do not have permission to do that!", isError: true}
+                            case 404:
+                                return {data: false, error: "Hidden reply not found!", isError: true}
+                            default:
+                                return {data: false, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: false, error: "Internal client error", isError: true}
+            },
             searchByUser: async(userId: number, pageNumber: number): Promise<ErrorWrapper<GetThreadsResponse>> => {
                 try {
                     const res = await auth.api.get(`/threads/search-by-user?userId=${userId}&pageNumber=${pageNumber}`)
@@ -301,6 +357,76 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                     }
                 }
                 return {data: undefined, error: "Internal client error", isError: true}
+            },
+            getHiddenThreads: async(hiddenThreadType: 'ADMIN' | 'USER', pageNumber: number): Promise<ErrorWrapper<GetHiddenThreadsResponse>> => {
+                try {
+                    const res = await auth.api.post(`/threads/getHidden?hiddenThreadType=${hiddenThreadType}&pageNumber=${pageNumber}`)
+                    return {data: res.data, error: undefined, isError: false}
+                } catch (err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 403:
+                                return {data: undefined, error: "You must be an administrator to view hidden threads!", isError: true}
+                            default:
+                                return {data: undefined, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: undefined, error: "Internal client error", isError: true}
+            },
+            setThreadHidden: async(threadId: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
+                try {
+                    await auth.api.post(`/threads/hide?threadId=${threadId}&hidden=${hidden}`)
+                    return {data: true, error: undefined, isError: false}
+                } catch (err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 403:
+                                return {data: false, error: "You do not have permission to do that!", isError: true}
+                            case 404:
+                                return {data: false, error: "Thread not found!", isError: true}
+                            default:
+                                return {data: false, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: false, error: "Internal client error", isError: true}
+            },
+            getHiddenThread: async(threadId: number): Promise<ErrorWrapper<HiddenThreadModel | undefined>> => {
+                try {
+                    const res = await auth.api.get(`/threads/hidden?threadId=${threadId}`)
+                    return {data: res.data, error: undefined, isError: false}
+                } catch (err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 404:
+                                return {data: undefined, error: "Hidden thread not found!", isError: true}
+                            case 403:
+                                return {data: undefined, error: "You do not have permission to do that!", isError: true}
+                            default:
+                                return {data: undefined, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: undefined, error: "Internal client error", isError: true}
+            },
+            deleteHiddenThread: async(threadId: number): Promise<ErrorWrapper<boolean>> => {
+                try {
+                    await auth.api.delete(`/threads/hidden/delete?threadId=${threadId}`)
+                    return {data: true, error: undefined, isError: false}
+                } catch (err: any) {
+                    if (err.response) {
+                        switch(err.response.status) {
+                            case 403:
+                                return {data: false, error: "You do not have permission to do that!", isError: true}
+                            case 404:
+                                return {data: false, error: "Hidden thread not found!", isError: true}
+                            default:
+                                return {data: false, error: "Internal server error", isError: true}
+                        }
+                    }
+                }
+                return {data: false, error: "Internal client error", isError: true}
             }
         }    
     }

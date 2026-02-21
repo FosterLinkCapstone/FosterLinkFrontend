@@ -19,13 +19,13 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
   const staticMapUrl = useRef(`https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=300x200&markers=color:red%7C${encodedAddress}&key=${auth.getMapsApiKey()}`);
 
   return (
-    <Card id={`${agency.id}`} className={`w-full h-fit max-w-4xl border-border ${highlighted ? "ring-2 ring-blue-400" : ""}`}>
+    <Card id={`${agency.id}`} className={`w-full h-fit max-w-7xl border-border ${highlighted ? "ring-2 ring-blue-400" : ""}`}>
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-border">
           <h2 className="text-2xl font-bold mb-4 text-center">{agency.agencyName}</h2>
           {
             (agency.approved == 2 && auth.admin) && 
-            <Button variant="outline" className="bg-red-200 text-red-400" onClick={() => onRemove(agency.id)}>Remove</Button>
+            <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)}>Remove</Button>
           }
           <div className="bg-muted rounded-lg p-4 mb-4">
             <p className="text-foreground leading-relaxed">

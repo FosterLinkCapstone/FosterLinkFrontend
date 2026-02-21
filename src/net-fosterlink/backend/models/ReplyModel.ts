@@ -1,3 +1,4 @@
+import type { PostMetadataModel } from "./PostMetadataModel"
 import type { UserModel } from "./UserModel"
 
 export interface ReplyModel {
@@ -8,4 +9,5 @@ export interface ReplyModel {
     author: UserModel,
     likeCount: number,
     liked: boolean,
+    postMetadata?: PostMetadataModel,
 }

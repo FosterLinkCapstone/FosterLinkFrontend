@@ -1,14 +1,14 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
+import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError";
 import type { AuthContextType } from "../AuthContext";
 import type { AgentInfoModel } from "../models/AgentInfoModel";
-import type { LoginResponse } from "../models/api/LoginResponse";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 
 export interface UserApiType {
-    login: (email: string, password: string) => Promise<LoginResponse>,
+    login: (email: string, password: string) => Promise<ErrorWrapper<string>>,
     getInfo: () => Promise<ErrorWrapper<UserInfoResponse>>,
-    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<{error: string | undefined, jwt: string}>
+    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<ErrorWrapper<string>>
     isAdmin: () => Promise<ErrorWrapper<boolean>>
     isFaqAuthor: () => Promise<ErrorWrapper<boolean>>
     getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
@@ -17,32 +17,40 @@ export interface UserApiType {
 
 export const userApi = (auth: AuthContextType): UserApiType => {
     return {
-        login: async (email: string, password: string): Promise<LoginResponse> => {
-        let response: LoginResponse = {
+        login: async (email: string, password: string): Promise<ErrorWrapper<string>> => {
+        let response: ErrorWrapper<string> = {
             isError: false,
-            error: "",
-            jwt: ""
+            error: undefined,
+            data: ""
         }
         try {
             const res = await auth.api.post("/users/login", {
                 email: email,
                 password: password
             })
-            response.jwt = res.data.token
+            response.data = res.data.token
             return response
         } catch (err: any) {
+            response.isError = true
+            response.data = undefined
             if (err.response) {
+                // Check for validation errors first
+                const validationError = extractValidationError(err.response);
+                if (validationError) {
+                    response.validationErrors = getValidationErrors(err.response)
+                }
+                
                 switch(err.response.status) {
+                    case 400:
+                        response.error = "Invalid login credentials format"
+                        return response
                     case 401:
-                        response.isError = true
                         response.error = "Incorrect password"
                         return response
                     case 404:
-                        response.isError = true
                         response.error = "That email was not found"
                         return response
                     default:
-                        response.isError = true
                         response.error = "Unknown error!"
                         return response
                 }
@@ -78,7 +86,7 @@ export const userApi = (auth: AuthContextType): UserApiType => {
             }
             return {data: {found: false, user: undefined}, error: "Internal client error", isError: true}
         },
-        register: async (info: {firstName: string, lastName: string, username: string, email: string, password: string}): Promise<{error: string | undefined, jwt: string}> => {
+        register: async (info: {firstName: string, lastName: string, username: string, email: string, password: string}): Promise<ErrorWrapper<string>> => {
             
             try {
                 const res = await auth.api.post(`/users/register`, {
@@ -87,30 +95,49 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 })
                 return {
                     error: undefined,
-                    jwt: res.data.token
+                    isError: false,
+                    data: res.data.token
                 }
             } catch(err: any) {
                 if (err.response) {
-                    if (err.response.status == 429) {
-                        return {
-                            error: "You have already registered in the last 10 minutes, and need to wait to create the next one.",
-                            jwt: ""
-                        }
-                    } else if (err.response.status == 409) {
-                        return {
-                            error: "A user with that email or username already exists.",
-                            jwt: ""
-                        }
-                    } else {
-                        return {
-                            error: "Unknown error",
-                            jwt: ""
+                    // Check for validation errors first
+                    const validationError = extractValidationError(err.response);
+                    let error = {}
+                    if (validationError) {
+                        error = {
+                            validationErrors: getValidationErrors(err.response),
+                            data: undefined,
+                            isError: true
                         }
                     }
+                    
+                    if (err.response.status == 400) {
+                        error = {
+                            ...error,
+                            error: "Invalid registration data. Please check your inputs.",
+                        }
+                    } else if (err.response.status == 429) {
+                        error = {
+                            ...error,
+                            error: "You have already registered in the last 10 minutes, and need to wait to create the next one.",
+                        }
+                    } else if (err.response.status == 409) {
+                        error = {
+                            ...error,
+                            error: "A user with that email or username already exists.",
+                        }
+                    } else {
+                        error = {
+                            ...error,
+                            error: "Unknown error",
+                        }
+                    }
+                    return error as ErrorWrapper<string>;
                 } else {
                     return {
                         error: "Unknown error",
-                        jwt: ""
+                        isError: true,
+                        data: undefined
                     }
                 }
             }

@@ -21,13 +21,15 @@ import type { FaqRequestModel } from "@/net-fosterlink/backend/models/FaqRequest
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
 export const CreateFaqCard = ({
-    handleSubmitResponse, 
+    handleSubmitResponse,
     handleClose,
-    requests
-} : {
-    handleSubmitResponse: (title: string, summary: string, content: string, answeringId: number) => Promise<void>, 
+    requests,
+    serverFieldErrors
+}: {
+    handleSubmitResponse: (title: string, summary: string, content: string, answeringId: number) => Promise<void>,
     handleClose: () => void,
-    requests: FaqRequestModel[] | null
+    requests: FaqRequestModel[] | null,
+    serverFieldErrors?: { [key: string]: string }
 }) => {
     const [newFaqTitle, setNewFaqTitle] = useState('')
     const [answeringId, setAnsweringId] = useState(-1)
@@ -112,18 +114,25 @@ export const CreateFaqCard = ({
                     </Command>
                 </PopoverContent>
             </Popover>
-            
-            <Input 
-                onChange={(e) => setNewFaqSummary(e.target.value)} 
+            {serverFieldErrors?.title && <span className="text-red-500">{serverFieldErrors.title}</span>}
+
+            <div className="grid gap-2">
+              <Input
+                onChange={(e) => setNewFaqSummary(e.target.value)}
                 value={newFaqSummary}
-                type="text" 
+                type="text"
                 placeholder="FAQ Summary. Typically 2-3 sentences"
-            />
-            <Textarea 
-                onChange={(e) => setNewFaqContent(e.target.value)} 
+              />
+              <span className="text-red-500">{serverFieldErrors?.summary}</span>
+            </div>
+            <div className="grid gap-2">
+              <Textarea
+                onChange={(e) => setNewFaqContent(e.target.value)}
                 value={newFaqContent}
                 placeholder="FAQ Content. Typically an in depth answer to the question."
-            />
+              />
+              <span className="text-red-500">{serverFieldErrors?.content}</span>
+            </div>
             <Button 
                 onClick={() => {
                     create()
