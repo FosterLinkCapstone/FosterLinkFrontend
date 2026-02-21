@@ -14,9 +14,10 @@ interface PendingFaqCardProps {
     expanded: boolean;
     onApprove: (faq: PendingFaqModel) => void;
     onDeny: (faq: PendingFaqModel) => void;
+    onDelete: (faq: PendingFaqModel) => void;
 }
 
-export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({ faq, onExpand, onCollapse, onShowDetail, expanded, onApprove, onDeny }) => {
+export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({ faq, onExpand, onCollapse, onShowDetail, expanded, onApprove, onDeny, onDelete }) => {
 
     return (
         <div className="flex flex-col w-full gap-1">
@@ -63,46 +64,58 @@ export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({ faq, onExpand, o
                     </button>
                 </div>
             </div>
-            {expanded && <div className="bg-muted p-6 text-center">
-                <p className="text-foreground mb-4">{faq.summary}</p>
-                <div className="flex flex-col items-center gap-2">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onShowDetail();
-                        }}
-                        className="text-sm text-primary hover:text-primary/90 font-medium"
-                    >
-                        Click for more!
-                    </button>
-                    <div className="flex items-center gap-4">
-                        <Button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onApprove(faq);
-                            }}
-                            className="text-sm text-green-700 hover:text-green-800 font-medium dark:text-green-300 dark:hover:text-green-200 dark:bg-emerald-500/20 dark:border-emerald-400/50 dark:hover:bg-emerald-500/30"
-                            variant="outline"
-                        >
-                            Approve
-                        </Button>
-                        {
-                            faq.approvalStatus !== ApprovalStatus.DENIED && 
-                            <Button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeny(faq);
-                                }}
-                                className="text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30"
-                                variant="outline"
-                            >
-                                Deny
-                            </Button>
-                        }
-
-                    </div>
+            {expanded && (
+              <>
+                <div className="bg-muted p-6 text-center">
+                  <p className="text-foreground mb-4">{faq.summary}</p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShowDetail();
+                    }}
+                    className="text-sm text-primary hover:text-primary/90 font-medium"
+                  >
+                    Click for more!
+                  </button>
                 </div>
-            </div>}
+            <div className="py-0.5 px-2 border-t border-border bg-background flex w-full gap-2">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onApprove(faq);
+                    }}
+                    className="flex-1 min-w-0 text-sm text-green-700 hover:text-green-800 font-medium dark:text-green-300 dark:hover:text-green-200 dark:bg-emerald-500/20 dark:border-emerald-400/50 dark:hover:bg-emerald-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
+                    variant="outline"
+                  >
+                    Approve
+                  </Button>
+                  {faq.approvalStatus !== ApprovalStatus.DENIED && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeny(faq);
+                      }}
+                      className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
+                      variant="outline"
+                    >
+                      Deny
+                    </Button>
+                  )}
+                  {faq.approvalStatus === ApprovalStatus.DENIED && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(faq);
+                      }}
+                      className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
+                      variant="outline"
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
             </Card>
         </div>
     );

@@ -12,6 +12,7 @@ import { Alert, AlertTitle } from '@/components/ui/alert';
 import { AlertCircleIcon } from 'lucide-react';
 import type { ErrorWrapper } from '../util/ErrorWrapper';
 import { StatusDialog } from '../components/StatusDialog';
+import { confirm } from '../components/ConfirmDialog';
 import type { ApprovalCheckModel } from '../backend/models/ApprovalCheckModel';
 import { CreateFaqRequestCard } from '../components/faq/CreateFaqRequestCard';
 import type { FaqRequestModel } from '../backend/models/FaqRequestModel';
@@ -82,14 +83,20 @@ export const FaqHome = () => {
     setExpandedId(null);
   };
 
-  const onRemove = (id: number) => {
-    faqApiRef.approve(id, false).then(res => {
-        if (!res.isError && res.data) {
-          setFaqs(faqs.filter(f => f.id !== id))
-          setFaqRemoved(true)
+  const onRemove = async (id: number) => {
+    const message = auth.admin
+      ? "Are you sure you want to hide this FAQ response? It can be restored from the Hidden FAQs page."
+      : "Are you sure you want to delete this FAQ response? It can be restored from the Hidden FAQs page.";
+    const confirmed = await confirm({ message });
+    if (confirmed) {
+      faqApiRef.setFaqHidden(id, true).then(res => {
+        if (!res.isError) {
+          setFaqs(faqs.filter(f => f.id !== id));
+          setFaqRemoved(true);
         }
-    })
-  }
+      });
+    }
+  };
 
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
@@ -174,7 +181,7 @@ export const FaqHome = () => {
     <div className="min-h-screen bg-background">
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
-      <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={"FAQ response successfully removed"} subtext='Moved back to pending requests'/>
+      <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={auth.admin ? "FAQ response successfully hidden" : "FAQ response deleted"} subtext={auth.admin ? 'It can be restored from the Hidden FAQs page' : ""}/>
       <StatusDialog open={getRequestsError != ''} onOpenChange={() => setRequestsError('')} isSuccess={false} title="Error loading requests" subtext={getRequestsError}/>
       {
         (suggestionCreationError !== null) && ((suggestionCreationError !== '') ? 
@@ -247,7 +254,7 @@ export const FaqHome = () => {
                 onCollapse={handleCollapse}
                 onShowDetail={() => handleShowDetail(faq)}
                 expanded={expandedId === faq.id}
-                canEdit={(auth.admin ? false : auth.admin!)}
+                canEdit={auth.admin || (!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id)}
                 onRemove={onRemove}
             />
         ))}

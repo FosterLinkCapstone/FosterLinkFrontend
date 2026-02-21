@@ -44,7 +44,6 @@ export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onS
                 <span className="font-medium">{faq.author.username}</span>
               </button>
               {auth.admin && <span>Approved by {faq.approvedByUsername}</span>}
-              {(canEdit && expanded) && <Button onClick={() => onRemove(faq.id)} variant="outline" className="bg-red-200 h-6 text-red-400">Remove</Button>}
             </div>
           </div>
           <button 
@@ -65,16 +64,36 @@ export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onS
           </button>
         </div>
       </div>
-      {expanded && <div className="bg-muted p-6 text-center">
-        <p className="text-foreground">{faq.summary}</p>
-        <div className="mt-4">
-          <button 
-            className="text-sm text-primary hover:text-primary/90 font-medium" onClick={onShowDetail}
-          >
-            Click for more!
-          </button>
-        </div>
-      </div>}
+      {expanded && (
+        <>
+          <div className="bg-muted p-6 text-center">
+            <p className="text-foreground mb-4">{faq.summary}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowDetail();
+              }}
+              className="text-sm text-primary hover:text-primary/90 font-medium"
+            >
+              Click for more!
+            </button>
+          </div>
+          {canEdit && (
+            <div className="py-0.5 px-2 border-t border-border bg-background flex w-full gap-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(faq.id);
+                }}
+                className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
+                variant="outline"
+              >
+                {auth.admin ? "Hide" : "Delete"}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
     </Card>
   );
 };

@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
-import type { HiddenThreadModel } from "../backend/models/HiddenThreadModel";
+import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
+import type { FaqModel } from "../backend/models/FaqModel";
 import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { AlertCircleIcon } from "lucide-react";
 import { Paginator } from "../components/Paginator";
-import { threadApi } from "../backend/api/ThreadApi";
-import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
+import { faqApi } from "../backend/api/FaqApi";
 import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
+import { HiddenFaqCard } from "../components/faq/HiddenFaqCard";
+import { FaqDialog } from "../components/faq/FaqDialog";
 
 const TAB_USER = "user";
 const TAB_ADMIN = "admin";
@@ -24,35 +23,38 @@ const tabToFilter = (tab: TabValue): HiddenByFilter => (tab === TAB_ADMIN ? "ADM
 
 const isValidTab = (t: string | null): t is TabValue => t === TAB_USER || t === TAB_ADMIN;
 
-export const HiddenThreads = () => {
+export const HiddenFaqs = () => {
   const auth = useAuth();
-  const threadApiRef = useRef(threadApi(auth));
-  threadApiRef.current = threadApi(auth);
+  const faqApiRef = useRef(faqApi(auth));
+  faqApiRef.current = faqApi(auth);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabFromUrl = (searchParams.get(TAB_PARAM) ?? TAB_USER).toLowerCase();
   const activeTab: TabValue = isValidTab(tabFromUrl) ? tabFromUrl : TAB_USER;
   const hiddenByFilter = tabToFilter(activeTab);
 
-  const [threads, setThreads] = useState<HiddenThreadModel[]>([]);
+  const [faqs, setFaqs] = useState<HiddenFaqModel[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [changeSuccess, setChangeSuccess] = useState<"restore" | "delete" | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailFaq, setDetailFaq] = useState<FaqModel | null>(null);
+  const faqContent = useRef<string>("");
 
   useEffect(() => {
     setLoading(true);
-    threadApiRef.current.getHiddenThreads(hiddenByFilter, 0).then((res) => {
+    faqApiRef.current.getHiddenFaqs(hiddenByFilter, 0).then((res) => {
       if (!res.isError && res.data) {
-        setThreads(res.data.threads);
+        setFaqs(res.data.faqs);
         setTotalPages(res.data.totalPages);
         setCurrentPage(1);
         setError(null);
       } else {
-        setThreads([]);
+        setFaqs([]);
         setTotalPages(0);
-        setError(res.error ?? "Failed to fetch hidden threads");
+        setError(res.error ?? "Failed to fetch hidden FAQs");
       }
     }).finally(() => setLoading(false));
   }, [hiddenByFilter]);
@@ -70,56 +72,69 @@ export const HiddenThreads = () => {
     }
   };
 
-  const handleRestore = async (threadId: number) => {
+  const handleShowDetail = (faq: HiddenFaqModel) => {
+    const asFaqModel: FaqModel = {
+      id: faq.id,
+      title: faq.title,
+      summary: faq.summary,
+      createdAt: faq.createdAt,
+      updatedAt: faq.updatedAt,
+      author: faq.author,
+      approvedByUsername: "",
+    };
+    faqApiRef.current.getContent(faq.id).then((res) => {
+      if (!res.isError && res.data) {
+        faqContent.current = res.data;
+        setDetailFaq(asFaqModel);
+      }
+    });
+  };
+
+  const handleRestore = async (faq: HiddenFaqModel) => {
     const confirmed = await confirm({
-      message:
-        "Are you sure you want to restore this thread? It will become visible to all users.",
+      message: "Are you sure you want to restore this FAQ? It will become visible to all users.",
     });
     if (confirmed) {
-      threadApiRef.current.setThreadHidden(threadId, false).then((res) => {
+      faqApiRef.current.setFaqHidden(faq.id, false).then((res) => {
         if (!res.isError) {
-          setThreads((prev) => prev.filter((t) => t.id !== threadId));
+          setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
           setChangeSuccess("restore");
         } else {
-          setError(res.error ?? "Failed to restore thread");
+          setError(res.error ?? "Failed to restore FAQ");
         }
       });
     }
   };
 
-  const handleDelete = async (threadId: number) => {
+  const handleDelete = async (faq: HiddenFaqModel) => {
     const confirmed = await confirm({
-      message: "Are you sure you want to delete this thread? It will not be recoverable.",
+      message: "Are you sure you want to permanently delete this FAQ? It will not be recoverable.",
     });
     if (confirmed) {
-      threadApiRef.current.deleteHiddenThread(threadId).then((res) => {
+      faqApiRef.current.deleteHiddenFaq(faq.id).then((res) => {
         if (!res.isError) {
-          setThreads((prev) => prev.filter((t) => t.id !== threadId));
+          setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
           setChangeSuccess("delete");
         } else {
-          setError(res.error ?? "Failed to delete thread");
+          setError(res.error ?? "Failed to delete FAQ");
         }
       });
     }
-  };
-
-  const getHiddenByName = (thread: HiddenThreadModel) => {
-    return thread.postMetadata.hiddenBy ?? thread.author.username;
   };
 
   return (
     <div className="min-h-screen bg-background">
       <StatusDialog
-        open={error != null && threads.length > 0}
+        open={error != null && faqs.length > 0}
         onOpenChange={() => setError(null)}
-        title={`Could not ${error?.includes("restore") ? "restore" : "delete"} thread`}
+        title={`Could not ${error?.includes("restore") ? "restore" : "delete"} FAQ`}
         subtext={error ?? "An unknown error occurred"}
         isSuccess={false}
       />
       <StatusDialog
         open={changeSuccess != null}
         onOpenChange={() => setChangeSuccess(null)}
-        title={`Successfully ${changeSuccess === "restore" ? "restored" : "deleted"} thread`}
+        title={`Successfully ${changeSuccess === "restore" ? "restored" : "deleted"} FAQ`}
         subtext=""
         isSuccess={true}
       />
@@ -129,7 +144,7 @@ export const HiddenThreads = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-3xl font-bold mb-6">Hidden Threads</h1>
+        <h1 className="text-3xl font-bold mb-6">Hidden FAQs</h1>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
           <TabsList className="w-full max-w-md">
@@ -146,11 +161,13 @@ export const HiddenThreads = () => {
                 <div className="size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
               </div>
             ) : (
-              <ThreadList
-                threads={threads}
+              <FaqList
+                faqs={faqs}
                 error={error}
-                auth={auth}
-                getHiddenByName={getHiddenByName}
+                expandedId={expandedId}
+                onExpand={setExpandedId}
+                onCollapse={() => setExpandedId(null)}
+                onShowDetail={handleShowDetail}
                 onRestore={handleRestore}
                 onDelete={handleDelete}
               />
@@ -158,72 +175,69 @@ export const HiddenThreads = () => {
           </TabsContent>
         </Tabs>
 
-        <Paginator<HiddenThreadModel[]>
+        <Paginator<HiddenFaqModel[]>
           pageCount={totalPages}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          onPageChanged={async (_pageNum) => {
+          onPageChanged={async (pageNum) => {
+            const res = await faqApiRef.current.getHiddenFaqs(hiddenByFilter, pageNum - 1);
+            if (res.data) {
+              setTotalPages(res.data.totalPages);
+              return res.data.faqs;
+            }
             return [];
           }}
-          onDataChanged={(_data) => {}}
+          onDataChanged={setFaqs}
         />
       </div>
+
+      <FaqDialog
+        detailFaq={detailFaq}
+        content={faqContent.current}
+        handleOpenChange={() => setDetailFaq(null)}
+      />
     </div>
   );
 };
 
-function ThreadList({
-  threads,
+function FaqList({
+  faqs,
   error,
-  auth,
-  getHiddenByName,
+  expandedId,
+  onExpand,
+  onCollapse,
+  onShowDetail,
   onRestore,
   onDelete,
 }: {
-  threads: HiddenThreadModel[];
+  faqs: HiddenFaqModel[];
   error: string | null;
-  auth: ReturnType<typeof useAuth>;
-  getHiddenByName: (t: HiddenThreadModel) => string;
-  onRestore: (id: number) => void;
-  onDelete: (id: number) => void;
+  expandedId: number | null;
+  onExpand: (id: number) => void;
+  onCollapse: () => void;
+  onShowDetail: (faq: HiddenFaqModel) => void;
+  onRestore: (faq: HiddenFaqModel) => void;
+  onDelete: (faq: HiddenFaqModel) => void;
 }) {
   return (
     <div className="space-y-4">
-      {threads.length === 0 ? (
+      {faqs.length === 0 ? (
         <>
-          <p className="text-center text-muted-foreground py-12">No hidden threads found.</p>
+          <p className="text-center text-muted-foreground py-12">No hidden FAQs found.</p>
           {error && <p className="text-center text-destructive">{error}</p>}
         </>
       ) : (
-        threads.map((thread) => (
-          <div key={thread.id} className="flex flex-col w-full gap-1">
-            <Alert
-              className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70"
-              variant="destructive"
-            >
-              <AlertCircleIcon />
-              <AlertTitle>Hidden by {getHiddenByName(thread)}</AlertTitle>
-            </Alert>
-
-            <ThreadPreviewWide thread={thread} auth={auth} basePath="/threads/hidden/thread/" />
-
-            <div className="w-full flex flex-col mt-1 gap-2">
-              <Button
-                variant="outline"
-                className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70"
-                onClick={() => onRestore(thread.id)}
-              >
-                Restore
-              </Button>
-              <Button
-                variant="outline"
-                className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
-                onClick={() => onDelete(thread.id)}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
+        faqs.map((faq) => (
+          <HiddenFaqCard
+            key={faq.id}
+            faq={faq}
+            onExpand={() => onExpand(faq.id)}
+            onCollapse={onCollapse}
+            onShowDetail={() => onShowDetail(faq)}
+            expanded={expandedId === faq.id}
+            onRestore={onRestore}
+            onDelete={onDelete}
+          />
         ))
       )}
     </div>
