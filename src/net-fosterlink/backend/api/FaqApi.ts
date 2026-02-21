@@ -6,6 +6,7 @@ import type { ApprovalCheckModel } from "../models/ApprovalCheckModel"
 import type { FaqRequestModel } from "../models/FaqRequestModel"
 import type { GetFaqsResponse } from "../models/api/GetFaqsResponse"
 import type { GetPendingFaqsResponse } from "../models/api/GetPendingFaqsResponse"
+import type { GetHiddenFaqsResponse } from "../models/api/GetHiddenFaqsResponse"
 
 export interface FaqApiType {
     getAll: (pageNumber: number) => Promise<ErrorWrapper<GetFaqsResponse>>
@@ -18,6 +19,10 @@ export interface FaqApiType {
     answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
     createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
     allAuthor: (userId: number, pageNumber?: number) => Promise<ErrorWrapper<FaqModel[]>>
+    getHiddenFaqs: (type: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenFaqsResponse>>
+    setFaqHidden: (faqId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
+    deleteHiddenFaq: (faqId: number) => Promise<ErrorWrapper<boolean>>
+    deleteFaq: (faqId: number) => Promise<ErrorWrapper<boolean>>
 }
 
 export const faqApi = (auth: AuthContextType): FaqApiType => {
@@ -196,6 +201,76 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 }
             }
             return {data: undefined, isError: true, error: "Internal client error"}
+        },
+        getHiddenFaqs: async(type: 'ADMIN' | 'USER', pageNumber: number): Promise<ErrorWrapper<GetHiddenFaqsResponse>> => {
+            try {
+                const res = await auth.api.post(`/faq/getHidden?type=${type}&pageNumber=${pageNumber}`)
+                return {data: res.data, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: undefined, error: "You must be an administrator to view hidden FAQs!", isError: true}
+                        default:
+                            return {data: undefined, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: undefined, error: "Internal client error", isError: true}
+        },
+        setFaqHidden: async(faqId: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
+            try {
+                await auth.api.post(`/faq/hide?faqId=${faqId}&hidden=${hidden}`)
+                return {data: true, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: false, error: "You do not have permission to do that!", isError: true}
+                        case 404:
+                            return {data: false, error: "FAQ not found!", isError: true}
+                        default:
+                            return {data: false, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: false, error: "Internal client error", isError: true}
+        },
+        deleteHiddenFaq: async(faqId: number): Promise<ErrorWrapper<boolean>> => {
+            try {
+                await auth.api.delete(`/faq/hidden/delete?id=${faqId}`)
+                return {data: true, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: false, error: "You do not have permission to do that!", isError: true}
+                        case 404:
+                            return {data: false, error: "Hidden FAQ not found!", isError: true}
+                        default:
+                            return {data: false, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: false, error: "Internal client error", isError: true}
+        },
+        deleteFaq: async(faqId: number): Promise<ErrorWrapper<boolean>> => {
+            try {
+                await auth.api.delete(`/faq/delete?id=${faqId}`)
+                return {data: true, error: undefined, isError: false}
+            } catch (err: any) {
+                if (err.response) {
+                    switch(err.response.status) {
+                        case 403:
+                            return {data: false, error: "You do not have permission to do that!", isError: true}
+                        case 404:
+                            return {data: false, error: "FAQ not found!", isError: true}
+                        default:
+                            return {data: false, error: "Internal server error", isError: true}
+                    }
+                }
+            }
+            return {data: false, error: "Internal client error", isError: true}
         }
     }
 }

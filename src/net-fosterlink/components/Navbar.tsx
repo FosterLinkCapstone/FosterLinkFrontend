@@ -75,7 +75,14 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                             <AdminOnlyBadge /> 
                             <span>Review and approve or deny pending FAQ responses</span>
                           </div>
-
+                        </ListItem>
+                      )}
+                      {auth.admin && (
+                        <ListItem href="/faq/pending?tab=hidden-user" title="Hidden FAQs">
+                          <div className="flex flex-col items-center">
+                            <AdminOnlyBadge />
+                            <span>Review and restore or permanently delete hidden FAQ responses.</span>
+                          </div>
                         </ListItem>
                       )}
                       {(auth.faqAuthor || auth.admin) && (
