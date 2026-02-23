@@ -9,6 +9,7 @@ import { AlertCircleIcon } from "lucide-react"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate } from "react-router"
 import { PhoneNumberInput } from "../components/PhoneNumberInput"
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 
 export const Register = () => {
     const username = useRef<string>("")
@@ -16,14 +17,18 @@ export const Register = () => {
     const lastName = useRef<string>("")
     const [phoneNumber, setPhoneNumber] = useState<string>("")
     const [email, setEmail] = useState<string>("")
+    const [fieldErrors,setFieldErrors] = useState<{[key: string]: string}>({})
     const [password, setPassword] = useState<string>("")
     const [confirmPassword, setConfirmPassword] = useState<string>("")
     const navigate = useNavigate()
     const [error, setError] = useState<string>("")
+    const [loading, setLoading] = useState<boolean>(false)
     const auth = useAuth()
     const userApiRef = userApi(auth)
 
     const submitRegister = () => {
+        setLoading(true)
+        setFieldErrors({})
         userApiRef.register({
             firstName: firstName.current,
             lastName: lastName.current,
@@ -34,11 +39,18 @@ export const Register = () => {
         }).then(res => {
             if (res.error) {
                 setError(res.error)
+                if (res.validationErrors) {
+                    const fieldErrors: {[key: string]: string} = {}
+                    res.validationErrors.forEach(e => {
+                        fieldErrors[e.field] = e.message
+                    })
+                    setFieldErrors(fieldErrors)
+                }
             } else {
-                auth.setToken(res.jwt)
+                auth.setToken(res.data!)
                 navigate("/")
             }
-        })
+        }).finally(() => { setLoading(false) })
     }
 
     return (
@@ -54,30 +66,38 @@ export const Register = () => {
                         <div className="grid gap-2">
                             <Label htmlFor="firstname">First Name</Label>
                             <Input id="firstname" type="text" placeholder="First Name" onChange={(event) => firstName.current = event.target.value} required/>
+                            <span className="text-red-500">{fieldErrors.firstName}</span>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="lastname">Last Name</Label>
                             <Input id="lastname" type="text" onChange={(event) => lastName.current = event.target.value} required/>
+                            <span className="text-red-500">{fieldErrors.lastName}</span>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="username">Username</Label>
                             <Input id="username" type="text" onChange={(event) => username.current = event.target.value} required/>
+                            <span className="text-red-500">{fieldErrors.username}</span>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email</Label>
                             <Input id="email" type="email" onChange={(event) => setEmail(event.target.value)} required/>
+                            <span className="text-red-500">{fieldErrors.email}</span>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="phoneNumber">Phone Number</Label>
                             <PhoneNumberInput value={phoneNumber} setValue={setPhoneNumber}/>
+                            <span className="text-red-500">{fieldErrors.phoneNumber}</span>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
                             <Input id="password" type="password" onChange={(event) =>  setPassword(event.target.value)} required/>
+                            <span className="text-red-500">{fieldErrors.password}</span>
+
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="confirm-password">Confirm Password</Label>
                             <Input id="confirm-password" type="password" onChange={(event) => setConfirmPassword(event.target.value)} required/>
+                            <span className="text-red-500">{fieldErrors.confirmPassword}</span>
                         </div>
                         {
                             password != confirmPassword && <Alert variant="destructive" className="text-red-400 bg-red-200">
@@ -90,13 +110,13 @@ export const Register = () => {
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitRegister} variant="outline" className="w-full">
-                    Register
+                <Button type="button" onClick={submitRegister} variant="outline" className="w-full" disabled={loading || (password != confirmPassword)}>
+                    {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Register"}
                 </Button>
                 {
-                    error != "" && <Alert variant="destructive">
+                    error != "" && <Alert variant="destructive" className="min-w-0">
                     <AlertCircleIcon/>
-                    <AlertTitle>{error}</AlertTitle>
+                    <AlertTitle className="min-w-0 break-words [overflow:visible] [-webkit-line-clamp:unset] [display:block]">{error}</AlertTitle>
                 </Alert>
                 }
                 

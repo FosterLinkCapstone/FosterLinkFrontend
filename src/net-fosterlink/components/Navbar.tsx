@@ -5,6 +5,7 @@ import { useAuth } from "../backend/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { UserModel } from "../backend/models/UserModel";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { AgentOnlyBadge } from "./AgentOnlyBadge";
 import { AdminOnlyBadge } from "./AdminOnlyBadge";
 import { FaqAuthorOnlyBadge } from "./FaqAuthorOnlyBadge";
@@ -45,6 +46,16 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                           Create a new thread. Create a title and some content!
                         </ListItem>
                       )}
+                      {
+                        auth.admin && (
+                          <ListItem href="/threads/hidden" title="Hidden Threads">
+                            <div className="flex flex-col items-center">
+                              <AdminOnlyBadge /> 
+                              <span>Review and restore or permanently delete hidden threads.</span>
+                            </div>
+                          </ListItem>
+                        )
+                      }
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -64,7 +75,14 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                             <AdminOnlyBadge /> 
                             <span>Review and approve or deny pending FAQ responses</span>
                           </div>
-
+                        </ListItem>
+                      )}
+                      {auth.admin && (
+                        <ListItem href="/faq/pending?tab=hidden-user" title="Hidden FAQs">
+                          <div className="flex flex-col items-center">
+                            <AdminOnlyBadge />
+                            <span>Review and restore or permanently delete hidden FAQ responses.</span>
+                          </div>
                         </ListItem>
                       )}
                       {(auth.faqAuthor || auth.admin) && (
@@ -125,7 +143,7 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                       {auth.isLoggedIn() ? (
                         <li className="list-none">
                           {userInfo && (
-                            <ListItem href={`/users/${userInfo.id}`} title="My Profile">
+                            <ListItem href={buildProfileUrl(userInfo)} title="My Profile">
                               View your public profile and posts
                             </ListItem>
                           )}
@@ -172,7 +190,7 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
             </Button>
 
             {userInfo && auth.isLoggedIn() && (
-              <Badge variant="outline" className="ml-4">
+              <Badge variant="outline" className="ml-4 dark:bg-muted/80 dark:border-border">
                 Logged in as {userInfo.username}
               </Badge>
             )}

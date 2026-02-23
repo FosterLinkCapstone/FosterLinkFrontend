@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
 import type { AgencyModel } from "@/net-fosterlink/backend/models/AgencyModel";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
@@ -18,13 +19,13 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
   const staticMapUrl = useRef(`https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=300x200&markers=color:red%7C${encodedAddress}&key=${auth.getMapsApiKey()}`);
 
   return (
-    <Card id={`${agency.id}`} className={`w-full h-fit max-w-4xl border-border ${highlighted ? "ring-2 ring-blue-400" : ""}`}>
+    <Card id={`${agency.id}`} className={`w-full h-fit max-w-7xl border-border ${highlighted ? "ring-2 ring-blue-400" : ""}`}>
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-border">
           <h2 className="text-2xl font-bold mb-4 text-center">{agency.agencyName}</h2>
           {
             (agency.approved == 2 && auth.admin) && 
-            <Button variant="outline" className="bg-red-200 text-red-400" onClick={() => onRemove(agency.id)}>Remove</Button>
+            <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)}>Remove</Button>
           }
           <div className="bg-muted rounded-lg p-4 mb-4">
             <p className="text-foreground leading-relaxed">
@@ -47,7 +48,7 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
         <div className="w-full md:w-80 flex flex-col">
           <div className="p-6 border-b border-border">
             <div className="flex items-start gap-4 mb-4">   
-              <div onClick={() => navigate(`/users/${agency.agent.id}`)} className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0 hover:text-primary cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring">
+              <div onClick={() => navigate(buildProfileUrl(agency.agent))} className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0 hover:text-primary cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring">
                 {agency.agent.profilePictureUrl ? (
                   <img 
                     src={agency.agent.profilePictureUrl} 
@@ -61,7 +62,7 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
                 )}
               </div>
               <div className="flex-1 min-w-0 text-start">
-                <h3 className="font-semibold text-lg hover:text-primary focus:outline-none cursor-pointer focus:ring-1 focus:ring-ring" onClick={() => navigate(`/users/${agency.agent.id}`)}>
+                <h3 className="font-semibold text-lg hover:text-primary focus:outline-none cursor-pointer focus:ring-1 focus:ring-ring" onClick={() => navigate(buildProfileUrl(agency.agent))}>
                   {agency.agent.fullName}
                 </h3>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">

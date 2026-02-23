@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Paginator } from "../components/Paginator"
 import type { AgencyModel } from "../backend/models/AgencyModel"
 import { agencyApi } from "../backend/api/AgencyApi"
 import { useAuth } from "../backend/AuthContext"
@@ -17,6 +18,8 @@ export const Agencies = () => {
     const auth = useAuth()
     const [searchParams, _] = useSearchParams()
     const [agencies, setAgencies] = useState<AgencyModel[] | null>(null)
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [totalPages, setTotalPages] = useState<number>(1)
     const [pendingCount, setPendingCount] = useState(0)
     const [creatingAgency, setCreatingAgency] = useState<boolean>(false)
     const [createError, setCreateError] = useState<ErrorWrapper<AgencyModel> | null>(null)
@@ -33,9 +36,11 @@ export const Agencies = () => {
 
     const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
     useEffect(() => {
-        agencyApiRef.getAll().then(res => {
+        agencyApiRef.getAll(0).then(res => {
             if (!res.isError && res.data) {
-                setAgencies(res.data)
+                setAgencies(res.data.agencies)
+                setTotalPages(res.data.totalPages)
+                setCurrentPage(1)
             }
         })
 
@@ -58,7 +63,7 @@ export const Agencies = () => {
         }
     }, [auth.admin])
 
-    const handleCreateAgency = (agency: CreateAgencyModel) => {
+    const handleCreateAgency = async (agency: CreateAgencyModel) => {
         agencyApiRef.create(agency).then(res => {
             if (res.isError) {
                 setCreateError(res)
@@ -124,7 +129,7 @@ export const Agencies = () => {
                     :
                     <div className="w-screen h-full items-center justify-items-center">
                         <h1 className="text-3xl font-bold my-2 text-center">Agencies</h1>
-                        <div className="w-fit h-full flex flex-col items-center gap-2 pb-3">
+                        <div className="w-7xl mx-auto h-full flex flex-col items-center gap-2 pb-3">
                             {
                                 auth.admin &&
                                 <Alert className='w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700' variant="default">
@@ -146,10 +151,32 @@ export const Agencies = () => {
                             }
                             {
                                 creatingAgency && <>
-                                    <CreateAgencyCard handleSubmit={handleCreateAgency} handleClose={() => setCreatingAgency(false)} />
+                                    <CreateAgencyCard
+                                        handleSubmit={handleCreateAgency}
+                                        handleClose={() => setCreatingAgency(false)}
+                                        serverFieldErrors={createError?.validationErrors
+                                            ? Object.fromEntries(createError.validationErrors.map(e => [e.field, e.message]))
+                                            : undefined}
+                                    />
                                 </>
                             }
                             {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
+                            {!searchParams.has("agencyId") && (
+                                <Paginator<AgencyModel[]>
+                                    pageCount={totalPages}
+                                    currentPage={currentPage}
+                                    setCurrentPage={setCurrentPage}
+                                    onDataChanged={setAgencies}
+                                    onPageChanged={async (pageNum) => {
+                                        const res = await agencyApiRef.getAll(pageNum - 1);
+                                        if (res.data) {
+                                            setTotalPages(res.data.totalPages);
+                                            return res.data.agencies;
+                                        }
+                                        return [];
+                                    }}
+                                />
+                            )}
                         </div> 
                     </div>
 

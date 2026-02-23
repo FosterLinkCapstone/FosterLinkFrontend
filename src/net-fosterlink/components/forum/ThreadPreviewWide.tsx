@@ -5,6 +5,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { VerifiedCheck } from "../VerifiedCheck";
 import type { AuthContextType } from "@/net-fosterlink/backend/AuthContext";
 import { useState } from "react";
@@ -12,10 +13,11 @@ import { threadApi } from "@/net-fosterlink/backend/api/ThreadApi";
 
 interface ThreadPreviewProps {
     thread: ThreadModel,
-    auth: AuthContextType
+    auth: AuthContextType,
+    basePath?: string
 }
 
-export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }) => {
+export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, basePath = "/threads/thread/" }) => {
   const [isLiked, setIsLiked] = useState<boolean>(thread.liked);
   const formatDate = (jsonDate: Date) => {
     const date = new Date(jsonDate)
@@ -33,12 +35,12 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth }
   const navigate = useNavigate()
 
   const goToThread = () => {
-    navigate(`/threads/thread/${thread.id}`)
+    navigate(`${basePath}${thread.id}`)
   }
 
   const goToProfile = (e: React.MouseEvent) => {
     e.stopPropagation()
-    navigate(`/users/${thread.author.id}`)
+    navigate(buildProfileUrl(thread.author))
   }
   const likeThread = (e: React.MouseEvent) => {
     e.stopPropagation()

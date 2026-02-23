@@ -17,9 +17,12 @@ import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 import { confirm } from "../components/ConfirmDialog";
 import { useNavigate } from "react-router";
 import { VerifiedCheck } from "../components/VerifiedCheck";
+import { buildProfileUrl } from "../util/UserUtil";
 
 export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [replyText, setReplyText] = useState('');
+  const [replyFieldErrors, setReplyFieldErrors] = useState<{[key: string]: string}>({});
+  const [replyError, setReplyError] = useState<string>('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean>(false);
   const [editedContent, setEditedContent] = useState<string>(thread.content);
@@ -54,6 +57,8 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
 
   const handleSubmitNewReply = () => {
     if (auth.isLoggedIn()) {
+      setReplyError('');
+      setReplyFieldErrors({});
       if (replyText != '' && thread) {
         threadApiRef.replyTo(replyText, thread.id).then(res => {
           if (!res.isError && res.data) {
@@ -61,20 +66,19 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             setReplyText('');
             setReplyingTo(null);
           } else {
-            const oldContent = replyText
-            setReplyText(res.error || "Internal server error... please try again later!")
-            setTimeout(() => setReplyText(oldContent), 3000)
+            setReplyError(res.error || "Internal server error... please try again later!");
+            if (res.validationErrors) {
+              const next: { [key: string]: string } = {};
+              res.validationErrors.forEach(e => { next[e.field] = e.message; });
+              setReplyFieldErrors(next);
+            }
           }
         })
       } else {
-          const oldContent = replyText
-          setReplyText("Please enter something!")
-          setTimeout(() => setReplyText(oldContent), 3000)
+        setReplyError("Please enter something!");
       }
     } else {
-      const oldContent = replyText
-      setReplyText("Please log in")
-      setTimeout(() => setReplyText(oldContent), 3000)
+      setReplyError("Please log in");
     }
   };
   const likeThread = () => {
@@ -98,13 +102,13 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
       setLoading(false)
     })
   }
-  const deleteThread = async () => {
+  const hideThread = async () => {
     setLoading(true)
     const res = await confirm({
       message: 'Are you sure you want to delete this thread?',
     })
     if (res) {
-      threadApiRef.deleteThread(thread.id).then(() => {
+      threadApiRef.setThreadHidden(thread.id, true).then(() => {
         setLoading(false)
         window.location.href = `/threads`
       })
@@ -134,6 +138,17 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const handleReplyDelete = (replyId: number) => {
     setReplies(replies.filter(r => r.id !== replyId))
   };
+
+  const handleReplyRestore = (replyId: number) => {
+    setReplies(replies.map(r => r.id === replyId ? { ...r, postMetadata: undefined } : r))
+  };
+
+  const handleReplyHide = (replyId: number, hiddenBy: string) => {
+    setReplies(replies.map(r => r.id === replyId
+      ? { ...r, postMetadata: { id: r.postMetadata?.id ?? 0, hidden: true, userDeleted: false, locked: false, verified: false, hiddenBy } }
+      : r
+    ))
+  };
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
@@ -144,13 +159,17 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
         <div className="w-80 space-y-4">
           <Card className="p-4 border-border">
             <h3 className="font-semibold mb-3">Reply</h3>
-            <Textarea
-              placeholder="Enter reply here..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              className="mb-3 min-h-[120px]"
-              disabled={!auth.isLoggedIn()}
-            />
+            <div className="grid gap-2 mb-3">
+              <Textarea
+                placeholder="Enter reply here..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                className="min-h-[120px]"
+                disabled={!auth.isLoggedIn()}
+              />
+              <span className="text-red-500">{replyFieldErrors["content"]}</span>
+            </div>
+            {replyError && <p className="text-red-500 text-sm mb-2">{replyError}</p>}
             <Button onClick={handleSubmitNewReply} className="w-full" disabled={!auth.isLoggedIn()}>
               Submit
             </Button>
@@ -174,7 +193,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
             <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
               <button
                 type="button"
-                onClick={() => navigate(`/users/${thread.author.id}`)}
+                onClick={() => navigate(buildProfileUrl(thread.author))}
                 className="flex items-center gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring rounded-full px-1"
               >
                 <Avatar className="h-6 w-6">
@@ -223,7 +242,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                   <div className="flex items-center gap-1.5">
                     {
                       (auth.admin || auth.getUserInfo()!.id === thread.author.id) &&
-                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={deleteThread}>Delete</Button> 
+                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={hideThread}>{auth.admin ? "Hide" : "Delete"}</Button> 
                     }
                     {
                       auth.getUserInfo()!.id === thread.author.id && (
@@ -269,6 +288,8 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       onReply={handleReply}
                       onReplyUpdate={handleReplyUpdate}
                       onReplyDelete={handleReplyDelete}
+                      onReplyRestore={handleReplyRestore}
+                      onReplyHide={handleReplyHide}
                     />
                 )
               )
@@ -295,13 +316,16 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       </span>
                     </div>
 
-                    <Textarea
-                      placeholder="Enter text here"
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      className="mb-3 min-h-[100px]"
-                    />
-
+                    <div className="grid gap-2 mb-3">
+                      <Textarea
+                        placeholder="Enter text here"
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                      <span className="text-red-500">{replyFieldErrors["content"]}</span>
+                    </div>
+                    {replyError && <p className="text-red-500 text-sm mb-2">{replyError}</p>}
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" onClick={handleCancelReply}>
                         Cancel

@@ -18,21 +18,37 @@ import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import type { FaqRequestModel } from "@/net-fosterlink/backend/models/FaqRequestModel"
+import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
 export const CreateFaqCard = ({
-    handleSubmitResponse, 
+    handleSubmitResponse,
     handleClose,
-    requests
-} : {
-    handleSubmitResponse: (title: string, summary: string, content: string, answeringId: number) => void, 
+    requests,
+    serverFieldErrors
+}: {
+    handleSubmitResponse: (title: string, summary: string, content: string, answeringId: number) => Promise<void>,
     handleClose: () => void,
-    requests: FaqRequestModel[] | null
+    requests: FaqRequestModel[] | null,
+    serverFieldErrors?: { [key: string]: string }
 }) => {
     const [newFaqTitle, setNewFaqTitle] = useState('')
     const [answeringId, setAnsweringId] = useState(-1)
     const [newFaqSummary, setNewFaqSummary] = useState('')
     const [newFaqContent, setNewFaqContent] = useState('')
     const [open, setOpen] = useState(false)
+    const [createLoading, setCreatingLoading] = useState(false)
+
+    const create = () => {
+        setCreatingLoading(true)
+        handleSubmitResponse(newFaqTitle, newFaqSummary, newFaqContent, answeringId).finally(() => {
+            setNewFaqTitle('')
+            setNewFaqSummary('')
+            setNewFaqContent('')
+            setAnsweringId(-1)
+            setCreatingLoading(false)
+        })
+    }
+
 
     if (requests == null) return (
         <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md transition-shadow">
@@ -98,27 +114,33 @@ export const CreateFaqCard = ({
                     </Command>
                 </PopoverContent>
             </Popover>
-            
-            <Input 
-                onChange={(e) => setNewFaqSummary(e.target.value)} 
-                type="text" 
+            {serverFieldErrors?.title && <span className="text-red-500">{serverFieldErrors.title}</span>}
+
+            <div className="grid gap-2">
+              <Input
+                onChange={(e) => setNewFaqSummary(e.target.value)}
+                value={newFaqSummary}
+                type="text"
                 placeholder="FAQ Summary. Typically 2-3 sentences"
-            />
-            <Textarea 
-                onChange={(e) => setNewFaqContent(e.target.value)} 
+              />
+              <span className="text-red-500">{serverFieldErrors?.summary}</span>
+            </div>
+            <div className="grid gap-2">
+              <Textarea
+                onChange={(e) => setNewFaqContent(e.target.value)}
+                value={newFaqContent}
                 placeholder="FAQ Content. Typically an in depth answer to the question."
-            />
+              />
+              <span className="text-red-500">{serverFieldErrors?.content}</span>
+            </div>
             <Button 
                 onClick={() => {
-                    handleSubmitResponse(newFaqTitle, newFaqSummary, newFaqContent, answeringId)
-                    setNewFaqTitle('')
-                    setNewFaqSummary('')
-                    setNewFaqContent('')
-                    setAnsweringId(-1)
+                    create()
                 }} 
                 variant="outline"
+                disabled={createLoading}
             >
-                Submit
+                {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create FAQ Response"}
             </Button>
             <Button onClick={() => handleClose()} variant="outline">Cancel</Button>
         </Card>

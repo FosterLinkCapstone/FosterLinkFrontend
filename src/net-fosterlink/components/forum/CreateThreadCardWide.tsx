@@ -10,32 +10,49 @@ import { Badge } from "@/components/ui/badge";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { CircleX } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 
 
 export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void, onCreate: (thread: ThreadModel) => void}) => {
   const [title, setTitle] = useState<string>('')
   const [content, setContent] = useState<string>('')
   const [error, setError] = useState<string>('')
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({})
   const [tags, setTags] = useState<string[]>([])
   const [tagFieldText, setTagFieldText] = useState<string>('')
   const [showErrorTooltip, setShowErrorTooltip] = useState<boolean>(false)
   const [errorTooltipText, setErrorTooltipText] = useState<string>('')
+  const [createLoading, setCreateLoading] = useState<boolean>(false)
   const auth = useAuth()
   const threadApiRef = threadApi(auth)
 
     const createThread = () => {
-        if (title == '') {
-            setError("Please enter a title!")
-            return
-        }
-        if (content == '') {
-            setError("Please enter some content!")
-            return
-        }
-        threadApiRef.createThread(title, content, tags).then(res => {
-            if (res.thread) onCreate(res.thread)
-            else setError(res.error!)
+      if (title === '') {
+        setError("Please enter a title!");
+        return;
+      }
+      if (content === '') {
+        setError("Please enter some content!");
+        return;
+      }
+      setError('');
+      setFieldErrors({});
+      setCreateLoading(true);
+      threadApiRef.createThread(title, content, tags)
+        .then(res => {
+          if (res.thread) onCreate(res.thread);
+          else {
+            setError(res.error ?? 'Failed to create thread');
+            if (res.validationErrors) {
+              const next: {[key: string]: string} = {};
+              res.validationErrors.forEach(e => { next[e.field] = e.message; });
+              setFieldErrors(next);
+            }
+          }
         })
+        .finally(() => {
+            setCreateLoading(false)
+        });
     }
     const removeTag = (tagToRemove: string) => {
       setTags(tags.filter(tag => tag != tagToRemove));
@@ -82,21 +99,27 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
       className="flex overflow-hidden border border-border"
     >
       <div className="flex flex-col items-center p-6 border-r gap-6 border-border bg-muted/50 min-w-[180px]">
-        <Input
+        <div className="w-full grid gap-2">
+          <Input
             type="text"
             placeholder="Enter title"
             id="new-thread-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full"
-        />
-        <Textarea
+          />
+          <span className="text-red-500">{fieldErrors["title"]}</span>
+        </div>
+        <div className="w-full grid gap-2">
+          <Textarea
             placeholder="Enter post content"
             id="new-thread-content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="w-full min-h-[200px]"
-        />
+          />
+          <span className="text-red-500">{fieldErrors["content"]}</span>
+        </div>
         <TooltipProvider>
           <InputGroup>
             <Tooltip open={showErrorTooltip}>
@@ -124,7 +147,7 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
 
         }
         <div className="w-full flex flex-row align-center gap-2 justify-center">
-            <Button type="button" className="w-100 !border-1" onClick={createThread}>Create</Button>
+            <Button type="button" className="w-100 !border-1" onClick={createThread} disabled={createLoading}>{createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create"}</Button>
             <Button type="button" className="w-100 !border-1" onClick={onCancel}>Cancel</Button>
         </div>
       </div>

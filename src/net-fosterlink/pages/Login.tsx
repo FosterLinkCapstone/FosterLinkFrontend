@@ -8,29 +8,42 @@ import { Alert, AlertTitle } from "@/components/ui/alert"
 import { AlertCircleIcon } from "lucide-react"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate, useSearchParams } from "react-router"
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 
 export const Login = () => {
     const [searchParams, _] = useSearchParams()
     const email = useRef<string>("")
     const password = useRef<string>("")
     const [error, setError] = useState<string>("")
+    const [loading, setLoading] = useState<boolean>(false)
+    const [fieldErrors,setFieldErrors] = useState<{[key: string]: string}>({})
     const auth = useAuth()
     const userApiRef = userApi(auth)
     const navigate = useNavigate()
 
     const submitLogin = () => {
+        setLoading(true)
         setError("")
+        setFieldErrors({})
         if (email.current != "" && password.current != "") {
             userApiRef.login(email.current, password.current).then(res => {
                 if (res.isError) {
-                    setError(res.error)
+                    setError(res.error!)
+                    if (res.validationErrors) {
+                        const fieldErrors: {[key: string]: string} = {}
+                        res.validationErrors.forEach(e => {
+                            fieldErrors[e.field] = e.message
+                        })
+                        setFieldErrors(fieldErrors)
+                    }
                 } else {
-                    auth.setToken(res.jwt)
+                    auth.setToken(res.data!)
                     navigate(searchParams.has("currentPage") ? searchParams.get("currentPage")! : "/")
                 }
-            })
+            }).finally(() => { setLoading(false) })
         } else {
             setError("Field must not be empty!")
+            setLoading(false)
         }
     }
 
@@ -47,17 +60,19 @@ export const Login = () => {
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email</Label>
                             <Input id="email" type="email" placeholder="user@example.com" onChange={(event) => email.current = event.target.value} required/>
+                            <span className="text-red-500">{fieldErrors["email"]}</span>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
                             <Input id="password" type="password" onChange={(event) => password.current = event.target.value} required/>
+                            <span className="text-red-500">{fieldErrors["password"]}</span>
                         </div>
                     </div>
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitLogin} className="w-full">
-                    Login
+                <Button type="button" onClick={submitLogin} className="w-full" disabled={loading}>
+                    {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Login"}
                 </Button>
                 {
                     error != "" && <Alert variant="destructive">

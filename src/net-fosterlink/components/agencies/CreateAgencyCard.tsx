@@ -7,8 +7,9 @@ import type { CreateAgencyModel } from "@/net-fosterlink/backend/models/api/Crea
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
+import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 
-export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: (agency: CreateAgencyModel) => void, handleClose: ()=>void}) => {
+export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors }: { handleSubmit: (agency: CreateAgencyModel) => Promise<void>, handleClose: () => void, serverFieldErrors?: { [key: string]: string } }) => {
   const [formData, setFormData] = useState<CreateAgencyModel>({
     name: '',
     missionStatement: '',
@@ -21,6 +22,8 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
   });
 
   const auth = useAuth()
+
+  const [createLoading, setCreateLoading] = useState<boolean>(false);
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateAgencyModel, string>>>({});
 
@@ -71,7 +74,10 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
 
   const handleFormSubmit = () => {
     if (validateForm()) {
-      handleSubmit(formData);
+      setCreateLoading(true);
+      handleSubmit(formData).finally(() => {
+        setCreateLoading(false);
+      });
     }
   };
 
@@ -99,7 +105,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
           onChange={(e) => updateField('name', e.target.value)}
           className={errors.name ? 'border-red-500' : ''}
         />
-        {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+        {(errors.name || serverFieldErrors?.name) && <span className="text-red-500">{errors.name ?? serverFieldErrors?.name}</span>}
       </div>
 
       <div className="space-y-2">
@@ -112,7 +118,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
           className={errors.missionStatement ? 'border-red-500' : ''}
           rows={4}
         />
-        {errors.missionStatement && <p className="text-sm text-red-600">{errors.missionStatement}</p>}
+        {(errors.missionStatement || serverFieldErrors?.missionStatement) && <span className="text-red-500">{errors.missionStatement ?? serverFieldErrors?.missionStatement}</span>}
       </div>
 
       <div className="space-y-2">
@@ -125,7 +131,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
           onChange={(e) => updateField('websiteUrl', e.target.value)}
           className={errors.websiteUrl ? 'border-red-500' : ''}
         />
-        {errors.websiteUrl && <p className="text-sm text-red-600">{errors.websiteUrl}</p>}
+        {(errors.websiteUrl || serverFieldErrors?.websiteUrl) && <span className="text-red-500">{errors.websiteUrl ?? serverFieldErrors?.websiteUrl}</span>}
       </div>
 
       <div className="space-y-2">
@@ -138,7 +144,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
           onChange={(e) => updateField('locationAddrLine1', e.target.value)}
           className={errors.locationAddrLine1 ? 'border-red-500' : ''}
         />
-        {errors.locationAddrLine1 && <p className="text-sm text-red-600">{errors.locationAddrLine1}</p>}
+        {(errors.locationAddrLine1 || serverFieldErrors?.locationAddrLine1) && <span className="text-red-500">{errors.locationAddrLine1 ?? serverFieldErrors?.locationAddrLine1}</span>}
       </div>
 
       <div className="space-y-2">
@@ -163,7 +169,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
             onChange={(e) => updateField('locationCity', e.target.value)}
             className={errors.locationCity ? 'border-red-500' : ''}
           />
-          {errors.locationCity && <p className="text-sm text-red-600">{errors.locationCity}</p>}
+          {(errors.locationCity || serverFieldErrors?.locationCity) && <span className="text-red-500">{errors.locationCity ?? serverFieldErrors?.locationCity}</span>}
         </div>
 
         <div className="space-y-2">
@@ -176,7 +182,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
             onChange={(e) => updateField('locationState', e.target.value)}
             className={errors.locationState ? 'border-red-500' : ''}
           />
-          {errors.locationState && <p className="text-sm text-red-600">{errors.locationState}</p>}
+          {(errors.locationState || serverFieldErrors?.locationState) && <span className="text-red-500">{errors.locationState ?? serverFieldErrors?.locationState}</span>}
         </div>
 
         <div className="space-y-2">
@@ -189,13 +195,13 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose } : {handleSubmit: 
             onChange={(e) => updateField('locationZipCode', parseInt(e.target.value) || 0)}
             className={errors.locationZipCode ? 'border-red-500' : ''}
           />
-          {errors.locationZipCode && <p className="text-sm text-red-600">{errors.locationZipCode}</p>}
+          {(errors.locationZipCode || serverFieldErrors?.locationZipCode) && <span className="text-red-500">{errors.locationZipCode ?? serverFieldErrors?.locationZipCode}</span>}
         </div>
       </div>
 
       <div className="flex gap-4 pt-2">
-        <Button variant="outline" onClick={handleFormSubmit} className="flex-1">
-          Submit
+        <Button variant="outline" onClick={handleFormSubmit} className="flex-1" disabled={createLoading}>
+          {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}
         </Button>
         <Button onClick={handleClose} variant="outline" className="flex-1">
           Cancel
