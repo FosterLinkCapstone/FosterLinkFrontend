@@ -1,118 +1,70 @@
-import { useEffect, useState } from "react"
-import type { AgencyModel } from "../backend/models/AgencyModel"
-import { agencyApi } from "../backend/api/AgencyApi"
+import { useSearchParams } from "react-router"
 import { useAuth } from "../backend/AuthContext"
 import { Navbar } from "../components/Navbar"
-import { AlertCircleIcon, Loader2 } from "lucide-react"
-import { AgencyCard } from "../components/agencies/AgencyCard"
-import { Button } from "@/components/ui/button"
-import { StatusDialog } from "../components/StatusDialog"
-import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Link } from "react-router"
-import { Paginator } from "../components/Paginator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PendingAgenciesTab } from "../components/agencies/PendingAgenciesTab"
+import { HiddenAgenciesTab } from "../components/agencies/HiddenAgenciesTab"
+import { AgencyDeletionRequestsTab } from "../components/agencies/AgencyDeletionRequestsTab"
+
+const TAB_PENDING = "pending"
+const TAB_HIDDEN = "hidden"
+const TAB_DELETION = "deletion"
+const TAB_PARAM = "tab"
+
+type ActiveTab = typeof TAB_PENDING | typeof TAB_HIDDEN | typeof TAB_DELETION
+
+const isValidTab = (t: string | null): t is ActiveTab =>
+    t === TAB_PENDING || t === TAB_HIDDEN || t === TAB_DELETION
 
 export const PendingAgencies = () => {
     const auth = useAuth()
-    const [agencies, setAgencies] = useState<AgencyModel[] | null>(null)
-    const [currentPage, setCurrentPage] = useState<number>(1)
-    const [totalPages, setTotalPages] = useState<number>(1)
-    const [approvedOrDenied, setApprovedOrDenied] = useState('')
-    const [isError, setIsError] = useState<boolean>(false)
+    const [searchParams, setSearchParams] = useSearchParams()
 
-    const agencyApiRef = agencyApi(auth)
-    useEffect(() => {
-        agencyApiRef.getPending(0).then(res => {
-            if (!res.isError && res.data) {
-                setAgencies(res.data.agencies)
-                setTotalPages(res.data.totalPages)
-                setCurrentPage(1)
-            }
-        })
-    }, [])
+    const tabFromUrl = searchParams.get(TAB_PARAM) ?? TAB_PENDING
+    const activeTab: ActiveTab = isValidTab(tabFromUrl) ? tabFromUrl : TAB_PENDING
 
-    const onApprove = (id: number, approve: boolean) => {
-        agencyApiRef.approve(id, approve).then(res => {
-            if (!res.isError && res.data) {
-                if (approve) {
-                    setAgencies(agencies?.filter(a => a.id !== id) ?? [])
-                } else {
-                    setAgencies(agencies?.map(a => {
-                        if (a.id === id) {
-                            a.approved = 3
-                            a.approvedByUsername = auth.getUserInfo()!.username
-                            return a
-                        } else return a
-                    }) ?? [])
-                }
-
-                setApprovedOrDenied(approve ? "approved" : "denied")
-            } else {
-                setIsError(true)
-            }
-        })
+    const setTabInUrl = (tab: ActiveTab) => {
+        const next = new URLSearchParams(searchParams)
+        next.set(TAB_PARAM, tab)
+        setSearchParams(next, { replace: true })
     }
 
     return (
         <div className="min-h-screen bg-background">
-                  <StatusDialog open={approvedOrDenied != ''}
-                        onOpenChange={() => setApprovedOrDenied('')}
-                        title={`Successfully ${approvedOrDenied} agency`}
-                        subtext=""
-                        isSuccess={true}
-                />
-                <StatusDialog open={isError}
-                        onOpenChange={() => setIsError(false)}
-                        title={`Could not update agency!`}
-                        subtext="Please try again later"
-                        isSuccess={false}
-                />
             <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
                 <Navbar userInfo={auth.getUserInfo()} />
             </div>
-            {
-                agencies == null ?
-                    <div className="min-h-screen bg-background flex items-center justify-center">
-                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                    </div>
-                    :
-                    <div className="w-screen h-full items-center justify-items-center mt-2">
-                         <h1 className="text-3xl font-bold mb-2 text-center">Agencies (pending)</h1>
-                         <Link className="text-primary hover:text-primary/90" to="/agencies">Go back</Link>
-                        <div className="mt-6 w-fit h-full flex flex-col items-center gap-6 pb-3">
-                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.map(a => <div className="flex flex-col w-full gap-1">
-                                {
-                                    a.approved == 3 &&
-                                        <Alert className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70" variant="destructive">
-                                            <AlertCircleIcon/>
-                                            <AlertTitle>Denied by {a.approvedByUsername}</AlertTitle>
-                                        </Alert>
-                                }
-                                <AgencyCard onRemove={() => {return}} agency={a} /> {/* pending card will never call remove */}
-                                <div className="w-full flex flex-col mt-1 gap-2">
-                                    <Button variant="outline" onClick={() => onApprove(a.id, true)} className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70">Approve</Button>
-                                    {
-                                        a.approved !== 3 && <Button variant="outline" onClick={() => onApprove(a.id, false)} className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70">Deny</Button>
-                                    }
-                                </div>
-                            </div>)}
-                            <Paginator<AgencyModel[]>
-                                pageCount={totalPages}
-                                currentPage={currentPage}
-                                setCurrentPage={setCurrentPage}
-                                onDataChanged={setAgencies}
-                                onPageChanged={async (pageNum) => {
-                                    const res = await agencyApiRef.getPending(pageNum - 1);
-                                    if (res.data) {
-                                        setTotalPages(res.data.totalPages);
-                                        return res.data.agencies;
-                                    }
-                                    return [];
-                                }}
-                            />
-                        </div>
-                    </div>
-            }
 
+            <div className="max-w-4xl mx-auto px-4 py-6">
+                <h1 className="text-3xl font-bold mb-1 text-center">Agencies (admin)</h1>
+                <Link className="text-primary hover:text-primary/90" to="/agencies">Go back</Link>
+                <div className="mb-6" />
+
+                <Tabs
+                    value={activeTab}
+                    onValueChange={(v) => setTabInUrl(v as ActiveTab)}
+                    className="mb-6"
+                >
+                    <TabsList className="w-full">
+                        <TabsTrigger value={TAB_PENDING} className="flex-1">Pending</TabsTrigger>
+                        <TabsTrigger value={TAB_HIDDEN} className="flex-1">Hidden</TabsTrigger>
+                        <TabsTrigger value={TAB_DELETION} className="flex-1">Deletion Requests</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value={TAB_PENDING} className="mt-4">
+                        <PendingAgenciesTab />
+                    </TabsContent>
+
+                    <TabsContent value={TAB_HIDDEN} className="mt-4">
+                        <HiddenAgenciesTab />
+                    </TabsContent>
+
+                    <TabsContent value={TAB_DELETION} className="mt-4">
+                        <AgencyDeletionRequestsTab />
+                    </TabsContent>
+                </Tabs>
+            </div>
         </div>
     )
 }
