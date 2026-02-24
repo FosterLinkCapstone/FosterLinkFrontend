@@ -8,10 +8,11 @@ import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
 
-export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyModel, onRemove: (agencyId: number) => void, highlighted?: boolean }) => {
+export const AgencyCard = ({ agency, onRemove, onRequestDeletion, highlighted, showRemove = false, deletionRequested = false } : { agency: AgencyModel, onRemove: (agencyId: number) => void, onRequestDeletion?: (agencyId: number) => void, highlighted?: boolean, showRemove?: boolean, deletionRequested? : boolean }) => {
 
   const auth = useAuth()
   const navigate = useNavigate()
+  const isOwner = auth.getUserInfo()?.id === agency.agent.id
   const fullAddress = `${agency.location.addrLine1}${agency.location.addrLine2 ? ', ' + agency.location.addrLine2 : ''}, ${agency.location.city}, ${agency.location.state} ${agency.location.zipCode}`;
   const encodedAddress = encodeURIComponent(fullAddress);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
@@ -24,8 +25,12 @@ export const AgencyCard = ({ agency, onRemove, highlighted } : { agency: AgencyM
         <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-border">
           <h2 className="text-2xl font-bold mb-4 text-center">{agency.agencyName}</h2>
           {
-            (agency.approved == 2 && auth.admin) && 
+            (agency.approved == 2 && auth.admin && showRemove) && 
             <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)}>Remove</Button>
+          }
+          {
+            (agency.approved == 2 && isOwner && !auth.admin && onRequestDeletion) &&
+            <Button variant="outline" className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700/60 mb-4" disabled={deletionRequested} onClick={() => onRequestDeletion(agency.id)}>Request Deletion</Button>
           }
           <div className="bg-muted rounded-lg p-4 mb-4">
             <p className="text-foreground leading-relaxed">

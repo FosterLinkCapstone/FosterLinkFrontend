@@ -114,13 +114,27 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                         View a list of every agency, their locations, mission statements, and agent information.
                       </ListItem>
                       {auth.admin && (
+                        <>
                         <ListItem href="/agencies/pending" title="Pending agencies">
                             <div className="flex flex-col items-center">
                               <AdminOnlyBadge /> 
                               <span>Review, approve, or deny pending agency requests</span>
                             </div>
-
                         </ListItem>
+                        <ListItem href="/agencies/pending?tab=deletion" title="Deletion Requests">
+                            <div className="flex flex-col items-center">
+                              <AdminOnlyBadge />
+                              <span>Review and approve or deny pending agency deletion requests</span>
+                            </div>
+                        </ListItem>
+                        <ListItem href="/agencies/pending?tab=hidden" title="Hidden Agencies">
+                            <div className="flex flex-col items-center">
+                              <AdminOnlyBadge />
+                              <span>Review and restore or permanently delete hidden agencies</span>
+                            </div>
+                        </ListItem>
+                        </>
+
                       )}
                       {(auth.admin || auth.agent) && (
                         <ListItem href="/agencies?creating=true" title="Create a new agency">

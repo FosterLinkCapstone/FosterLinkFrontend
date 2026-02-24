@@ -13,6 +13,7 @@ import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Link, useNavigate, useSearchParams } from "react-router"
 import type { ErrorWrapper } from "../util/ErrorWrapper"
 import { StatusDialog } from "../components/StatusDialog"
+import { confirm } from "../components/ConfirmDialog"
 
 export const Agencies = () => {
     const auth = useAuth()
@@ -23,9 +24,7 @@ export const Agencies = () => {
     const [pendingCount, setPendingCount] = useState(0)
     const [creatingAgency, setCreatingAgency] = useState<boolean>(false)
     const [createError, setCreateError] = useState<ErrorWrapper<AgencyModel> | null>(null)
-    const [createSuccess, setCreateSuccess] = useState<boolean>(false)
-    const [removeSuccess, setRemoveSuccess] = useState<boolean>(false)
-    const [removeError, setRemoveError] = useState<boolean>(false)
+    const [actionResult, setActionResult] = useState<{ success: boolean; title: string; subtext: string } | null>(null)
     const navigate = useNavigate()
 
     const highlightedAgencyId = useMemo(() => {
@@ -69,20 +68,62 @@ export const Agencies = () => {
                 setCreateError(res)
             } else {
                 setCreatingAgency(false)
-                setCreateSuccess(true)
+                setActionResult({ success: true, title: "Successfully created agency!", subtext: "Awaiting review from an administrator." })
             }
         })
     }
     const onRemove = (agencyId: number) => {
-        agencyApiRef.approve(agencyId, false).then(res => {
+        agencyApiRef.hideAgency(agencyId, true).then(res => {
             if (!res.isError && res.data) {
                 setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
-                setRemoveSuccess(true)
+                setActionResult({ success: true, title: "Successfully removed agency!", subtext: "" })
             } else {
-                setRemoveError(true)
+                setActionResult({ success: false, title: "Could not remove agency!", subtext: res.error ?? "" })
             }
         })
     }
+
+    const onRequestDeletion = (agencyId: number) => {
+        agencyApiRef.requestDeletion(agencyId).then(res => {
+            if (!res.isError) {
+                const user = auth.getUserInfo()
+                setAgencies(prev => prev?.map(a => a.id === agencyId && user
+                    ? { ...a, deletionRequestedAt: new Date().toISOString(), deletionRequestedByUsername: user.username }
+                    : a) ?? null)
+                setActionResult({ success: true, title: "Deletion request submitted!", subtext: "An administrator will review your request." })
+            } else {
+                setActionResult({ success: false, title: "Could not submit deletion request!", subtext: res.error ?? "" })
+            }
+        })
+    }
+
+    const onCancelDeletionRequest = (agencyId: number) => {
+        agencyApiRef.cancelDeletionRequest(agencyId).then(res => {
+            if (!res.isError) {
+                setAgencies(prev => prev?.map(a => a.id === agencyId
+                    ? { ...a, deletionRequestedAt: undefined, deletionRequestedByUsername: undefined, deletionRequestId: undefined }
+                    : a) ?? null)
+            } else {
+                setActionResult({ success: false, title: "Could not cancel deletion request!", subtext: res.error ?? "" })
+            }
+        })
+    }
+
+    const onAcceptDeletionRequest = async (agency: AgencyModel) => {
+        if (agency.deletionRequestId == null) return
+        const ok = await confirm({
+            message: `Are you sure you want to accept this deletion request? The agency "${agency.agencyName}" will be permanently deleted and cannot be recovered.`,
+        })
+        if (!ok) return
+        const res = await agencyApiRef.approveDeletionRequest(agency.deletionRequestId, true)
+        if (!res.isError) {
+            setAgencies(prev => prev?.filter(a => a.id !== agency.id) ?? [])
+            setActionResult({ success: true, title: "Deletion request accepted — agency deleted", subtext: "" })
+        } else {
+            setActionResult({ success: false, title: "Could not accept deletion request", subtext: res.error ?? "" })
+        }
+    }
+
 
     return (
         <div className="min-h-screen bg-background">
@@ -94,28 +135,12 @@ export const Agencies = () => {
                 isSuccess={false}
             />
             }
-            { createSuccess &&
-            <StatusDialog open={createSuccess}
-                onOpenChange={() => setCreateSuccess(false)}
-                title={`Successfully created agency!`}
-                subtext="Awaiting review from an administrator."
-                isSuccess={true}
-            />      
-            }
-            { removeSuccess &&    
-            <StatusDialog open={removeSuccess}
-                onOpenChange={() => setRemoveSuccess(false)}
-                title={`Successfully removed agency!`}
-                subtext=""
-                isSuccess={true}
-            />
-            }
-            { removeError &&
-            <StatusDialog open={removeSuccess}
-                onOpenChange={() => setRemoveError(false)}
-                title={`Could not remove agency!`}
-                subtext=""
-                isSuccess={false}
+            { actionResult &&
+            <StatusDialog open={actionResult != null}
+                onOpenChange={() => setActionResult(null)}
+                title={actionResult.title}
+                subtext={actionResult.subtext}
+                isSuccess={actionResult.success}
             />
             }
             <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
@@ -160,7 +185,44 @@ export const Agencies = () => {
                                     />
                                 </>
                             }
-                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => <AgencyCard key={a.id} highlighted={highlightedAgencyId === a.id} onRemove={onRemove} agency={a} />)}
+                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => (
+                                <div key={a.id} className="flex flex-col w-full gap-1">
+                                    {a.deletionRequestedByUsername && (
+                                        <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700" variant="default">
+                                            <AlertCircleIcon />
+                                            <AlertTitle>
+                                                <div className="flex flex-row gap-3 justify-center items-center">
+                                                <span>Deletion requested by {a.deletionRequestedByUsername}
+                                                {a.deletionRequestedAt && ` on ${new Date(a.deletionRequestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}</span>
+                                                {auth.getUserInfo()?.username === a.deletionRequestedByUsername && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-amber-200 text-amber-900 border-amber-400 hover:bg-amber-300 dark:bg-amber-800/60 dark:text-amber-100 dark:border-amber-600 dark:hover:bg-amber-800/80"
+                                                    onClick={() => onCancelDeletionRequest(a.id)}
+                                                >
+                                                    Cancel request
+                                                </Button>
+                                                )}
+                                                {auth.admin && a.deletionRequestId != null && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                                                        onClick={() => onAcceptDeletionRequest(a)}
+                                                    >
+                                                        Accept
+                                                    </Button>
+                                                </>
+                                                )}
+                                                </div>
+                                            </AlertTitle>
+                                        </Alert>
+                                    )}
+                                    <AgencyCard highlighted={highlightedAgencyId === a.id} onRemove={onRemove} onRequestDeletion={onRequestDeletion} agency={a} showRemove={true} deletionRequested={a.deletionRequestedAt != null} />
+                                </div>
+                            ))}
                             {!searchParams.has("agencyId") && (
                                 <Paginator<AgencyModel[]>
                                     pageCount={totalPages}
