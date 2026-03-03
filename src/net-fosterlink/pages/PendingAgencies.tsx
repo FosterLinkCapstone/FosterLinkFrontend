@@ -24,6 +24,26 @@ export const PendingAgencies = () => {
     const tabFromUrl = searchParams.get(TAB_PARAM) ?? TAB_PENDING
     const activeTab: ActiveTab = isValidTab(tabFromUrl) ? tabFromUrl : TAB_PENDING
 
+    const onApprove = (id: number, approve: boolean) => {
+        agencyApiRef.approve(id, approve).then(res => {
+            if (!res.isError) {
+                if (approve) {
+                    setAgencies(agencies?.filter(a => a.id !== id) ?? [])
+                } else {
+                    setAgencies(agencies?.map(a => {
+                        if (a.id === id) {
+                            a.approved = 3
+                            a.approvedByUsername = auth.getUserInfo()!.username
+                            return a
+                        } else return a
+                    }) ?? [])
+                }
+
+                setApprovedOrDenied(approve ? "approved" : "denied")
+            } else {
+                setIsError(true)
+            }
+        })
     const setTabInUrl = (tab: ActiveTab) => {
         const next = new URLSearchParams(searchParams)
         next.set(TAB_PARAM, tab)

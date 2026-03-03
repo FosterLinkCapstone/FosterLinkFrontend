@@ -1,5 +1,5 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper"
-import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError"
+import { doGenericRequest, RequestType } from "@/net-fosterlink/util/ApiUtil"
 import type { AuthContextType } from "../AuthContext"
 import type { FaqModel } from "../models/FaqModel"
 import type { ApprovalCheckModel } from "../models/ApprovalCheckModel"
@@ -26,251 +26,199 @@ export interface FaqApiType {
 }
 
 export const faqApi = (auth: AuthContextType): FaqApiType => {
+    const defaultErrorsAll: Map<number, string> = new Map<number, string>([
+        [403, "You must be logged in to view FAQs!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsContent: Map<number, string> = new Map<number, string>([
+        [404, "FAQ content not found!"],
+        [403, "You must be logged in to view FAQ content!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsPending: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can view pending FAQs!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsApprove: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can approve FAQs!"],
+        [404, "FAQ not found!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsCreateFaq: Map<number, string> = new Map<number, string>([
+        [400, "Invalid FAQ data. Please check your inputs."],
+        [403, "Only FAQ authors can create FAQ responses!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsGetRequests: Map<number, string> = new Map<number, string>([
+        [403, "Only FAQ authors can view FAQ requests!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsAnswerRequest: Map<number, string> = new Map<number, string>([
+        [403, "Only FAQ authors can answer requests!"],
+        [404, "FAQ request not found!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsAllAuthor: Map<number, string> = new Map<number, string>([
+        [404, "User not found or has no FAQ responses!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsGetHiddenFaqs: Map<number, string> = new Map<number, string>([
+        [403, "You must be an administrator to view hidden FAQs!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsSetFaqHidden: Map<number, string> = new Map<number, string>([
+        [403, "You do not have permission to do that!"],
+        [404, "FAQ not found!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsDeleteHiddenFaq: Map<number, string> = new Map<number, string>([
+        [403, "You do not have permission to do that!"],
+        [404, "Hidden FAQ not found!"],
+        [-1, "Internal server error"]
+    ])
+
+    const defaultErrorsDeleteFaq: Map<number, string> = new Map<number, string>([
+        [403, "You do not have permission to do that!"],
+        [404, "FAQ not found!"],
+        [-1, "Internal server error"]
+    ])
     return {
         getAll: async (pageNumber: number): Promise<ErrorWrapper<GetFaqsResponse>> => {
-            try {
-                const res = await auth.api.get(`/faq/all?pageNumber=${pageNumber}`)
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "You must be logged in to view FAQs!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<GetFaqsResponse>(
+                auth.api,
+                RequestType.GET,
+                `/faq/all?pageNumber=${pageNumber}`,
+                {},
+                defaultErrorsAll
+            )
         },
         getContent: async(faqId: number): Promise<ErrorWrapper<string>> => {
-            try {
-                const res = await auth.api.get(`/faq/content?id=${faqId}`)
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 404:
-                            return {data: undefined, error: "FAQ content not found!", isError: true}
-                        case 403:
-                            return {data: undefined, error: "You must be logged in to view FAQ content!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<string>(
+                auth.api,
+                RequestType.GET,
+                `/faq/content?id=${faqId}`,
+                {},
+                defaultErrorsContent
+            )
         },
         getPending: async(pageNumber: number): Promise<ErrorWrapper<GetPendingFaqsResponse>> => {
-            try {
-                const res = await auth.api.get(`/faq/pending?pageNumber=${pageNumber}`)
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "Only administrators can view pending FAQs!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<GetPendingFaqsResponse>(
+                auth.api,
+                RequestType.GET,
+                `/faq/pending?pageNumber=${pageNumber}`,
+                {},
+                defaultErrorsPending
+            )
         },
         approve: async(id: number, approved: boolean): Promise<ErrorWrapper<boolean>> => {
-            try {
-                const res = await auth.api.post(`/faq/approve`, {id: id, approved: approved})
-                if (res.status == 200) {
-                    return {data: true, error: undefined, isError: false}
-                }
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "Only administrators can approve FAQs!", isError: true}
-                        case 404:
-                            return {data: undefined, error: "FAQ not found!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/faq/approve`,
+                { id, approved },
+                defaultErrorsApprove
+            )
         },
         create: async(title: string, summary: string, content: string): Promise<ErrorWrapper<FaqModel>> => {
-            try {
-                const res = await auth.api.post(`/faq/create`, {title: title, summary: summary, content: content})
-                return {data: res.data, isError: false, error: undefined}
-            } catch (err: any) {
-                if (err.response) {
-                    // Check for validation errors first
-                    const validationError = extractValidationError(err.response);
-                    if (validationError) {
-                        return {data: undefined, isError: true, error: validationError, validationErrors: getValidationErrors(err.response)}
-                    }
-                    
-                    switch (err.response.status) {
-                        case 400:
-                            return {data: undefined, isError: true, error: "Invalid FAQ data. Please check your inputs."}
-                        case 403:
-                            console.error("Unauthorized: only users marked as faq authors can create faq responses!")
-                            return {data: undefined, isError: true, error: "Only FAQ authors can create FAQ responses!"}
-                        default:
-                            return {data: undefined, isError: true, error: "Internal server error"}
-                    }
-                }
-            }
-            return {data: undefined, isError: true, error: "Internal server error"}
+            return doGenericRequest<FaqModel>(
+                auth.api,
+                RequestType.POST,
+                `/faq/create`,
+                { title, summary, content },
+                defaultErrorsCreateFaq
+            )
         },
         checkApprovalStatus: async(): Promise<ApprovalCheckModel> => {
             const res = await auth.api.get("/faq/checkApproval")
             return res.data
         },
         getRequests: async(): Promise<ErrorWrapper<FaqRequestModel[]>> => {
-            try {
-                const res = await auth.api.get("/faq/requests")
-                return {isError: false, error: undefined, data: res.data}
-            } catch(err: any) {
-                if (err.response) {
-                    switch (err.status) {
-                        case 403:
-                            return {data: undefined, isError: true, error: "Only FAQ authors can view FAQ requests!"}
-                    }
-                }
-            }
-            return {data: undefined, isError: true, error: "Internal server error"}
+            return doGenericRequest<FaqRequestModel[]>(
+                auth.api,
+                RequestType.GET,
+                "/faq/requests",
+                {},
+                defaultErrorsGetRequests
+            )
         },
         answerRequest: async(requestId: number): Promise<ErrorWrapper<boolean>> => {
-            try {
-                const res = await auth.api.post('/faq/requests/answer', {reqId: requestId})
-                if (res.status == 200) {
-                    return {data: true, error: undefined, isError: false}
-                }
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "Only FAQ authors can answer requests!", isError: true}
-                        case 404:
-                            return {data: undefined, error: "FAQ request not found!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                '/faq/requests/answer',
+                { reqId: requestId },
+                defaultErrorsAnswerRequest
+            )
         },
         createRequest: async(suggested: string): Promise<ErrorWrapper<boolean>> => {
-            try {
-                const res = await auth.api.post('/faq/requests/create', {suggested: suggested})
-                if (res.status == 200) {
-                    return {data: true, error: undefined, isError: false}
-                }
-            } catch (err: any) {
-                if (err.response) {
-                    // Check for validation errors first
-                    const validationError = extractValidationError(err.response);
-                    if (validationError) {
-                        return {data: undefined, error: validationError, isError: true, validationErrors: getValidationErrors(err.response)}
-                    }
-                    
-                    switch(err.response.status) {
-                        case 400:
-                            return {data: undefined, error: "Invalid request content!", isError: true}
-                        case 403:
-                            return {data: undefined, error: "You must be logged in to create FAQ requests!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            const defaultErrorsCreateRequest: Map<number, string> = new Map<number, string>([
+                [400, "Invalid request content!"],
+                [403, "You must be logged in to create FAQ requests!"],
+                [-1, "Internal client error"]
+            ])
+
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                "/faq/requests/create",
+                { suggested },
+                defaultErrorsCreateRequest
+            )
         },
         allAuthor: async(userId: number, pageNumber: number = 0): Promise<ErrorWrapper<FaqModel[]>> => {
-            try {
-                const res = await auth.api.get(`/faq/allAuthor?userId=${userId}&pageNumber=${pageNumber}`)
-                return {isError: false, error: undefined, data: res.data}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 404:
-                            return {data: undefined, isError: true, error: "User not found or has no FAQ responses!"}
-                        default:
-                            return {data: undefined, isError: true, error: "Internal server error"}
-                    }
-                }
-            }
-            return {data: undefined, isError: true, error: "Internal client error"}
+            return doGenericRequest<FaqModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/faq/allAuthor?userId=${userId}&pageNumber=${pageNumber}`,
+                {},
+                defaultErrorsAllAuthor
+            )
         },
         getHiddenFaqs: async(type: 'ADMIN' | 'USER', pageNumber: number): Promise<ErrorWrapper<GetHiddenFaqsResponse>> => {
-            try {
-                const res = await auth.api.post(`/faq/getHidden?type=${type}&pageNumber=${pageNumber}`)
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "You must be an administrator to view hidden FAQs!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<GetHiddenFaqsResponse>(
+                auth.api,
+                RequestType.POST,
+                `/faq/getHidden?type=${type}&pageNumber=${pageNumber}`,
+                {},
+                defaultErrorsGetHiddenFaqs
+            )
         },
         setFaqHidden: async(faqId: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
-            try {
-                await auth.api.post(`/faq/hide?faqId=${faqId}&hidden=${hidden}`)
-                return {data: true, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: false, error: "You do not have permission to do that!", isError: true}
-                        case 404:
-                            return {data: false, error: "FAQ not found!", isError: true}
-                        default:
-                            return {data: false, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: false, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/faq/hide?faqId=${faqId}&hidden=${hidden}`,
+                {},
+                defaultErrorsSetFaqHidden
+            )
         },
         deleteHiddenFaq: async(faqId: number): Promise<ErrorWrapper<boolean>> => {
-            try {
-                await auth.api.delete(`/faq/hidden/delete?id=${faqId}`)
-                return {data: true, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: false, error: "You do not have permission to do that!", isError: true}
-                        case 404:
-                            return {data: false, error: "Hidden FAQ not found!", isError: true}
-                        default:
-                            return {data: false, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: false, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.DELETE,
+                `/faq/hidden/delete?id=${faqId}`,
+                {},
+                defaultErrorsDeleteHiddenFaq
+            )
         },
         deleteFaq: async(faqId: number): Promise<ErrorWrapper<boolean>> => {
-            try {
-                await auth.api.delete(`/faq/delete?id=${faqId}`)
-                return {data: true, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: false, error: "You do not have permission to do that!", isError: true}
-                        case 404:
-                            return {data: false, error: "FAQ not found!", isError: true}
-                        default:
-                            return {data: false, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: false, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.DELETE,
+                `/faq/delete?id=${faqId}`,
+                {},
+                defaultErrorsDeleteFaq
+            )
         }
     }
 }
