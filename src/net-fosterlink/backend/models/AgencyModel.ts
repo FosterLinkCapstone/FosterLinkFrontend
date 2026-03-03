@@ -11,5 +11,11 @@ export interface AgencyModel {
     agent: UserModel,
     agentInfo: AgentInfoModel,
     approved: number,
-    approvedByUsername: string
+    approvedByUsername: string,
+    hiddenByUsername?: string,
+    /** Set when the owner has requested deletion (pending request). */
+    deletionRequestedAt?: string,
+    deletionRequestedByUsername?: string,
+    /** Pending deletion request id; set when deletionRequestedByUsername is set (for admin Accept/Deny). */
+    deletionRequestId?: number
 }
