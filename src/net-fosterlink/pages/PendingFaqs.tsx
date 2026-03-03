@@ -139,7 +139,7 @@ export const PendingFaqs = () => {
     });
     if (confirmed) {
       faqApiRef.current.approve(faq.id, true).then(res => {
-        if (!res.isError && res.data) {
+        if (!res.isError) {
           setFaqs(faqs.filter(f => f.id !== faq.id));
           setApprovedOrDenied("approved");
         } else {

@@ -75,7 +75,7 @@ export const Agencies = () => {
     }
     const onRemove = (agencyId: number) => {
         agencyApiRef.approve(agencyId, false).then(res => {
-            if (!res.isError && res.data) {
+            if (!res.isError) {
                 setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
                 setRemoveSuccess(true)
             } else {

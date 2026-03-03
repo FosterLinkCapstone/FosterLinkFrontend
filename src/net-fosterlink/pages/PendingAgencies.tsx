@@ -32,7 +32,7 @@ export const PendingAgencies = () => {
 
     const onApprove = (id: number, approve: boolean) => {
         agencyApiRef.approve(id, approve).then(res => {
-            if (!res.isError && res.data) {
+            if (!res.isError) {
                 if (approve) {
                     setAgencies(agencies?.filter(a => a.id !== id) ?? [])
                 } else {
