@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { AlertTriangle, Search, Trash2 } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { userApi } from "../backend/api/UserApi";
@@ -19,6 +19,11 @@ import type { FaqModel } from "../backend/models/FaqModel";
 import { faqApi } from "../backend/api/FaqApi";
 import { Paginator } from "../components/Paginator";
 import type { GetThreadsResponse } from "../backend/models/api/GetThreadsResponse";
+import { accountDeletionApi } from "../backend/api/AccountDeletionApi";
+import type { AccountDeletionRequestModel } from "../backend/models/AccountDeletionRequestModel";
+import { StatusDialog } from "../components/StatusDialog";
+import { confirm } from "../components/ConfirmDialog";
+import { DeleteAccountDialog } from "../components/account-deletion/DeleteAccountDialog";
 
 type OrderBy = "newest" | "oldest" | "likes";
 
@@ -83,12 +88,17 @@ const ThreadCardSkeleton = () => (
   </Card>
 );
 
+const formatDate = (date: Date | string) =>
+  new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
 export const UserProfile = () => {
   const { userId  } = useParams();
   const [searchParams] = useSearchParams();
   const auth = useAuth();
   const navigate = useNavigate();
   const threadApiRef = useMemo(() => threadApi(auth), [auth]);
+  const deletionApiRef = useRef(accountDeletionApi(auth));
+  deletionApiRef.current = accountDeletionApi(auth);
 
   const [profileMetadata, setProfileMetadata] = useState<ProfileMetadataModel | null>(null);
   const [faqResponses, setFaqResponses] = useState<FaqModel[]>([]);
@@ -101,6 +111,11 @@ export const UserProfile = () => {
   const [searchText, setSearchText] = useState("");
   const [orderBy, setOrderBy] = useState<OrderBy>("newest");
   const [threadsCurrentPage, setThreadsCurrentPage] = useState(1);
+
+  // Deletion request state
+  const [myDeletionRequest, setMyDeletionRequest] = useState<AccountDeletionRequestModel | null | undefined>(undefined);
+  const [deletionStatusMsg, setDeletionStatusMsg] = useState<{ msg: string; success: boolean } | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const numericUserId = useMemo(() => {
     if (!userId) return null;
@@ -150,6 +165,12 @@ export const UserProfile = () => {
       userApi(auth).getProfileMetadata(numericUserId),
       threadApiRef.searchByUser(numericUserId, 0)
     ]).then(([profileRes, threadRes]) => {
+
+      if (profileRes.isError) {
+        navigate("/not-found", { replace: true });
+        return;
+      }
+
       if (!profileRes.isError && profileRes.data) {
         setProfileMetadata(profileRes.data);
       } else {
@@ -170,6 +191,43 @@ export const UserProfile = () => {
       }
     });
   }, [numericUserId, auth, threadApiRef]);
+
+  const currentUserId = auth.getUserInfo()?.id;
+  const isOwnProfile = !!currentUserId && !!numericUserId && currentUserId === numericUserId;
+
+  useEffect(() => {
+    if (!isOwnProfile || !auth.isLoggedIn()) {
+      setMyDeletionRequest(null);
+      return;
+    }
+    deletionApiRef.current.getMyRequest().then(res => {
+      if (!res.isError) {
+        setMyDeletionRequest(res.data ?? null);
+      } else {
+        setMyDeletionRequest(null);
+      }
+    });
+  }, [isOwnProfile, auth]);
+
+  const handleCancelDeletion = async () => {
+    const confirmed = await confirm({
+      message: "Are you sure you want to cancel your account deletion request? Your account will be unlocked and remain active.",
+    });
+    if (!confirmed) return;
+    const res = await deletionApiRef.current.cancelDeletion();
+    if (!res.isError) {
+      setMyDeletionRequest(null);
+      setDeletionStatusMsg({ msg: "Your deletion request has been cancelled. Your account is now active.", success: true });
+    } else {
+      setDeletionStatusMsg({ msg: res.error ?? "Failed to cancel deletion request.", success: false });
+    }
+  };
+
+  const handleDeletionRequestSuccess = () => {
+    deletionApiRef.current.getMyRequest().then(r => {
+      if (!r.isError) setMyDeletionRequest(r.data ?? null);
+    });
+  };
 
   const filteredSortedThreads = useMemo(() => {
     let result = [...threads];
@@ -234,6 +292,22 @@ export const UserProfile = () => {
 
   return (
     <PageLayout auth={auth}>
+      {/* Status dialogs */}
+      <StatusDialog
+        open={!!deletionStatusMsg}
+        onOpenChange={() => setDeletionStatusMsg(null)}
+        title={deletionStatusMsg?.msg ?? ""}
+        subtext=""
+        isSuccess={deletionStatusMsg?.success ?? false}
+      />
+
+      {/* Delete account dialog */}
+      <DeleteAccountDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onSuccess={handleDeletionRequestSuccess}
+      />
+
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Profile Header */}
         <div className="flex flex-col items-center text-center mb-10">
@@ -281,6 +355,43 @@ export const UserProfile = () => {
           )}
           {isLoadingWithInitialRender && (
             <div className="h-6 w-32 bg-muted/50 rounded-full animate-pulse" />
+          )}
+
+          {/* Deletion request banner (own profile) */}
+          {isOwnProfile && myDeletionRequest && (
+            <div className="mt-4 w-full max-w-md border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-left space-y-2">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300 font-semibold text-sm">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                Your account is scheduled for deletion
+              </div>
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Will be automatically deleted on <span className="font-medium">{formatDate(myDeletionRequest.autoApproveBy)}</span>
+                {myDeletionRequest.clearAccount && " — all account content will also be cleared."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelDeletion}
+                className="text-xs border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40"
+              >
+                Cancel Deletion Request
+              </Button>
+            </div>
+          )}
+
+          {/* Delete my account button (own profile, no pending request) */}
+          {isOwnProfile && myDeletionRequest === null && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-xs text-muted-foreground border-muted-foreground/30 hover:border-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                Delete My Account
+              </Button>
+            </div>
           )}
         </div>
 

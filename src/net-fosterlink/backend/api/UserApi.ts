@@ -197,6 +197,8 @@ export const userApi = (auth: AuthContextType): UserApiType => {
             } catch (err: any) {
                 if (err.response) {
                     switch (err.response.status) {
+                        case 403:
+                            return {isError: true, error: "This account is locked pending deletion.", data: undefined}
                         case 404:
                             return {isError: true, error: "Could not find that user!", data: undefined}
                         default:

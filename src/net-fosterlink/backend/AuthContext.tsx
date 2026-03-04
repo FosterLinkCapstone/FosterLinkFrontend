@@ -58,7 +58,11 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
             const status = err?.response?.status
             const url = err?.config?.url ?? ""
             const isLoginRequest = String(url).includes("/users/login")
+            const isGetInfoRequest = String(url).includes("/users/getInfo")
             if (status === 401 && !isLoginRequest) {
+                forceLogout()
+            }
+            if (status === 403 && isGetInfoRequest) {
                 forceLogout()
             }
             return Promise.reject(err)

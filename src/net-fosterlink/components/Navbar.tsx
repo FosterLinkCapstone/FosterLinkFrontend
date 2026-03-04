@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { ListItem } from "./ListItem";
 import { Link } from "react-router";
@@ -11,16 +12,19 @@ import { AdminOnlyBadge } from "./AdminOnlyBadge";
 import { FaqAuthorOnlyBadge } from "./FaqAuthorOnlyBadge";
 import { useTheme } from "@/ThemeProvider";
 import { Moon, Sun, Monitor } from "lucide-react";
+import { DeleteAccountDialog } from "./account-deletion/DeleteAccountDialog";
 
 export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
   const auth = useAuth();
   const { theme, setTheme } = useTheme();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const cycleTheme = () => {
     setTheme(theme === "light" ? "dark" : theme === "dark" ? "system" : "light");
   };
 
   return (
+    <>
     <nav className="bg-background shadow-sm border-b w-full border-border">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
@@ -170,6 +174,15 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                               Sign out of your account
                             </p>
                           </a>
+                          <a
+                            onClick={() => setShowDeleteDialog(true)}
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                          >
+                            <div className="text-sm font-medium leading-none text-red-600 dark:text-red-400">Delete Account</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Request permanent deletion of your account
+                            </p>
+                          </a>
                         </li>
                       ) : (
                         <>
@@ -184,6 +197,23 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
+                {auth.admin && (
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
+                      Admin
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent className="bg-popover text-popover-foreground">
+                      <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
+                        <ListItem href="/admin/account-deletion-requests" title="Account Deletion Requests">
+                          <div className="flex flex-col items-center">
+                            <AdminOnlyBadge />
+                            <span>Review and approve or delay pending account deletion requests</span>
+                          </div>
+                        </ListItem>
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                )}
                 {
                   auth.admin && (
                 <NavigationMenuItem>
@@ -317,5 +347,11 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
         </div>
       </div>
     </nav>
+
+    <DeleteAccountDialog
+      open={showDeleteDialog}
+      onOpenChange={setShowDeleteDialog}
+    />
+  </>
   );
 }
