@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Search } from "lucide-react";
+import { AlertTriangle, Ban, ShieldAlert, Search } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { userApi } from "../backend/api/UserApi";
@@ -143,6 +143,8 @@ export const UserProfile = () => {
       joinedText: formatJoinedText(joinDateSource),
       joinedTooltip: formatJoinedTooltip(joinDateSource),
       verified: user?.verified ?? false,
+      banned: user?.banned ?? false,
+      restricted: user?.restricted ?? false,
     };
   }, [profileMetadata?.user, initialData]);
 
@@ -218,6 +220,58 @@ export const UserProfile = () => {
       setDeletionStatusMsg({ msg: "Your deletion request has been cancelled. Your account is now active.", success: true });
     } else {
       setDeletionStatusMsg({ msg: res.error ?? "Failed to cancel deletion request.", success: false });
+    }
+  };
+
+  const handleBan = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to ban ${display.username}? They will be locked out of their account.` });
+    if (!confirmed) return;
+    const res = await userApi(auth).banUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, banned: true } } : prev);
+      setDeletionStatusMsg({ msg: "User has been banned.", success: true });
+    } else {
+      setDeletionStatusMsg({ msg: res.error ?? "Failed to ban user.", success: false });
+    }
+  };
+
+  const handleUnban = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to unban ${display.username}?` });
+    if (!confirmed) return;
+    const res = await userApi(auth).unbanUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, banned: false } } : prev);
+      setDeletionStatusMsg({ msg: "User has been unbanned.", success: true });
+    } else {
+      setDeletionStatusMsg({ msg: res.error ?? "Failed to unban user.", success: false });
+    }
+  };
+
+  const handleRestrict = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to restrict ${display.username}?` });
+    if (!confirmed) return;
+    const res = await userApi(auth).restrictUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, restricted: true } } : prev);
+      setDeletionStatusMsg({ msg: "User has been restricted.", success: true });
+    } else {
+      setDeletionStatusMsg({ msg: res.error ?? "Failed to restrict user.", success: false });
+    }
+  };
+
+  const handleUnrestrict = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to unrestrict ${display.username}?` });
+    if (!confirmed) return;
+    const res = await userApi(auth).unrestrictUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, restricted: false } } : prev);
+      setDeletionStatusMsg({ msg: "User has been unrestricted.", success: true });
+    } else {
+      setDeletionStatusMsg({ msg: res.error ?? "Failed to unrestrict user.", success: false });
     }
   };
 
@@ -336,6 +390,44 @@ export const UserProfile = () => {
                 >
                   Agency Rep
                 </Badge>
+              )}
+              {display.banned && (
+                <Badge className="px-4 py-1 rounded-full border-red-400 dark:border-red-600 bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200">
+                  <Ban className="h-3 w-3 mr-1" /> Banned
+                </Badge>
+              )}
+              {display.restricted && (
+                <Badge className="px-4 py-1 rounded-full border-orange-400 dark:border-orange-600 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200">
+                  <ShieldAlert className="h-3 w-3 mr-1" /> Restricted
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Admin moderation actions */}
+          {auth.admin && !isOwnProfile && profileMetadata && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {display.banned ? (
+                <Button variant="outline" size="sm" onClick={handleUnban}
+                  className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40">
+                  Unban User
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleBan}
+                  className="text-xs border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40">
+                  <Ban className="h-3 w-3 mr-1" /> Ban User
+                </Button>
+              )}
+              {display.restricted ? (
+                <Button variant="outline" size="sm" onClick={handleUnrestrict}
+                  className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40">
+                  Unrestrict User
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleRestrict}
+                  className="text-xs border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40">
+                  <ShieldAlert className="h-3 w-3 mr-1" /> Restrict User
+                </Button>
               )}
             </div>
           )}

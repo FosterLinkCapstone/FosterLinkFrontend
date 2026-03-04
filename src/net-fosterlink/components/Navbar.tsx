@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { UserModel } from "../backend/models/UserModel";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
-import { AgentOnlyBadge } from "./AgentOnlyBadge";
+import { AgentOnlyBadge } from "./agencies/AgentOnlyBadge";
 import { AdminOnlyBadge } from "./AdminOnlyBadge";
 import { FaqAuthorOnlyBadge } from "./faq/FaqAuthorOnlyBadge";
 import { useTheme } from "@/ThemeProvider";

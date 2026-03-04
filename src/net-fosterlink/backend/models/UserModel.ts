@@ -4,5 +4,7 @@ export interface UserModel {
     username: string,
     profilePictureUrl: string,
     verified: boolean,
-    createdAt: Date
+    createdAt: Date,
+    banned: boolean,
+    restricted: boolean
 }

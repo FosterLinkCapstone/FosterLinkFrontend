@@ -28,6 +28,10 @@ export interface UserApiType {
     getSettings: () => Promise<ErrorWrapper<UserSettingsModel>>,
     updateUser: (data: UpdateUserPayload) => Promise<ErrorWrapper<void>>,
     changePassword: (oldPassword: string, newPassword: string) => Promise<ErrorWrapper<void>>,
+    banUser: (userId: number) => Promise<ErrorWrapper<void>>,
+    unbanUser: (userId: number) => Promise<ErrorWrapper<void>>,
+    restrictUser: (userId: number, restrictedUntil?: string) => Promise<ErrorWrapper<void>>,
+    unrestrictUser: (userId: number) => Promise<ErrorWrapper<void>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -191,6 +195,69 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 RequestType.POST,
                 "/users/changePassword",
                 { oldPassword, newPassword },
+                defaultErrors
+            );
+        },
+
+        banUser: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to ban users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/ban?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        unbanUser: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to unban users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/unban?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        restrictUser: async(userId: number, restrictedUntil?: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to restrict users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            const params = restrictedUntil
+                ? `/users/restrict?userId=${userId}&restrictedUntil=${encodeURIComponent(restrictedUntil)}`
+                : `/users/restrict?userId=${userId}`;
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                params,
+                {},
+                defaultErrors
+            );
+        },
+
+        unrestrictUser: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to unrestrict users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/unrestrict?userId=${userId}`,
+                {},
                 defaultErrors
             );
         },
