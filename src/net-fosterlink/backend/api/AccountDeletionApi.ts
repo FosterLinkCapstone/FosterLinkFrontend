@@ -1,4 +1,5 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
+import { doGenericRequest, RequestType } from "@/net-fosterlink/util/ApiUtil";
 import type { AuthContextType } from "../AuthContext";
 import type { AccountDeletionRequestModel, GetAccountDeletionRequestsResponse } from "../models/AccountDeletionRequestModel";
 
@@ -12,100 +13,100 @@ export interface AccountDeletionApiType {
 }
 
 export const accountDeletionApi = (auth: AuthContextType): AccountDeletionApiType => {
+    const defaultErrorsRequestDeletion: Map<number, string> = new Map([
+        [400, "You already have a pending deletion request."],
+        [403, "You must be logged in."],
+        [-1, "An unexpected error occurred."]
+    ]);
+
+    const defaultErrorsCancelDeletion: Map<number, string> = new Map([
+        [403, "You must be logged in."],
+        [404, "No pending deletion request found."],
+        [-1, "An unexpected error occurred."]
+    ]);
+
+    const defaultErrorsGetMyRequest: Map<number, string> = new Map([
+        [403, "You must be logged in."],
+        [-1, "An unexpected error occurred."]
+    ]);
+
+    const defaultErrorsGetRequests: Map<number, string> = new Map([
+        [403, "Not authorized."],
+        [-1, "An unexpected error occurred."]
+    ]);
+
+    const defaultErrorsApproveRequest: Map<number, string> = new Map([
+        [403, "Not authorized."],
+        [404, "Deletion request not found."],
+        [-1, "An unexpected error occurred."]
+    ]);
+
+    const defaultErrorsDelayRequest: Map<number, string> = new Map([
+        [400, "Invalid request. Please check your inputs."],
+        [403, "Not authorized."],
+        [404, "Deletion request not found."],
+        [-1, "An unexpected error occurred."]
+    ]);
+
     return {
         requestDeletion: async (clearAccount: boolean): Promise<ErrorWrapper<void>> => {
-            try {
-                await auth.api.post(`/account-deletion/request?clearAccount=${clearAccount}`)
-                return { isError: false, error: undefined, data: undefined }
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 400: return { isError: true, error: "You already have a pending deletion request.", data: undefined }
-                        case 403: return { isError: true, error: "You must be logged in.", data: undefined }
-                        default: return { isError: true, error: "An unexpected error occurred.", data: undefined }
-                    }
-                }
-                return { isError: true, error: "Network error.", data: undefined }
-            }
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/account-deletion/request?clearAccount=${clearAccount}`,
+                {},
+                defaultErrorsRequestDeletion
+            );
         },
 
         cancelDeletion: async (): Promise<ErrorWrapper<void>> => {
-            try {
-                await auth.api.delete("/account-deletion/cancel")
-                return { isError: false, error: undefined, data: undefined }
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 403: return { isError: true, error: "You must be logged in.", data: undefined }
-                        case 404: return { isError: true, error: "No pending deletion request found.", data: undefined }
-                        default: return { isError: true, error: "An unexpected error occurred.", data: undefined }
-                    }
-                }
-                return { isError: true, error: "Network error.", data: undefined }
-            }
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.DELETE,
+                "/account-deletion/cancel",
+                {},
+                defaultErrorsCancelDeletion
+            );
         },
 
         getMyRequest: async (): Promise<ErrorWrapper<AccountDeletionRequestModel | null>> => {
-            try {
-                const res = await auth.api.get("/account-deletion/my-request")
-                return { isError: false, error: undefined, data: res.data }
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 403: return { isError: true, error: "You must be logged in.", data: undefined }
-                        default: return { isError: true, error: "An unexpected error occurred.", data: undefined }
-                    }
-                }
-                return { isError: true, error: "Network error.", data: undefined }
-            }
+            return doGenericRequest<AccountDeletionRequestModel | null>(
+                auth.api,
+                RequestType.GET,
+                "/account-deletion/my-request",
+                {},
+                defaultErrorsGetMyRequest
+            );
         },
 
         getRequests: async (pageNumber: number, sortBy: "recency" | "urgency" = "recency"): Promise<ErrorWrapper<GetAccountDeletionRequestsResponse>> => {
-            try {
-                const res = await auth.api.get(`/account-deletion/requests?pageNumber=${pageNumber}&sortBy=${sortBy}`)
-                return { isError: false, error: undefined, data: res.data }
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 403: return { isError: true, error: "Not authorized.", data: undefined }
-                        default: return { isError: true, error: "An unexpected error occurred.", data: undefined }
-                    }
-                }
-                return { isError: true, error: "Network error.", data: undefined }
-            }
+            return doGenericRequest<GetAccountDeletionRequestsResponse>(
+                auth.api,
+                RequestType.GET,
+                `/account-deletion/requests?pageNumber=${pageNumber}&sortBy=${sortBy}`,
+                {},
+                defaultErrorsGetRequests
+            );
         },
 
         approveRequest: async (requestId: number): Promise<ErrorWrapper<void>> => {
-            try {
-                await auth.api.post(`/account-deletion/approve?requestId=${requestId}`)
-                return { isError: false, error: undefined, data: undefined }
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 403: return { isError: true, error: "Not authorized.", data: undefined }
-                        case 404: return { isError: true, error: "Deletion request not found.", data: undefined }
-                        default: return { isError: true, error: "An unexpected error occurred.", data: undefined }
-                    }
-                }
-                return { isError: true, error: "Network error.", data: undefined }
-            }
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/account-deletion/approve?requestId=${requestId}`,
+                {},
+                defaultErrorsApproveRequest
+            );
         },
 
         delayRequest: async (requestId: number, reason: string): Promise<ErrorWrapper<void>> => {
-            try {
-                await auth.api.post("/account-deletion/delay", { requestId, reason })
-                return { isError: false, error: undefined, data: undefined }
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 400: return { isError: true, error: "Invalid request. Please check your inputs.", data: undefined }
-                        case 403: return { isError: true, error: "Not authorized.", data: undefined }
-                        case 404: return { isError: true, error: "Deletion request not found.", data: undefined }
-                        default: return { isError: true, error: "An unexpected error occurred.", data: undefined }
-                    }
-                }
-                return { isError: true, error: "Network error.", data: undefined }
-            }
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/account-deletion/delay",
+                { requestId, reason },
+                defaultErrorsDelayRequest
+            );
         }
-    }
-}
+    };
+};
