@@ -292,6 +292,7 @@ export const UserProfile = () => {
 
   return (
     <PageLayout auth={auth}>
+      <title>{display.username}</title>
       {/* Status dialogs */}
       <StatusDialog
         open={!!deletionStatusMsg}

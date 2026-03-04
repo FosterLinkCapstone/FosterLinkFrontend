@@ -78,6 +78,7 @@ export const Home = () => {
 
   return (
     <div className="min-h-screen bg-background bg-gradient-to-b from-blue-50/80 to-background dark:from-transparent dark:to-transparent">
+        <title>FosterLink</title>
         <Navbar userInfo={auth.getUserInfo()}/>
 
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">

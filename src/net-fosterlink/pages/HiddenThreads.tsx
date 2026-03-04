@@ -109,6 +109,7 @@ export const HiddenThreads = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <title>Hidden Threads</title>
       <StatusDialog
         open={error != null && threads.length > 0}
         onOpenChange={() => setError(null)}

@@ -127,6 +127,7 @@ export const Agencies = () => {
 
     return (
         <div className="min-h-screen bg-background">
+            <title>Agencies</title>
             { createError &&
             <StatusDialog open={createError != null}
                 onOpenChange={() => setCreateError(null)}

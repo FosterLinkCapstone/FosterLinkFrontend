@@ -32,8 +32,14 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
   const [loadingReplies, setLoadingReplies] = useState<boolean>(true)
   const auth = useAuth()
   const [isLiked, setIsLiked] = useState<boolean>(thread.liked)
+  const [likeInFlight, setLikeInFlight] = useState(false)
   const threadApiRef = threadApi(auth)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    document.title = `${thread.author.username} · ${thread.title}`
+    return () => { document.title = 'FosterLink' }
+  }, [thread.author.username, thread.title])
 
   useEffect(() => {
     setLoadingReplies(true)
@@ -82,17 +88,27 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
     }
   };
   const likeThread = () => {
-    if (auth.isLoggedIn()) {
-      thread.likeCount += isLiked ? -1 : 1
-      setIsLiked(!isLiked)
-      threadApiRef.likeThread(thread.id).then(res => {
-        if (res.isError) {
-          // Revert the like count change on error
-          thread.likeCount += isLiked ? 1 : -1
-          setIsLiked(!isLiked)
-        }
-      })
+    if (!auth.isLoggedIn() || likeInFlight) {
+      return;
     }
+
+    setLikeInFlight(true);
+
+    const wasLiked = isLiked;
+    const delta = wasLiked ? -1 : 1;
+
+    thread.likeCount = Math.max(0, thread.likeCount + delta);
+    setIsLiked(!wasLiked);
+
+    threadApiRef.likeThread(thread.id).then(res => {
+      if (res.isError) {
+        // Revert the like count change on error
+        thread.likeCount = Math.max(0, thread.likeCount - delta);
+        setIsLiked(wasLiked);
+      }
+    }).finally(() => {
+      setLikeInFlight(false);
+    });
   }
   const submitEdit = () => {
     thread.content = editedContent
@@ -263,7 +279,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                 )
               }
 
-            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn()} onClick={likeThread}>
+            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn() || likeInFlight} onClick={likeThread}>
                 {isLiked ? <>
                   <Heart fill="currentColor" className="h-4 w-4 text-destructive"/>
                   <span className="text-sm text-destructive">{thread.likeCount}</span>

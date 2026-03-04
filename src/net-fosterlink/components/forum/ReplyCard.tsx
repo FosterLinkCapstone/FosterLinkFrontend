@@ -28,6 +28,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
   const auth = useAuth()
   const threadApiRef = threadApi(auth)
   const [isLiked, setIsLiked] = useState<boolean>(reply.liked)
+  const [likeInFlight, setLikeInFlight] = useState(false)
   const [editing, setEditing] = useState<boolean>(false)
   const [editedContent, setEditedContent] = useState<string>(reply.content)
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({})
@@ -49,16 +50,26 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
   }
 
   const likeReply = () => {
-    if (auth.isLoggedIn()) {
-      setIsLiked(!isLiked)
-      reply.likeCount += isLiked ? -1 : 1
-      threadApiRef.likeReply(reply.id).then(res => {
-        if (res.isError) {
-          setIsLiked(!isLiked)
-          reply.likeCount += isLiked ? 1 : -1
-        }
-      })
+    if (!auth.isLoggedIn() || likeInFlight) {
+      return;
     }
+
+    setLikeInFlight(true);
+
+    const wasLiked = isLiked;
+    const delta = wasLiked ? -1 : 1;
+
+    setIsLiked(!wasLiked);
+    reply.likeCount = Math.max(0, reply.likeCount + delta);
+
+    threadApiRef.likeReply(reply.id).then(res => {
+      if (res.isError) {
+        setIsLiked(wasLiked);
+        reply.likeCount = Math.max(0, reply.likeCount - delta);
+      }
+    }).finally(() => {
+      setLikeInFlight(false);
+    });
   }
 
   const submitEdit = () => {
@@ -169,7 +180,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
             <div className="flex items-center gap-3">
               <button
                 className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75"
-                disabled={!auth.isLoggedIn()}
+                disabled={!auth.isLoggedIn() || likeInFlight}
                 onClick={likeReply}
               >
                 {isLiked ? <>

@@ -141,6 +141,7 @@ export const Threads = () => {
   }
   return (
     <div className="min-h-screen bg-background">
+      <title>Threads</title>
       <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>

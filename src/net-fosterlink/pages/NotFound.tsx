@@ -9,6 +9,7 @@ export const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <title>FosterLink</title>
       <Navbar userInfo={auth.getUserInfo()} />
       
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">

@@ -34,6 +34,7 @@ export const HiddenThreadLoader = ({preloadedThread = undefined} : {preloadedThr
         }
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
+                <title>Loading...</title>
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div>
         );

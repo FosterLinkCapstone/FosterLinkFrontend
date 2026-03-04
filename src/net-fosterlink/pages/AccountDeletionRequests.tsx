@@ -212,6 +212,7 @@ export const AccountDeletionRequests = () => {
 
     return (
         <div className="min-h-screen bg-background">
+            <title>Account Deletion Requests</title>
             <div className="bg-background border-b border-border h-16 flex items-center justify-center">
                 <Navbar userInfo={auth.getUserInfo()} />
             </div>

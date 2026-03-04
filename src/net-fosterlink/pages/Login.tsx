@@ -49,6 +49,7 @@ export const Login = () => {
 
     return (
         <div className="h-screen flex items-center justify-center">
+        <title>Login</title>
 <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Login to your account</CardTitle>

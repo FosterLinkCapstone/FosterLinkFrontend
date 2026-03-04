@@ -218,6 +218,7 @@ export const PendingFaqs = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <title>Pending FAQs</title>
       <StatusDialog open={approvedOrDenied != ''}
         onOpenChange={() => setApprovedOrDenied('')}
         title={`Successfully ${approvedOrDenied} FAQ response`}

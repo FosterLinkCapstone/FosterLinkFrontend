@@ -124,6 +124,7 @@ export const HiddenFaqs = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <title>Hidden FAQs</title>
       <StatusDialog
         open={error != null && faqs.length > 0}
         onOpenChange={() => setError(null)}

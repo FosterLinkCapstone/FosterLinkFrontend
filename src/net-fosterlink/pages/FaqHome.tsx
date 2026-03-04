@@ -179,6 +179,7 @@ export const FaqHome = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <title>Frequently Asked Questions</title>
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
       <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={auth.admin ? "FAQ response successfully hidden" : "FAQ response deleted"} subtext={auth.admin ? 'It can be restored from the Hidden FAQs page' : ""}/>

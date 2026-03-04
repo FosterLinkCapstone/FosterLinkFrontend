@@ -99,6 +99,7 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
 
   return (
     <div className="min-h-screen bg-background">
+      <title>[Hidden] {thread.title}</title>
       <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
         <Navbar userInfo={auth.getUserInfo()}/>
       </div>

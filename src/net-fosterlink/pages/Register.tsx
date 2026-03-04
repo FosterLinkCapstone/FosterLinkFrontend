@@ -55,6 +55,7 @@ export const Register = () => {
 
     return (
         <div className="h-screen flex items-center justify-center">
+        <title>Register</title>
         <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Register for a new account!</CardTitle>
