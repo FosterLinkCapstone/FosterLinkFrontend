@@ -145,7 +145,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
                 {thread.commentCount}
               </span>
             </button>
-            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn() || likeInFlight} onClick={e => likeThread(e)}>
+            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn() || likeInFlight || auth.restricted} onClick={e => likeThread(e)}>
                 {isLiked ? <>
                   <Heart fill="currentColor" className="h-4 w-4 text-destructive"/>
                   <span className="text-sm text-destructive">{thread.likeCount}</span>

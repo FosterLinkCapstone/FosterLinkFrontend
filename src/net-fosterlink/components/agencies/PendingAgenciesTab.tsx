@@ -127,6 +127,7 @@ export const PendingAgenciesTab = () => {
                                     variant="outline"
                                     onClick={() => onApprove(a.id, true)}
                                     className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70"
+                                    disabled={auth.restricted}
                                 >
                                     Approve
                                 </Button>
@@ -135,6 +136,7 @@ export const PendingAgenciesTab = () => {
                                         variant="outline"
                                         onClick={() => onApprove(a.id, false)}
                                         className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                                        disabled={auth.restricted}
                                     >
                                         Deny
                                     </Button>
@@ -144,6 +146,7 @@ export const PendingAgenciesTab = () => {
                                         variant="outline"
                                         onClick={() => onFullDelete(a.id)}
                                         className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                                        disabled={auth.restricted}
                                     >
                                         Delete
                                     </Button>

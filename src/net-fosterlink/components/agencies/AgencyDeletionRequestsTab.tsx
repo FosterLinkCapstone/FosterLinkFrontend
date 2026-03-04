@@ -115,6 +115,7 @@ export const AgencyDeletionRequestsTab = () => {
                                     variant="outline"
                                     onClick={() => handleAccept(req)}
                                     className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                                    disabled={auth.restricted}
                                 >
                                     Accept
                                 </Button>

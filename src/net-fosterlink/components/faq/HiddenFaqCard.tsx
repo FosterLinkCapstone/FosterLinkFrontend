@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import type { HiddenFaqModel } from "@/net-fosterlink/backend/models/HiddenFaqModel";
+import { useAuth } from "@/net-fosterlink/backend/AuthContext";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { AlertCircleIcon, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -25,6 +26,7 @@ export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
   onRestore,
   onDelete,
 }) => {
+  const auth = useAuth();
   return (
     <div className="flex flex-col w-full gap-1">
       <Alert
@@ -97,6 +99,7 @@ export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
                 }}
                 className="flex-1 min-w-0 text-sm text-green-700 hover:text-green-800 font-medium dark:text-green-300 dark:hover:text-green-200 dark:bg-emerald-500/20 dark:border-emerald-400/50 dark:hover:bg-emerald-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
                 variant="outline"
+                disabled={auth.restricted}
               >
                 Restore
               </Button>
@@ -107,6 +110,7 @@ export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
                 }}
                 className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
                 variant="outline"
+                disabled={auth.restricted}
               >
                 Delete
               </Button>

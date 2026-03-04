@@ -261,7 +261,8 @@ export const AccountSettings = () => {
                         <button
                             type="button"
                             onClick={() => setShowProfilePicDialog(true)}
-                            className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background border border-border shadow flex items-center justify-center hover:bg-accent transition-colors"
+                            disabled={auth.restricted}
+                            className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background border border-border shadow flex items-center justify-center hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none"
                             aria-label="Change profile picture"
                         >
                             <Pencil className="h-3.5 w-3.5" />
@@ -371,6 +372,7 @@ export const AccountSettings = () => {
                             className="w-full justify-center gap-2"
                             onClick={() => setShowChangePasswordDialog(true)}
                             type="button"
+                            disabled={auth.restricted}
                         >
                             <Lock className="h-4 w-4" />
                             Change password
@@ -411,7 +413,7 @@ export const AccountSettings = () => {
                             <Button
                                 size="sm"
                                 onClick={handleSave}
-                                disabled={saving || hasErrors}
+                                disabled={saving || hasErrors || auth.restricted}
                                 className="gap-1.5"
                             >
                                 <Save className="h-3.5 w-3.5" />

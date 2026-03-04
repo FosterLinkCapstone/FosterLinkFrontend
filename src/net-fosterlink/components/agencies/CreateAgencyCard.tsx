@@ -200,7 +200,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
       </div>
 
       <div className="flex gap-4 pt-2">
-        <Button variant="outline" onClick={handleFormSubmit} className="flex-1" disabled={createLoading}>
+        <Button variant="outline" onClick={handleFormSubmit} className="flex-1" disabled={createLoading || auth.restricted}>
           {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}
         </Button>
         <Button onClick={handleClose} variant="outline" className="flex-1">

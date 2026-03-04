@@ -173,7 +173,7 @@ export const Agencies = () => {
                             }
                             {
                                 ((auth.admin != null && auth.admin != null) && (auth.admin || auth.agent)) &&
-                                <Button onClick={() => { setCreatingAgency(!creatingAgency) }} variant="outline" className="w-full my-4">Create a new agency</Button>
+                                <Button onClick={() => { setCreatingAgency(!creatingAgency) }} variant="outline" className="w-full my-4" disabled={auth.restricted}>Create a new agency</Button>
                             }
                             {
                                 creatingAgency && <>
@@ -201,6 +201,7 @@ export const Agencies = () => {
                                                     size="sm"
                                                     className="bg-amber-200 text-amber-900 border-amber-400 hover:bg-amber-300 dark:bg-amber-800/60 dark:text-amber-100 dark:border-amber-600 dark:hover:bg-amber-800/80"
                                                     onClick={() => onCancelDeletionRequest(a.id)}
+                                                    disabled={auth.restricted}
                                                 >
                                                     Cancel request
                                                 </Button>
@@ -212,6 +213,7 @@ export const Agencies = () => {
                                                         size="sm"
                                                         className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
                                                         onClick={() => onAcceptDeletionRequest(a)}
+                                                        disabled={auth.restricted}
                                                     >
                                                         Accept
                                                     </Button>

@@ -181,12 +181,12 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 className="min-h-[120px]"
-                disabled={!auth.isLoggedIn()}
+                disabled={!auth.isLoggedIn() || auth.restricted}
               />
               <span className="text-red-500">{replyFieldErrors["content"]}</span>
             </div>
             {replyError && <p className="text-red-500 text-sm mb-2">{replyError}</p>}
-            <Button onClick={handleSubmitNewReply} className="w-full" disabled={!auth.isLoggedIn()}>
+            <Button onClick={handleSubmitNewReply} className="w-full" disabled={!auth.isLoggedIn() || auth.restricted}>
               Submit
             </Button>
           </Card>
@@ -258,16 +258,16 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                   <div className="flex items-center gap-1.5">
                     {
                       (auth.admin || auth.getUserInfo()!.id === thread.author.id) &&
-                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={hideThread}>{auth.admin ? "Hide" : "Delete"}</Button> 
+                      <Button variant="outline" className="mb-4 bg-red-200 text-red-400" onClick={hideThread} disabled={auth.restricted}>{auth.admin ? "Hide" : "Delete"}</Button> 
                     }
                     {
                       auth.getUserInfo()!.id === thread.author.id && (
                         <>
-                          <Button variant="outline" className="mb-4" onClick={() => setEditing(!editing)}>
+                          <Button variant="outline" className="mb-4" onClick={() => setEditing(!editing)} disabled={auth.restricted}>
                             {editing ? 'Cancel' : 'Edit Thread'}
                           </Button>
                           {
-                            editing && <Button variant="outline" className="mb-4" onClick={submitEdit}>Submit</Button>
+                            editing && <Button variant="outline" className="mb-4" onClick={submitEdit} disabled={auth.restricted}>Submit</Button>
                           }
                         </>
 
@@ -279,7 +279,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                 )
               }
 
-            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn() || likeInFlight} onClick={likeThread}>
+            <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn() || likeInFlight || auth.restricted} onClick={likeThread}>
                 {isLiked ? <>
                   <Heart fill="currentColor" className="h-4 w-4 text-destructive"/>
                   <span className="text-sm text-destructive">{thread.likeCount}</span>
@@ -346,7 +346,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
                       <Button variant="outline" onClick={handleCancelReply}>
                         Cancel
                       </Button>
-                      <Button onClick={handleSubmitNewReply}>
+                      <Button onClick={handleSubmitNewReply} disabled={auth.restricted}>
                         Submit
                       </Button>
                     </div>

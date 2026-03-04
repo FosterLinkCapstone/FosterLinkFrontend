@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +12,7 @@ interface ProfilePictureDialogProps {
 }
 
 export const ProfilePictureDialog = ({ open, onOpenChange, currentUrl, onConfirm }: ProfilePictureDialogProps) => {
+    const auth = useAuth()
     const [url, setUrl] = useState(currentUrl)
 
     const handleOpenChange = (isOpen: boolean) => {
@@ -44,7 +46,7 @@ export const ProfilePictureDialog = ({ open, onOpenChange, currentUrl, onConfirm
                     </Button>
                     <Button
                         onClick={handleConfirm}
-                        disabled={!url.trim()}
+                        disabled={!url.trim() || auth.restricted}
                         className="w-full sm:w-auto"
                     >
                         Confirm

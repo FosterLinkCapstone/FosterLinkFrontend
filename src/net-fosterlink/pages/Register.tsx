@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { useRef, useState } from "react"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { AlertCircleIcon } from "lucide-react"
+import { ExpandableAlert } from "../components/ExpandableAlert"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate } from "react-router"
 import { PhoneNumberInput } from "../components/PhoneNumberInput"
@@ -114,12 +115,7 @@ export const Register = () => {
                 <Button type="button" onClick={submitRegister} variant="outline" className="w-full" disabled={loading || (password != confirmPassword)}>
                     {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Register"}
                 </Button>
-                {
-                    error != "" && <Alert variant="destructive" className="min-w-0">
-                    <AlertCircleIcon/>
-                    <AlertTitle className="min-w-0 break-words [overflow:visible] [-webkit-line-clamp:unset] [display:block]">{error}</AlertTitle>
-                </Alert>
-                }
+                {error != "" && <ExpandableAlert message={error} />}
                 
             </CardFooter>
         </Card>

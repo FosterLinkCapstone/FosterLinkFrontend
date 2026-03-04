@@ -38,6 +38,7 @@ export const userApi = (auth: AuthContextType): UserApiType => {
     const defaultErrorsLogin: Map<number, string> = new Map<number, string>([
         [400, "Invalid login credentials format"],
         [401, "Incorrect password"],
+        [403, "Your account has been banned. If you believe this is a mistake, please contact an administrator."],
         [404, "That email was not found"],
         [-1, "Unknown error!"]
     ]);

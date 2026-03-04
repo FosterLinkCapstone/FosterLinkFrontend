@@ -117,10 +117,10 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
                 : `This thread was hidden by its author.`}
             </p>
             <div className="flex gap-2">
-              <Button className="flex-1" onClick={restoreThread}>
+              <Button className="flex-1" onClick={restoreThread} disabled={auth.restricted}>
                 Restore
               </Button>
-              <Button variant="destructive" className="flex-1" onClick={permanentlyDeleteThread}>
+              <Button variant="destructive" className="flex-1" onClick={permanentlyDeleteThread} disabled={auth.restricted}>
                 Delete
               </Button>
             </div>

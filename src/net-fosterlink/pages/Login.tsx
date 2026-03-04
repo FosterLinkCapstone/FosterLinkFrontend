@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useRef, useState } from "react"
-import { Alert, AlertTitle } from "@/components/ui/alert"
-import { AlertCircleIcon } from "lucide-react"
+import { ExpandableAlert } from "../components/ExpandableAlert"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate, useSearchParams } from "react-router"
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
@@ -75,12 +74,7 @@ export const Login = () => {
                 <Button type="button" onClick={submitLogin} className="w-full" disabled={loading}>
                     {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Login"}
                 </Button>
-                {
-                    error != "" && <Alert variant="destructive">
-                    <AlertCircleIcon/>
-                    <AlertTitle>{error}</AlertTitle>
-                </Alert>
-                }
+                {error != "" && <ExpandableAlert message={error} />}
 
             </CardFooter>
         </Card>

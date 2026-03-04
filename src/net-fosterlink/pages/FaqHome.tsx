@@ -213,7 +213,7 @@ export const FaqHome = () => {
           </Alert>
         }
         {
-          (auth.faqAuthor || auth.admin) && <Button className="w-full mb-6" variant='outline' onClick={handleCreateFaq}>Create</Button>
+          (auth.faqAuthor || auth.admin) && <Button className="w-full mb-6" variant='outline' onClick={handleCreateFaq} disabled={auth.restricted}>Create</Button>
         }
         {
           creating && <CreateFaqCard
@@ -229,7 +229,7 @@ export const FaqHome = () => {
           />
         }
         {
-          (auth.isLoggedIn()) && <Button className='w-full mb-6' variant="outline" onClick={() => setCreatingSuggestion(true)}>Suggest a new FAQ response</Button>
+          (auth.isLoggedIn()) && <Button className='w-full mb-6' variant="outline" onClick={() => setCreatingSuggestion(true)} disabled={auth.restricted}>Suggest a new FAQ response</Button>
         }
 
         { createError && 

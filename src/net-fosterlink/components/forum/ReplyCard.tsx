@@ -180,7 +180,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
             <div className="flex items-center gap-3">
               <button
                 className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75"
-                disabled={!auth.isLoggedIn() || likeInFlight}
+                disabled={!auth.isLoggedIn() || likeInFlight || auth.restricted}
                 onClick={likeReply}
               >
                 {isLiked ? <>
@@ -192,7 +192,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                 </>}
               </button>
               {auth.isLoggedIn() && (
-                <Button variant="ghost" size="sm" onClick={() => onReply(reply.author.username)}>
+                <Button variant="ghost" size="sm" onClick={() => onReply(reply.author.username)} disabled={auth.restricted}>
                   Reply
                 </Button>
               )}
@@ -207,6 +207,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                   size="sm"
                   className="bg-red-200 text-red-400"
                   onClick={hideReply}
+                  disabled={auth.restricted}
                 >
                   Hide
                 </Button>
@@ -219,6 +220,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                   size="sm"
                   className="bg-red-200 text-red-400"
                   onClick={deleteReply}
+                  disabled={auth.restricted}
                 >
                   Delete
                 </Button>
@@ -237,11 +239,12 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                       setEditing(true)
                     }
                   }}
+                  disabled={auth.restricted}
                 >
                   {editing ? 'Cancel' : 'Edit'}
                 </Button>
                 {editing && (
-                  <Button variant="outline" size="sm" onClick={submitEdit}>
+                  <Button variant="outline" size="sm" onClick={submitEdit} disabled={auth.restricted}>
                     Submit
                   </Button>
                 )}

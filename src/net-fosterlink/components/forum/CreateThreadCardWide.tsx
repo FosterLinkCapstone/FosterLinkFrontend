@@ -147,7 +147,7 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
 
         }
         <div className="w-full flex flex-row align-center gap-2 justify-center">
-            <Button type="button" className="w-100 !border-1" onClick={createThread} disabled={createLoading}>{createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create"}</Button>
+            <Button type="button" className="w-100 !border-1" onClick={createThread} disabled={createLoading || auth.restricted}>{createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create"}</Button>
             <Button type="button" className="w-100 !border-1" onClick={onCancel}>Cancel</Button>
         </div>
       </div>

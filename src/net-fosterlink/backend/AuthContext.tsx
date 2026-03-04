@@ -17,7 +17,8 @@ export interface AuthContextType {
     faqAuthor: boolean,
     agent: boolean,
     admin: boolean | null,
-    restricted: boolean
+    restricted: boolean,
+    banned: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -31,6 +32,7 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
     const [faqAuthor, setFaqAuthor] = useState(false)
     const [agent, setAgent] = useState(false)
     const [restricted, setRestricted] = useState(false)
+    const [banned, setBanned] = useState(false)
     const currentUserInfo = useRef<UserModel | undefined>(
         undefined
     )
@@ -85,6 +87,7 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
                 if (res.status == 200) {
                     currentUserInfo.current = res.data
                     setRestricted(res.data.restricted ?? false)
+                    setBanned(res.data.banned ?? false)
                     api.get(`/users/privileges`).then(pri => {
                         const priv: PrivilegeModel = pri.data
                         setAdmin(priv.admin)
@@ -124,8 +127,9 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
         faqAuthor,
         agent,
         admin,
-        restricted
-    }), [token, faqAuthor, agent, admin, restricted])
+        restricted,
+        banned
+    }), [token, faqAuthor, agent, admin, restricted,banned])
 
     return (
         <AuthContext.Provider value={contextValue}>

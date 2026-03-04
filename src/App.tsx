@@ -14,12 +14,14 @@ import { PendingFaqs } from './net-fosterlink/pages/PendingFaqs'
 import { Agencies } from './net-fosterlink/pages/Agencies'
 import { PendingAgencies } from './net-fosterlink/pages/PendingAgencies'
 import { NotFound } from './net-fosterlink/pages/NotFound'
+import { Banned } from './net-fosterlink/pages/Banned'
 import { UserProfile } from './net-fosterlink/pages/UserProfile'
 import { HiddenThreads } from './net-fosterlink/pages/HiddenThreads'
 import { HiddenThreadLoader } from './net-fosterlink/pages/HiddenThreadLoader'
 import { HiddenFaqs } from './net-fosterlink/pages/HiddenFaqs'
 import { AccountDeletionRequests } from './net-fosterlink/pages/AccountDeletionRequests'
 import { AccountSettings } from './net-fosterlink/pages/AccountSettings'
+import { RestrictGateway } from './net-fosterlink/components/RestrictGateway'
 
 function App() {
 
@@ -36,6 +38,7 @@ function App() {
         <ThemeProvider>
         <BrowserRouter>
           <AuthProvider apiUrl={import.meta.env.VITE_API_URL} mapsApiKey={import.meta.env.VITE_MAPS_API_KEY}>
+            <RestrictGateway>
             <Routes>
               <Route path="/" element={<Home/>}/>
               <Route path="/login" element={<Login/>}/>
@@ -52,8 +55,10 @@ function App() {
               <Route path="/admin/account-deletion-requests" element={<AdminOnly><AccountDeletionRequests/></AdminOnly>}/>
               <Route path="/users/:userId" element={<UserProfile/>}/>
               <Route path="/settings" element={<AccountSettings/>}/>
+              <Route path="/banned" element={<Banned/>}/>
               <Route path="*" element={<NotFound/>}/>
             </Routes>
+            </RestrictGateway>
           </AuthProvider>
         </BrowserRouter>
         </ThemeProvider>

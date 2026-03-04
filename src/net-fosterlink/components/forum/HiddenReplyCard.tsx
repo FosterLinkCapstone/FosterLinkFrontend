@@ -122,7 +122,7 @@ export const HiddenReplyCard: React.FC<HiddenReplyCardProps> = ({ reply, onReply
               <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
 
               <div className="flex flex-row gap-2 flex-wrap items-center">
-                <Button variant="outline" size="sm" onClick={restoreReply}>
+                <Button variant="outline" size="sm" onClick={restoreReply} disabled={auth.restricted}>
                   Restore
                 </Button>
                 <Button
@@ -130,6 +130,7 @@ export const HiddenReplyCard: React.FC<HiddenReplyCardProps> = ({ reply, onReply
                   size="sm"
                   className="bg-red-200 text-red-400"
                   onClick={permanentlyDeleteReply}
+                  disabled={auth.restricted}
                 >
                   Permanently Delete
                 </Button>

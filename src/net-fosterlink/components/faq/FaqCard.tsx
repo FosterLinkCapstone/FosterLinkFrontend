@@ -87,6 +87,7 @@ export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onS
                 }}
                 className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
                 variant="outline"
+                disabled={auth.restricted}
               >
                 {auth.admin ? "Hide" : "Delete"}
               </Button>

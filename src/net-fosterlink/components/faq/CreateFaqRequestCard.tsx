@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertCircleIcon } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
 export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverFieldErrors }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmit: (suggestion: string) => Promise<void>, serverFieldErrors?: { [key: string]: string } }) => {
+    const auth = useAuth()
     const [suggestionText, setSuggestionText] = useState<string>('')
     const [noContentError, setSuggestionNoContentError] = useState<boolean>(false)
     const [submitLoading, setSubmitLoading] = useState<boolean>(false)
@@ -52,7 +54,7 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverField
                         } else {
                             setSuggestionNoContentError(true)
                         }
-                    }} disabled={submitLoading}>{submitLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}</Button>
+                    }} disabled={submitLoading || auth.restricted}>{submitLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}</Button>
                 </DialogFooter>
 
             </DialogContent>

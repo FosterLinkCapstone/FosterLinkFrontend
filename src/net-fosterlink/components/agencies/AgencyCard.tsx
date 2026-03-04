@@ -26,11 +26,11 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, highlighted, s
           <h2 className="text-2xl font-bold mb-4 text-center">{agency.agencyName}</h2>
           {
             (agency.approved == 2 && auth.admin && showRemove) && 
-            <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)}>Remove</Button>
+            <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>Remove</Button>
           }
           {
             (agency.approved == 2 && isOwner && !auth.admin && onRequestDeletion) &&
-            <Button variant="outline" className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700/60 mb-4" disabled={deletionRequested} onClick={() => onRequestDeletion(agency.id)}>Request Deletion</Button>
+            <Button variant="outline" className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700/60 mb-4" disabled={deletionRequested || auth.restricted} onClick={() => onRequestDeletion(agency.id)}>Request Deletion</Button>
           }
           <div className="bg-muted rounded-lg p-4 mb-4">
             <p className="text-foreground leading-relaxed">

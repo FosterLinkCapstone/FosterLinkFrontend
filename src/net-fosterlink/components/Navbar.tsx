@@ -10,7 +10,7 @@ import { AgentOnlyBadge } from "./agencies/AgentOnlyBadge";
 import { AdminOnlyBadge } from "./AdminOnlyBadge";
 import { FaqAuthorOnlyBadge } from "./faq/FaqAuthorOnlyBadge";
 import { useTheme } from "@/ThemeProvider";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor, ShieldAlert } from "lucide-react";
 
 export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
   const auth = useAuth();
@@ -334,9 +334,17 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
             </Button>
 
             {userInfo && auth.isLoggedIn() && (
-              <Badge variant="outline" className="ml-4 dark:bg-muted/80 dark:border-border">
-                Logged in as {userInfo.username}
-              </Badge>
+              <div className="flex items-center gap-2 ml-4">
+                <Badge variant="outline" className="dark:bg-muted/80 dark:border-border">
+                  Logged in as {userInfo.username}
+                </Badge>
+                {auth.restricted && (
+                  <Badge className="px-2 py-0.5 rounded-full border-orange-400 dark:border-orange-600 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 text-xs font-medium">
+                    <ShieldAlert className="h-3 w-3 mr-1 inline" />
+                    Restricted
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -409,23 +409,27 @@ export const UserProfile = () => {
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {display.banned ? (
                 <Button variant="outline" size="sm" onClick={handleUnban}
-                  className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40">
+                  className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                  disabled={auth.restricted}>
                   Unban User
                 </Button>
               ) : (
                 <Button variant="outline" size="sm" onClick={handleBan}
-                  className="text-xs border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40">
+                  className="text-xs border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40"
+                  disabled={auth.restricted}>
                   <Ban className="h-3 w-3 mr-1" /> Ban User
                 </Button>
               )}
               {display.restricted ? (
                 <Button variant="outline" size="sm" onClick={handleUnrestrict}
-                  className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40">
+                  className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                  disabled={auth.restricted}>
                   Unrestrict User
                 </Button>
               ) : (
                 <Button variant="outline" size="sm" onClick={handleRestrict}
-                  className="text-xs border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40">
+                  className="text-xs border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40"
+                  disabled={auth.restricted}>
                   <ShieldAlert className="h-3 w-3 mr-1" /> Restrict User
                 </Button>
               )}

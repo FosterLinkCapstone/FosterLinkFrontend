@@ -183,7 +183,7 @@ export const Threads = () => {
         </div>
         {
           auth.isLoggedIn() && <div className="max-w-7xl mb-6">
-                                  <Button className="w-full !border-solid !border-1" onClick={() => setCreating(!creating)}>Create Thread</Button>
+                                  <Button className="w-full !border-solid !border-1" onClick={() => setCreating(!creating)} disabled={auth.restricted}>Create Thread</Button>
                                 </div>
         }
 

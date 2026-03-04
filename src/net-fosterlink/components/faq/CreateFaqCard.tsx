@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover"
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { cn } from "@/lib/utils"
 import type { FaqRequestModel } from "@/net-fosterlink/backend/models/FaqRequestModel"
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
@@ -31,6 +32,7 @@ export const CreateFaqCard = ({
     requests: FaqRequestModel[] | null,
     serverFieldErrors?: { [key: string]: string }
 }) => {
+    const auth = useAuth()
     const [newFaqTitle, setNewFaqTitle] = useState('')
     const [answeringId, setAnsweringId] = useState(-1)
     const [newFaqSummary, setNewFaqSummary] = useState('')
@@ -138,7 +140,7 @@ export const CreateFaqCard = ({
                     create()
                 }} 
                 variant="outline"
-                disabled={createLoading}
+                disabled={createLoading || auth.restricted}
             >
                 {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create FAQ Response"}
             </Button>

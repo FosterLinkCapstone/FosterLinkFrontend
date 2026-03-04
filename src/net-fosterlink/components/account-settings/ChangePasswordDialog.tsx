@@ -194,7 +194,7 @@ export const ChangePasswordDialog = ({ open, onOpenChange }: ChangePasswordDialo
                         </Button>
                         <Button
                             onClick={handleConfirm}
-                            disabled={!canSubmit || loading}
+                            disabled={!canSubmit || loading || auth.restricted}
                             className="w-full sm:w-auto"
                         >
                             {loading ? "Confirming..." : "Confirm"}
