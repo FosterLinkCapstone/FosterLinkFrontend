@@ -35,7 +35,9 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
           <div className="flex items-center gap-6">
             <NavigationMenu>
               <NavigationMenuList className="flex gap-6">
-                <Link className="hover:text-primary transition-colors bg-transparent text-foreground font-semibold" to="/">Home</Link>
+                <NavigationMenuItem>
+                  <Link className="hover:text-primary transition-colors bg-transparent text-foreground font-semibold" to="/">Home</Link>
+                </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
                     Forum
@@ -159,21 +161,22 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                   <NavigationMenuContent className="bg-popover text-popover-foreground">
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       {auth.isLoggedIn() ? (
-                        <li className="list-none">
+                        <>
                           {userInfo && (
                             <ListItem href={buildProfileUrl(userInfo)} title="My Profile">
                               View your public profile and posts
                             </ListItem>
                           )}
-                          <a
-                            onClick={auth.logout}
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
-                          >
-                            <div className="text-sm font-medium leading-none">Logout</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Sign out of your account
-                            </p>
-                          </a>
+                          <li className="list-none">
+                            <a
+                              onClick={auth.logout}
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                            >
+                              <div className="text-sm font-medium leading-none">Logout</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                Sign out of your account
+                              </p>
+                            </a>
                           <a
                             onClick={() => setShowDeleteDialog(true)}
                             className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 focus:bg-accent focus:text-accent-foreground cursor-pointer"
@@ -183,7 +186,8 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                               Request permanent deletion of your account
                             </p>
                           </a>
-                        </li>
+                          </li>
+                        </>
                       ) : (
                         <>
                           <ListItem href={`/login?currentPage=${window.location.pathname}`} title="Login">

@@ -13,8 +13,6 @@ import { StatusDialog } from "../components/StatusDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 import { Paginator } from "../components/Paginator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { AlertCircleIcon } from "lucide-react";
 import { confirm } from "../components/ConfirmDialog";
 
 const TAB_PENDING = "pending";
@@ -141,7 +139,7 @@ export const PendingFaqs = () => {
     });
     if (confirmed) {
       faqApiRef.current.approve(faq.id, true).then(res => {
-        if (!res.isError && res.data) {
+        if (!res.isError) {
           setFaqs(faqs.filter(f => f.id !== faq.id));
           setApprovedOrDenied("approved");
         } else {
