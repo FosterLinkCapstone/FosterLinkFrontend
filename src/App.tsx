@@ -19,6 +19,7 @@ import { HiddenThreads } from './net-fosterlink/pages/HiddenThreads'
 import { HiddenThreadLoader } from './net-fosterlink/pages/HiddenThreadLoader'
 import { HiddenFaqs } from './net-fosterlink/pages/HiddenFaqs'
 import { AccountDeletionRequests } from './net-fosterlink/pages/AccountDeletionRequests'
+import { AccountSettings } from './net-fosterlink/pages/AccountSettings'
 
 function App() {
 
@@ -50,6 +51,7 @@ function App() {
               <Route path="/agencies/pending" element={<AdminOnly><PendingAgencies/></AdminOnly>}/>
               <Route path="/admin/account-deletion-requests" element={<AdminOnly><AccountDeletionRequests/></AdminOnly>}/>
               <Route path="/users/:userId" element={<UserProfile/>}/>
+              <Route path="/settings" element={<AccountSettings/>}/>
               <Route path="*" element={<NotFound/>}/>
             </Routes>
           </AuthProvider>

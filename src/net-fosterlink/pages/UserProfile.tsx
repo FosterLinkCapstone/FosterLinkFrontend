@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Search, Trash2 } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { userApi } from "../backend/api/UserApi";
@@ -23,7 +23,6 @@ import { accountDeletionApi } from "../backend/api/AccountDeletionApi";
 import type { AccountDeletionRequestModel } from "../backend/models/AccountDeletionRequestModel";
 import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
-import { DeleteAccountDialog } from "../components/account-deletion/DeleteAccountDialog";
 
 type OrderBy = "newest" | "oldest" | "likes";
 
@@ -115,7 +114,6 @@ export const UserProfile = () => {
   // Deletion request state
   const [myDeletionRequest, setMyDeletionRequest] = useState<AccountDeletionRequestModel | null | undefined>(undefined);
   const [deletionStatusMsg, setDeletionStatusMsg] = useState<{ msg: string; success: boolean } | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const numericUserId = useMemo(() => {
     if (!userId) return null;
@@ -223,12 +221,6 @@ export const UserProfile = () => {
     }
   };
 
-  const handleDeletionRequestSuccess = () => {
-    deletionApiRef.current.getMyRequest().then(r => {
-      if (!r.isError) setMyDeletionRequest(r.data ?? null);
-    });
-  };
-
   const filteredSortedThreads = useMemo(() => {
     let result = [...threads];
 
@@ -302,13 +294,6 @@ export const UserProfile = () => {
         isSuccess={deletionStatusMsg?.success ?? false}
       />
 
-      {/* Delete account dialog */}
-      <DeleteAccountDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onSuccess={handleDeletionRequestSuccess}
-      />
-
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Profile Header */}
         <div className="flex flex-col items-center text-center mb-10">
@@ -380,20 +365,6 @@ export const UserProfile = () => {
             </div>
           )}
 
-          {/* Delete my account button (own profile, no pending request) */}
-          {isOwnProfile && myDeletionRequest === null && (
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-xs text-muted-foreground border-muted-foreground/30 hover:border-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                Delete My Account
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Search & Filter */}

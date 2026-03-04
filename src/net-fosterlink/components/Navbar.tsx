@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { ListItem } from "./ListItem";
 import { Link } from "react-router";
@@ -9,15 +8,13 @@ import type { UserModel } from "../backend/models/UserModel";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { AgentOnlyBadge } from "./AgentOnlyBadge";
 import { AdminOnlyBadge } from "./AdminOnlyBadge";
-import { FaqAuthorOnlyBadge } from "./FaqAuthorOnlyBadge";
+import { FaqAuthorOnlyBadge } from "./faq/FaqAuthorOnlyBadge";
 import { useTheme } from "@/ThemeProvider";
 import { Moon, Sun, Monitor } from "lucide-react";
-import { DeleteAccountDialog } from "./account-deletion/DeleteAccountDialog";
 
 export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
   const auth = useAuth();
   const { theme, setTheme } = useTheme();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const cycleTheme = () => {
     setTheme(theme === "light" ? "dark" : theme === "dark" ? "system" : "light");
@@ -167,6 +164,9 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                               View your public profile and posts
                             </ListItem>
                           )}
+                          <ListItem href="/settings" title="Account Settings">
+                            Update your profile info, email, username, and more
+                          </ListItem>
                           <li className="list-none">
                             <a
                               onClick={auth.logout}
@@ -177,15 +177,6 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                                 Sign out of your account
                               </p>
                             </a>
-                          <a
-                            onClick={() => setShowDeleteDialog(true)}
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 focus:bg-accent focus:text-accent-foreground cursor-pointer"
-                          >
-                            <div className="text-sm font-medium leading-none text-red-600 dark:text-red-400">Delete Account</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Request permanent deletion of your account
-                            </p>
-                          </a>
                           </li>
                         </>
                       ) : (
@@ -351,11 +342,6 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
         </div>
       </div>
     </nav>
-
-    <DeleteAccountDialog
-      open={showDeleteDialog}
-      onOpenChange={setShowDeleteDialog}
-    />
   </>
   );
 }

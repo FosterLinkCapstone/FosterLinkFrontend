@@ -4,6 +4,18 @@ import type { AuthContextType } from "../AuthContext";
 import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
+import type { UserSettingsModel } from "../models/UserSettingsModel";
+
+export interface UpdateUserPayload {
+    userId: number;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+    username?: string;
+    password?: string;
+    profilePictureUrl?: string;
+}
 
 export interface UserApiType {
     login: (email: string, password: string) => Promise<ErrorWrapper<string>>,
@@ -12,7 +24,10 @@ export interface UserApiType {
     isAdmin: () => Promise<ErrorWrapper<boolean>>
     isFaqAuthor: () => Promise<ErrorWrapper<boolean>>
     getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
-    getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>
+    getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>,
+    getSettings: () => Promise<ErrorWrapper<UserSettingsModel>>,
+    updateUser: (data: UpdateUserPayload) => Promise<ErrorWrapper<void>>,
+    changePassword: (oldPassword: string, newPassword: string) => Promise<ErrorWrapper<void>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -130,7 +145,55 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 {},
                 defaultErrorsGetProfileMetadata
             );
-        }
+        },
+
+        getSettings: async(): Promise<ErrorWrapper<UserSettingsModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in to view your settings."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<UserSettingsModel>(
+                auth.api,
+                RequestType.GET,
+                "/users/getSettings",
+                {},
+                defaultErrors
+            );
+        },
+
+        updateUser: async(data: UpdateUserPayload): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid update data. Please check your inputs."],
+                [401, "You are not authorized to update this account."],
+                [409, "That username or email is already taken."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.PUT,
+                "/users/update",
+                data,
+                defaultErrors
+            );
+        },
+
+        changePassword: async(oldPassword: string, newPassword: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "Old password is incorrect."],
+                [404, "User not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/users/changePassword",
+                { oldPassword, newPassword },
+                defaultErrors
+            );
+        },
 
     }
     
