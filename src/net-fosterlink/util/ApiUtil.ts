@@ -23,16 +23,16 @@ export const doGenericRequest = async <T>(
         let requestPromise;
         switch (type) {
             case RequestType.GET:
-                requestPromise = api.get(uri);
+                requestPromise = api.get(uri, {withCredentials: true});
                 break;
             case RequestType.POST:
-                requestPromise = api.post(uri, payload);
+                requestPromise = api.post(uri, payload, {withCredentials: true});
                 break;
             case RequestType.PUT:
-                requestPromise = api.put(uri, payload);
+                requestPromise = api.put(uri, payload, {withCredentials: true});
                 break;
             case RequestType.DELETE:
-                requestPromise = api.delete(uri);
+                requestPromise = api.delete(uri, {withCredentials: true});
                 break;
             default:
                 throw new Error("Unsupported request type");

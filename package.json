@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.553.0",
     "react": "^19.1.1",
     "react-confirm": "^0.5.0-1",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^24.10.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",

@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { useNavigate } from 'react-router'
 import type { UserModel } from './models/UserModel'
 import type { PrivilegeModel } from './models/PrivilegeModel'
+import Cookies from 'js-cookie'
 
 export interface AuthContextType {
     token: string | null,
@@ -34,6 +35,12 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
     const api = axios.create({ baseURL: apiUrl })
     api.interceptors.request.use((cfg) => {
         cfg.headers.Authorization = `Bearer ${token}`
+        return cfg
+    })
+    api.interceptors.request.use((cfg) => {
+        // Read CSRF token from cookie on every request; cookie is set by backend and may not exist until after first response
+        const csrf = Cookies.get("XSRF-TOKEN")
+        if (csrf) cfg.headers["X-XSRF-TOKEN"] = csrf
         return cfg
     })
 
