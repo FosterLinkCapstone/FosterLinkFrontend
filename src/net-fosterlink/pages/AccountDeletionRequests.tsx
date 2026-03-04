@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Paginator } from "../components/Paginator"
 import { StatusDialog } from "../components/StatusDialog"
@@ -19,9 +20,12 @@ import { Trash2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react
 
 type SortBy = "recency" | "urgency"
 
+const formatDate = (date: Date | string) =>
+    new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+
 const formatDateTime = (date: Date | string) => {
     const d = new Date(date)
-    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
 }
 
 const thirtyDaysFromNow = () => {
@@ -30,10 +34,12 @@ const thirtyDaysFromNow = () => {
     return d
 }
 
-const isUrgent = (autoApproveBy: Date | string) => {
-    const daysLeft = (new Date(autoApproveBy).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    return daysLeft <= 7
+const getDaysLeft = (autoApproveBy: Date | string) => {
+    const diff = (new Date(autoApproveBy).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    return Math.max(0, Math.ceil(diff))
 }
+
+const isUrgent = (autoApproveBy: Date | string) => getDaysLeft(autoApproveBy) <= 7
 
 const RequestCard = ({
     req,
@@ -47,28 +53,32 @@ const RequestCard = ({
     const navigate = useNavigate()
     const [showFullNote, setShowFullNote] = useState(false)
     const urgent = isUrgent(req.autoApproveBy)
+    const daysLeft = getDaysLeft(req.autoApproveBy)
     const hasDelayNote = !!req.delayNote
 
     return (
-        <Card className={`overflow-hidden border ${urgent ? "border-red-300 dark:border-red-700" : "border-border"}`}>
-            {/* Header: requested at */}
-            <div className={`px-4 py-2 text-xs font-medium flex items-center justify-between ${urgent ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300" : "bg-muted/40 text-muted-foreground"}`}>
-                <span className="flex items-center gap-1">
-                    {urgent && <AlertCircle className="h-3 w-3" />}
-                    Requested at {formatDateTime(req.requestedAt)}
-                </span>
-                {req.clearAccount && (
-                    <Badge variant="outline" className="text-xs border-destructive text-destructive dark:border-red-400 dark:text-red-400">
-                        Account will clear
-                    </Badge>
-                )}
-            </div>
+        <div className="flex flex-col w-full gap-1">
+            {urgent && (
+                <Alert className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70" variant="destructive">
+                    <AlertCircle />
+                    <AlertTitle>
+                        Urgent — auto-approves in {daysLeft} {daysLeft === 1 ? "day" : "days"}
+                    </AlertTitle>
+                </Alert>
+            )}
 
-            {/* Body: user info + delay note + buttons */}
-            <div className="p-4 flex flex-col sm:flex-row gap-4">
-                {/* User info */}
+            {hasDelayNote && (
+                <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700">
+                    <Clock />
+                    <AlertTitle>
+                        Previously delayed{req.reviewedBy ? ` by ${req.reviewedBy.username}` : ""}
+                    </AlertTitle>
+                </Alert>
+            )}
+
+            <Card className="overflow-hidden hover:shadow-md transition-shadow">
                 <div
-                    className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity min-w-0"
+                    className="p-4 flex items-center gap-3 cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => navigate(buildProfileUrl(req.requestedBy))}
                     title="View user profile"
                 >
@@ -78,61 +88,64 @@ const RequestCard = ({
                             {getInitials(req.requestedBy.fullName)}
                         </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
+                    <div className="flex-1 min-w-0">
                         <div className="font-semibold truncate">{req.requestedBy.fullName}</div>
                         <div className="text-sm text-muted-foreground truncate">@{req.requestedBy.username}</div>
                     </div>
+                    {req.clearAccount && (
+                        <Badge variant="outline" className="text-xs border-destructive text-destructive dark:border-red-400 dark:text-red-400 flex-shrink-0">
+                            Account will clear
+                        </Badge>
+                    )}
                 </div>
 
-                {/* Delay note (truncated) */}
+                <div className="px-4 py-2.5 border-t border-border bg-muted/30 flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Requested {formatDateTime(req.requestedAt)}</span>
+                    <span className={urgent ? "text-red-600 dark:text-red-400 font-medium" : ""}>
+                        Auto-approves {formatDate(req.autoApproveBy)}
+                    </span>
+                </div>
+
                 {hasDelayNote && (
-                    <div className="flex-1 min-w-0">
-                        <div
-                            className="text-sm text-muted-foreground bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-md p-2 cursor-pointer"
-                            onClick={() => setShowFullNote(!showFullNote)}
-                        >
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Delay note</span>
-                                {showFullNote
-                                    ? <ChevronUp className="h-3 w-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                                    : <ChevronDown className="h-3 w-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                                }
-                            </div>
-                            <p className={`text-amber-800 dark:text-amber-200 ${showFullNote ? "" : "line-clamp-2"}`}>
+                    <div
+                        className="px-4 py-2.5 border-t border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 cursor-pointer"
+                        onClick={() => setShowFullNote(!showFullNote)}
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Delay note</span>
+                            {showFullNote
+                                ? <ChevronUp className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                : <ChevronDown className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                            }
+                        </div>
+                        {showFullNote && (
+                            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
                                 {req.delayNote}
                             </p>
-                        </div>
+                        )}
                     </div>
                 )}
+            </Card>
 
-                {/* Action buttons */}
-                <div className="flex flex-col gap-2 flex-shrink-0 sm:w-28">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onApprove(req)}
-                        className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/30 dark:text-red-200 dark:border-red-500/50 hover:bg-red-200 dark:hover:bg-red-500/50"
-                    >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                        Approve
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onDelay(req)}
-                        className="bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
-                    >
-                        <Clock className="h-3.5 w-3.5 mr-1.5" />
-                        Delay
-                    </Button>
-                </div>
+            <div className="w-full flex flex-col mt-1 gap-2">
+                <Button
+                    variant="outline"
+                    onClick={() => onApprove(req)}
+                    className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Approve Deletion
+                </Button>
+                <Button
+                    variant="outline"
+                    onClick={() => onDelay(req)}
+                    className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/50 dark:text-amber-50 dark:border-amber-400/70 hover:bg-amber-200 dark:hover:bg-amber-500/70"
+                >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Delay
+                </Button>
             </div>
-
-            {/* Footer: auto approve by */}
-            <div className={`px-4 py-2 text-xs border-t ${urgent ? "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 text-red-600 dark:text-red-400" : "border-border bg-muted/20 text-muted-foreground"}`}>
-                Will auto approve at {formatDateTime(req.autoApproveBy)}
-            </div>
-        </Card>
+        </div>
     )
 }
 
@@ -240,15 +253,15 @@ export const AccountDeletionRequests = () => {
                 loading={delayLoading}
             />
 
-            <div className="max-w-3xl mx-auto px-4 py-8">
-                <div className="flex items-center justify-between mb-6">
+            <div className="max-w-4xl mx-auto px-4 py-6">
+                <div className="flex items-start justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold">Account Deletion Requests</h1>
+                        <h1 className="text-3xl font-bold">Account Deletion Requests</h1>
                         <p className="text-sm text-muted-foreground mt-1">
                             Requests auto-approve after 30 days if not acted on.
                         </p>
                     </div>
-                    <div className="w-48">
+                    <div className="w-48 flex-shrink-0">
                         <Select
                             value={sortBy}
                             onValueChange={(val: SortBy) => setSortBy(val)}
@@ -265,15 +278,15 @@ export const AccountDeletionRequests = () => {
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-16">
+                    <div className="flex justify-center py-12">
                         <div className="size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
                     </div>
                 ) : error && requests.length === 0 ? (
-                    <div className="text-center text-destructive py-16">{error}</div>
+                    <div className="text-center text-destructive py-12">{error}</div>
                 ) : requests.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-16">No pending deletion requests.</p>
+                    <p className="text-center text-muted-foreground py-12">No pending deletion requests.</p>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="flex flex-col items-center gap-6">
                         {requests.map(req => (
                             <RequestCard
                                 key={req.id}
