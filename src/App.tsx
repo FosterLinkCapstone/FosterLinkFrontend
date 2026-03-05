@@ -22,6 +22,7 @@ import { HiddenFaqs } from './net-fosterlink/pages/HiddenFaqs'
 import { AccountDeletionRequests } from './net-fosterlink/pages/AccountDeletionRequests'
 import { AccountSettings } from './net-fosterlink/pages/AccountSettings'
 import { RestrictGateway } from './net-fosterlink/components/RestrictGateway'
+import { AdminUsers } from './net-fosterlink/pages/AdminUsers'
 
 function App() {
 
@@ -53,6 +54,7 @@ function App() {
               <Route path="/agencies" element={<Agencies/>}/>
               <Route path="/agencies/pending" element={<AdminOnly><PendingAgencies/></AdminOnly>}/>
               <Route path="/admin/account-deletion-requests" element={<AdminOnly><AccountDeletionRequests/></AdminOnly>}/>
+              <Route path="/admin/users" element={<AdminOnly><AdminUsers/></AdminOnly>}/>
               <Route path="/users/:userId" element={<UserProfile/>}/>
               <Route path="/settings" element={<AccountSettings/>}/>
               <Route path="/banned" element={<Banned/>}/>

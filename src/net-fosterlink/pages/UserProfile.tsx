@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Ban, ShieldAlert, Search } from "lucide-react";
+import { AlertTriangle, Ban, ShieldAlert, Search, ShieldCheck } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { userApi } from "../backend/api/UserApi";
@@ -407,6 +407,14 @@ export const UserProfile = () => {
           {/* Admin moderation actions */}
           {auth.admin && !isOwnProfile && profileMetadata && (
             <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/admin/users?searchBy=USERNAME&query=${encodeURIComponent(display.username)}`)}
+                className="text-xs border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <ShieldCheck className="h-3 w-3 mr-1" /> Manage in Admin Panel
+              </Button>
               {display.banned ? (
                 <Button variant="outline" size="sm" onClick={handleUnban}
                   className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"

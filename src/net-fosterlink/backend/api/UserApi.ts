@@ -5,6 +5,7 @@ import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 import type { UserSettingsModel } from "../models/UserSettingsModel";
+import type { AdminUserStatsModel, GetAdminUsersResponse } from "../models/AdminUserModel";
 
 export interface UpdateUserPayload {
     userId: number;
@@ -32,6 +33,11 @@ export interface UserApiType {
     unbanUser: (userId: number) => Promise<ErrorWrapper<void>>,
     restrictUser: (userId: number, restrictedUntil?: string) => Promise<ErrorWrapper<void>>,
     unrestrictUser: (userId: number) => Promise<ErrorWrapper<void>>,
+    getUserStats: () => Promise<ErrorWrapper<AdminUserStatsModel>>,
+    getAllUsers: (page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
+    getDeletedUsers: (page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
+    searchUsers: (searchBy: string, query: string, page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
+    setUserRole: (userId: number, role: string, enabled: boolean) => Promise<ErrorWrapper<void>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -258,6 +264,79 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 auth.api,
                 RequestType.POST,
                 `/users/unrestrict?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getUserStats: async(): Promise<ErrorWrapper<AdminUserStatsModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view user stats."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminUserStatsModel>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/stats`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getDeletedUsers: async(page: number): Promise<ErrorWrapper<GetAdminUsersResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view deleted accounts."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminUsersResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/deleted?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getAllUsers: async(page: number): Promise<ErrorWrapper<GetAdminUsersResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view users."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminUsersResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/all?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        searchUsers: async(searchBy: string, query: string, page: number): Promise<ErrorWrapper<GetAdminUsersResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid search parameters."],
+                [403, "You do not have permission to search users."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminUsersResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/search?searchBy=${encodeURIComponent(searchBy)}&query=${encodeURIComponent(query)}&page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        setUserRole: async(userId: number, role: string, enabled: boolean): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "That role cannot be set via this endpoint."],
+                [403, "You do not have permission to set user roles."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/setRole?userId=${userId}&role=${encodeURIComponent(role)}&enabled=${enabled}`,
                 {},
                 defaultErrors
             );
