@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
 import type { FaqModel } from "@/net-fosterlink/backend/models/FaqModel";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 
@@ -14,11 +14,12 @@ interface FaqCardProps {
     onCollapse: () => void;
     onShowDetail: () => void;
     expanded: boolean;
+    contentLoading?: boolean;
     canEdit: boolean;
     onRemove: (id: number) => void;
 }
 
-export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onShowDetail, expanded, canEdit, onRemove }) => {
+export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onShowDetail, expanded, contentLoading, canEdit, onRemove }) => {
   const auth = useAuth()
   const navigate = useNavigate()
 
@@ -68,15 +69,21 @@ export const FaqCard: React.FC<FaqCardProps> = ({ faq, onExpand, onCollapse, onS
         <>
           <div className="bg-muted p-6 text-center">
             <p className="text-foreground mb-4">{faq.summary}</p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onShowDetail();
-              }}
-              className="text-sm text-primary hover:text-primary/90 font-medium"
-            >
-              Click for more!
-            </button>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowDetail();
+                }}
+                className="text-sm text-primary hover:text-primary/90 font-medium"
+                disabled={contentLoading}
+              >
+                Click for more!
+              </button>
+              {contentLoading && (
+                <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" aria-hidden />
+              )}
+            </div>
           </div>
           {canEdit && (
             <div className="py-0.5 px-2 border-t border-border bg-background flex w-full gap-2">

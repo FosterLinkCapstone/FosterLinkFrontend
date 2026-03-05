@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router"
 import { useAuth } from "../backend/AuthContext"
-import { Navbar } from "../components/Navbar"
+import { PageLayout } from "../components/PageLayout"
 import { Link } from "react-router"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PendingAgenciesTab } from "../components/agencies/PendingAgenciesTab"
@@ -31,12 +31,8 @@ export const PendingAgencies = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <PageLayout auth={auth}>
             <title>Pending Agencies</title>
-            <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-                <Navbar userInfo={auth.getUserInfo()} />
-            </div>
-
             <div className="max-w-4xl mx-auto px-4 py-6">
                 <h1 className="text-3xl font-bold mb-1 text-center">Agencies (admin)</h1>
                 <Link className="text-primary hover:text-primary/90" to="/agencies">Go back</Link>
@@ -66,6 +62,6 @@ export const PendingAgencies = () => {
                     </TabsContent>
                 </Tabs>
             </div>
-        </div>
+        </PageLayout>
     )
 }

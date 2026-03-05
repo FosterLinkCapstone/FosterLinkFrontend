@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
 import type { FaqModel } from "../backend/models/FaqModel";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Paginator } from "../components/Paginator";
@@ -11,6 +11,7 @@ import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
 import { HiddenFaqCard } from "../components/faq/HiddenFaqCard";
 import { FaqDialog } from "../components/faq/FaqDialog";
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 
 const TAB_USER = "user";
 const TAB_ADMIN = "admin";
@@ -39,6 +40,7 @@ export const HiddenFaqs = () => {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detailFaq, setDetailFaq] = useState<FaqModel | null>(null);
   const faqContent = useRef<string>("");
@@ -95,6 +97,7 @@ export const HiddenFaqs = () => {
       message: "Are you sure you want to restore this FAQ? It will become visible to all users.",
     });
     if (confirmed) {
+      setActionLoading(true);
       faqApiRef.current.setFaqHidden(faq.id, false).then((res) => {
         if (!res.isError) {
           setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
@@ -102,7 +105,7 @@ export const HiddenFaqs = () => {
         } else {
           setError(res.error ?? "Failed to restore FAQ");
         }
-      });
+      }).finally(() => setActionLoading(false));
     }
   };
 
@@ -111,6 +114,7 @@ export const HiddenFaqs = () => {
       message: "Are you sure you want to permanently delete this FAQ? It will not be recoverable.",
     });
     if (confirmed) {
+      setActionLoading(true);
       faqApiRef.current.deleteHiddenFaq(faq.id).then((res) => {
         if (!res.isError) {
           setFaqs((prev) => prev.filter((f) => f.id !== faq.id));
@@ -118,12 +122,13 @@ export const HiddenFaqs = () => {
         } else {
           setError(res.error ?? "Failed to delete FAQ");
         }
-      });
+      }).finally(() => setActionLoading(false));
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
+      <BackgroundLoadSpinner loading={actionLoading} />
       <title>Hidden FAQs</title>
       <StatusDialog
         open={error != null && faqs.length > 0}
@@ -139,10 +144,6 @@ export const HiddenFaqs = () => {
         subtext=""
         isSuccess={true}
       />
-
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()} />
-      </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6">Hidden FAQs</h1>
@@ -197,7 +198,7 @@ export const HiddenFaqs = () => {
         content={faqContent.current}
         handleOpenChange={() => setDetailFaq(null)}
       />
-    </div>
+    </PageLayout>
   );
 };
 

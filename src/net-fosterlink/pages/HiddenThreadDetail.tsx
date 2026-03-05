@@ -8,7 +8,7 @@ import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
 import { useEffect, useState } from "react";
 import type { ThreadModel } from "../backend/models/ThreadModel";
 import type { HiddenThreadModel } from "../backend/models/HiddenThreadModel";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ReplyModel } from "../backend/models/ReplyModel";
@@ -98,12 +98,8 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
       <title>[Hidden] {thread.title}</title>
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
         <div className="w-80 space-y-4">
           <Card className="p-4 border-border">
@@ -211,6 +207,6 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

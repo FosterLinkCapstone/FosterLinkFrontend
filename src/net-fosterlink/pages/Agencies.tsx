@@ -3,7 +3,7 @@ import { Paginator } from "../components/Paginator"
 import type { AgencyModel } from "../backend/models/AgencyModel"
 import { agencyApi } from "../backend/api/AgencyApi"
 import { useAuth } from "../backend/AuthContext"
-import { Navbar } from "../components/Navbar"
+import { PageLayout } from "../components/PageLayout"
 import { AlertCircleIcon, Loader2 } from "lucide-react"
 import { AgencyCard } from "../components/agencies/AgencyCard"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { Link, useNavigate, useSearchParams } from "react-router"
 import type { ErrorWrapper } from "../util/ErrorWrapper"
 import { StatusDialog } from "../components/StatusDialog"
 import { confirm } from "../components/ConfirmDialog"
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 
 export const Agencies = () => {
     const auth = useAuth()
@@ -25,6 +26,7 @@ export const Agencies = () => {
     const [creatingAgency, setCreatingAgency] = useState<boolean>(false)
     const [createError, setCreateError] = useState<ErrorWrapper<AgencyModel> | null>(null)
     const [actionResult, setActionResult] = useState<{ success: boolean; title: string; subtext: string } | null>(null)
+    const [hideLoading, setHideLoading] = useState<boolean>(false)
     const navigate = useNavigate()
 
     const highlightedAgencyId = useMemo(() => {
@@ -73,6 +75,7 @@ export const Agencies = () => {
         })
     }
     const onRemove = (agencyId: number) => {
+        setHideLoading(true)
         agencyApiRef.hideAgency(agencyId, true).then(res => {
             if (!res.isError && res.data) {
                 setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
@@ -80,7 +83,7 @@ export const Agencies = () => {
             } else {
                 setActionResult({ success: false, title: "Could not remove agency!", subtext: res.error ?? "" })
             }
-        })
+        }).finally(() => setHideLoading(false))
     }
 
     const onRequestDeletion = (agencyId: number) => {
@@ -126,7 +129,8 @@ export const Agencies = () => {
 
 
     return (
-        <div className="min-h-screen bg-background">
+        <PageLayout auth={auth}>
+            <BackgroundLoadSpinner loading={hideLoading} />
             <title>Agencies</title>
             { createError &&
             <StatusDialog open={createError != null}
@@ -144,9 +148,6 @@ export const Agencies = () => {
                 isSuccess={actionResult.success}
             />
             }
-            <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-                <Navbar userInfo={auth.getUserInfo()} />
-            </div>
             {
                 agencies == null ?
                     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -247,6 +248,6 @@ export const Agencies = () => {
 
             }
 
-        </div>
+        </PageLayout>
     )
 }

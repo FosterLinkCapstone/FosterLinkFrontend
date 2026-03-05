@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { userApi } from "../backend/api/UserApi";
 import type { AdminUserModel } from "../backend/models/AdminUserModel";
@@ -530,7 +530,7 @@ export const AdminUsers = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <PageLayout auth={auth}>
             <title>User Management</title>
 
             <StatusDialog
@@ -540,10 +540,6 @@ export const AdminUsers = () => {
                 subtext=""
                 isSuccess={statusMsg?.success ?? false}
             />
-
-            <div className="bg-background border-b border-border h-16 flex items-center justify-center">
-                <Navbar userInfo={auth.getUserInfo()} />
-            </div>
 
             <div className="max-w-5xl mx-auto px-4 py-8">
                 <h1 className="text-2xl font-bold mb-1 text-center">User Management</h1>
@@ -712,6 +708,6 @@ export const AdminUsers = () => {
                     onPageChanged={handlePageChange}
                 />
             </div>
-        </div>
+        </PageLayout>
     );
 };

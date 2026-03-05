@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 import type { HiddenThreadModel } from "../backend/models/HiddenThreadModel";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +12,7 @@ import { threadApi } from "../backend/api/ThreadApi";
 import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
 import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 
 const TAB_USER = "user";
 const TAB_ADMIN = "admin";
@@ -40,6 +41,7 @@ export const HiddenThreads = () => {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   useEffect(() => {
     setLoading(true);
@@ -76,6 +78,7 @@ export const HiddenThreads = () => {
         "Are you sure you want to restore this thread? It will become visible to all users.",
     });
     if (confirmed) {
+      setActionLoading(true);
       threadApiRef.current.setThreadHidden(threadId, false).then((res) => {
         if (!res.isError) {
           setThreads((prev) => prev.filter((t) => t.id !== threadId));
@@ -83,7 +86,7 @@ export const HiddenThreads = () => {
         } else {
           setError(res.error ?? "Failed to restore thread");
         }
-      });
+      }).finally(() => setActionLoading(false));
     }
   };
 
@@ -92,6 +95,7 @@ export const HiddenThreads = () => {
       message: "Are you sure you want to delete this thread? It will not be recoverable.",
     });
     if (confirmed) {
+      setActionLoading(true);
       threadApiRef.current.deleteHiddenThread(threadId).then((res) => {
         if (!res.isError) {
           setThreads((prev) => prev.filter((t) => t.id !== threadId));
@@ -99,7 +103,7 @@ export const HiddenThreads = () => {
         } else {
           setError(res.error ?? "Failed to delete thread");
         }
-      });
+      }).finally(() => setActionLoading(false));
     }
   };
 
@@ -108,7 +112,8 @@ export const HiddenThreads = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
+      <BackgroundLoadSpinner loading={actionLoading} />
       <title>Hidden Threads</title>
       <StatusDialog
         open={error != null && threads.length > 0}
@@ -124,10 +129,6 @@ export const HiddenThreads = () => {
         subtext=""
         isSuccess={true}
       />
-
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()} />
-      </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6">Hidden Threads</h1>
@@ -169,7 +170,7 @@ export const HiddenThreads = () => {
           onDataChanged={(_data) => {}}
         />
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

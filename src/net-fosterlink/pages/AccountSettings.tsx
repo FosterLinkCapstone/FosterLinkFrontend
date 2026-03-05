@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
+import { PageLayout } from "../components/PageLayout";
 import { userApi } from "../backend/api/UserApi";
 import type { UserSettingsModel } from "../backend/models/UserSettingsModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,14 +17,6 @@ import { ChangePasswordDialog } from "../components/account-settings/ChangePassw
 import { DeleteAccountDialog } from "../components/account-deletion/DeleteAccountDialog";
 import { StatusDialog } from "../components/StatusDialog";
 
-const PageLayout: React.FC<{ auth: ReturnType<typeof useAuth>; children: React.ReactNode }> = ({ auth, children }) => (
-    <div className="min-h-screen bg-background">
-        <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-            <Navbar userInfo={auth.getUserInfo()} />
-        </div>
-        {children}
-    </div>
-);
 
 type FormState = Omit<UserSettingsModel, "id">;
 type FormErrors = Partial<Record<keyof FormState, string>>;

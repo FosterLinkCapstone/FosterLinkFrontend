@@ -8,7 +8,7 @@ import { ReplyCard } from "../components/forum/ReplyCard";
 import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
 import { useEffect, useState } from "react";
 import type { ThreadModel } from "../backend/models/ThreadModel";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ReplyModel } from "../backend/models/ReplyModel";
@@ -125,9 +125,10 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
     })
     if (res) {
       threadApiRef.setThreadHidden(thread.id, true).then(() => {
-        setLoading(false)
         window.location.href = `/threads`
-      })
+      }).finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
   }
     const formatDate = (jsonDate: Date) => {
@@ -166,11 +167,7 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
     ))
   };
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-
+    <PageLayout auth={auth}>
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
         <div className="w-80 space-y-4">
           <Card className="p-4 border-border">
@@ -357,6 +354,6 @@ export const ThreadDetailPage = ({thread}: {thread: ThreadModel}) => {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

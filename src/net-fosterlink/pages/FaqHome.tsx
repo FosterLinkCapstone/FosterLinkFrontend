@@ -4,7 +4,7 @@ import { FaqCard } from '../components/faq/FaqCard';
 import { useAuth } from '../backend/AuthContext';
 import { faqApi } from '../backend/api/FaqApi';
 import { Link, useSearchParams } from 'react-router';
-import { Navbar } from '../components/Navbar';
+import { PageLayout } from '../components/PageLayout';
 import { FaqDialog } from '../components/faq/FaqDialog';
 import { Button } from '@/components/ui/button';
 import { CreateFaqCard } from '../components/faq/CreateFaqCard';
@@ -16,8 +16,10 @@ import { confirm } from '../components/ConfirmDialog';
 import type { ApprovalCheckModel } from '../backend/models/ApprovalCheckModel';
 import { CreateFaqRequestCard } from '../components/faq/CreateFaqRequestCard';
 import type { FaqRequestModel } from '../backend/models/FaqRequestModel';
+import type { GetFaqsResponse } from '../backend/models/api/GetFaqsResponse';
 import { FaqCardSkeleton } from '../components/faq/FaqCardSkeleton';
 import { Paginator } from '../components/Paginator';
+import { BackgroundLoadSpinner } from '../components/BackgroundLoadSpinner';
 
 export const FaqHome = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -43,9 +45,11 @@ export const FaqHome = () => {
   const [faqRemoved, setFaqRemoved] = useState<boolean>(false)
 
   const [loading, setLoading] = useState<boolean>(true)
+  const [hideLoading, setHideLoading] = useState<boolean>(false)
 
   const [unapprovedFaqs, setUnapprovedFaqs] = useState<ApprovalCheckModel>({countDenied: 0, countPending: 0})
-  
+  const [contentLoadingId, setContentLoadingId] = useState<number | null>(null)
+
   const auth = useAuth()
   const faqApiRef = faqApi(auth);
     
@@ -89,23 +93,25 @@ export const FaqHome = () => {
       : "Are you sure you want to delete this FAQ response? It can be restored from the Hidden FAQs page.";
     const confirmed = await confirm({ message });
     if (confirmed) {
+      setHideLoading(true);
       faqApiRef.setFaqHidden(id, true).then(res => {
         if (!res.isError) {
           setFaqs(faqs.filter(f => f.id !== id));
           setFaqRemoved(true);
         }
-      });
+      }).finally(() => setHideLoading(false));
     }
   };
 
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
+        setContentLoadingId(faq.id);
         faqApiRef.getContent(faq.id).then(res => {
           if (!res.isError && res.data) {
             faqContent.current = res.data
             setDetailFaq(faq);
           }
-        })
+        }).finally(() => setContentLoadingId(null))
     } else setDetailFaq(faq)
   };
 
@@ -178,7 +184,8 @@ export const FaqHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
+      <BackgroundLoadSpinner loading={hideLoading} />
       <title>Frequently Asked Questions</title>
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
@@ -200,10 +207,6 @@ export const FaqHome = () => {
         onSubmit={submitNewRequest}
         serverFieldErrors={Object.keys(suggestionFieldErrors).length > 0 ? suggestionFieldErrors : undefined}
       />
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
         {
@@ -255,28 +258,31 @@ export const FaqHome = () => {
                 onCollapse={handleCollapse}
                 onShowDetail={() => handleShowDetail(faq)}
                 expanded={expandedId === faq.id}
+                contentLoading={contentLoadingId === faq.id}
                 canEdit={auth.admin || (!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id)}
                 onRemove={onRemove}
             />
         ))}
 
-        <Paginator<FaqModel[]>
+        <Paginator<GetFaqsResponse>
           pageCount={totalPages}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          onDataChanged={setFaqs}
+          onDataChanged={(data) => {
+            setFaqs(data.faqs);
+            setTotalPages(data.totalPages);
+          }}
           onPageChanged={async (pageNum) => {
             const res = await faqApiRef.getAll(pageNum - 1);
-            if (res.data) {
-              setTotalPages(res.data.totalPages);
-              return res.data.faqs;
+            if (!res.isError && res.data) {
+              return res.data;
             }
-            return [];
+            return { faqs: [], totalPages: 1 };
           }}
         />
         
       </div>
       <FaqDialog detailFaq={detailFaq} content={faqContent.current} handleOpenChange={handleCloseDetail}/>  
-    </div>
+    </PageLayout>
   );
 };

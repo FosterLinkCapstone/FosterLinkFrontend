@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router"
-import { Navbar } from "../components/Navbar"
+import { PageLayout } from "../components/PageLayout"
 import { useAuth } from "../backend/AuthContext"
 import { accountDeletionApi } from "../backend/api/AccountDeletionApi"
 import type { AccountDeletionRequestModel } from "../backend/models/AccountDeletionRequestModel"
@@ -14,14 +14,13 @@ import { Paginator } from "../components/Paginator"
 import { StatusDialog } from "../components/StatusDialog"
 import { confirm } from "../components/ConfirmDialog"
 import { DelayDialog } from "../components/account-deletion/DelayDialog"
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 import { getInitials } from "../util/StringUtil"
 import { buildProfileUrl } from "../util/UserUtil"
 import { Trash2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react"
+import { formatDate } from "../util/DateUtil"
 
 type SortBy = "recency" | "urgency"
-
-const formatDate = (date: Date | string) =>
-    new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 
 const formatDateTime = (date: Date | string) => {
     const d = new Date(date)
@@ -45,10 +44,12 @@ const RequestCard = ({
     req,
     onApprove,
     onDelay,
+    approving,
 }: {
     req: AccountDeletionRequestModel
     onApprove: (req: AccountDeletionRequestModel) => void
     onDelay: (req: AccountDeletionRequestModel) => void
+    approving: boolean
 }) => {
     const navigate = useNavigate()
     const [showFullNote, setShowFullNote] = useState(false)
@@ -127,11 +128,12 @@ const RequestCard = ({
                 )}
             </Card>
 
-            <div className="w-full flex flex-col mt-1 gap-2">
+            <div className="w-full flex flex-row flex-wrap items-center gap-2 mt-1">
                 <Button
                     variant="outline"
                     onClick={() => onApprove(req)}
                     className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                    disabled={approving}
                 >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Approve Deletion
@@ -144,6 +146,7 @@ const RequestCard = ({
                     <Clock className="h-4 w-4 mr-2" />
                     Delay
                 </Button>
+                <BackgroundLoadSpinner loading={approving} />
             </div>
         </div>
     )
@@ -166,6 +169,7 @@ export const AccountDeletionRequests = () => {
 
     const [delayTarget, setDelayTarget] = useState<AccountDeletionRequestModel | null>(null)
     const [delayLoading, setDelayLoading] = useState(false)
+    const [approvingId, setApprovingId] = useState<number | null>(null)
 
     const loadPage = async (page: number, sort: SortBy) => {
         const res = await apiRef.current.getRequests(page - 1, sort)
@@ -195,12 +199,17 @@ export const AccountDeletionRequests = () => {
             message: `Are you sure you want to approve the deletion request for "${req.requestedBy.fullName}" (@${req.requestedBy.username})? The account will be permanently anonymized${req.clearAccount ? " and all associated content will be deleted" : ""}. This cannot be undone.`,
         })
         if (!confirmed) return
-        const res = await apiRef.current.approveRequest(req.id)
-        if (!res.isError) {
-            setRequests(prev => prev.filter(r => r.id !== req.id))
-            setSuccessMsg("Deletion request approved. The account has been anonymized.")
-        } else {
-            setErrorDialogMsg(res.error ?? "Failed to approve deletion request.")
+        setApprovingId(req.id)
+        try {
+            const res = await apiRef.current.approveRequest(req.id)
+            if (!res.isError) {
+                setRequests(prev => prev.filter(r => r.id !== req.id))
+                setSuccessMsg("Deletion request approved. The account has been anonymized.")
+            } else {
+                setErrorDialogMsg(res.error ?? "Failed to approve deletion request.")
+            }
+        } finally {
+            setApprovingId(null)
         }
     }
 
@@ -224,11 +233,8 @@ export const AccountDeletionRequests = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <PageLayout auth={auth}>
             <title>Account Deletion Requests</title>
-            <div className="bg-background border-b border-border h-16 flex items-center justify-center">
-                <Navbar userInfo={auth.getUserInfo()} />
-            </div>
 
             <StatusDialog
                 open={!!successMsg}
@@ -293,6 +299,7 @@ export const AccountDeletionRequests = () => {
                                 req={req}
                                 onApprove={handleApprove}
                                 onDelay={handleDelay}
+                                approving={approvingId === req.id}
                             />
                         ))}
                         <Paginator<AccountDeletionRequestModel[]>
@@ -312,6 +319,6 @@ export const AccountDeletionRequests = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </PageLayout>
     )
 }

@@ -5,7 +5,7 @@ import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
 import type { FaqModel } from "../backend/models/FaqModel";
 import { useAuth } from "../backend/AuthContext";
 import { faqApi } from "../backend/api/FaqApi";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { FaqDialog } from "../components/faq/FaqDialog";
 import { PendingFaqCard } from "../components/faq/PendingFaqCard";
 import { HiddenFaqCard } from "../components/faq/HiddenFaqCard";
@@ -217,7 +217,7 @@ export const PendingFaqs = () => {
   const hiddenType = activeTab === TAB_HIDDEN_ADMIN ? "ADMIN" : "USER";
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
       <title>Pending FAQs</title>
       <StatusDialog open={approvedOrDenied != ''}
         onOpenChange={() => setApprovedOrDenied('')}
@@ -239,10 +239,6 @@ export const PendingFaqs = () => {
         subtext={hiddenError ?? "An unknown error occurred"}
         isSuccess={false}
       />
-
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()} />
-      </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-1 text-center">Frequently Asked Questions (admin)</h1>
@@ -364,7 +360,7 @@ export const PendingFaqs = () => {
         content={faqContent.current}
         handleOpenChange={handleCloseDetail}
       />
-    </div>
+    </PageLayout>
   );
 };
 

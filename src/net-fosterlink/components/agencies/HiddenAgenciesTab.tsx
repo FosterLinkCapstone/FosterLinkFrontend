@@ -9,6 +9,7 @@ import { StatusDialog } from "@/net-fosterlink/components/StatusDialog"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Paginator } from "@/net-fosterlink/components/Paginator"
 import { confirm } from "@/net-fosterlink/components/ConfirmDialog"
+import { BackgroundLoadSpinner } from "@/net-fosterlink/components/BackgroundLoadSpinner"
 
 export const HiddenAgenciesTab = () => {
     const auth = useAuth()
@@ -19,6 +20,7 @@ export const HiddenAgenciesTab = () => {
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [totalPages, setTotalPages] = useState<number>(0)
     const [loading, setLoading] = useState<boolean>(true)
+    const [actionLoading, setActionLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const [changeSuccess, setChangeSuccess] = useState<"restore" | "delete" | null>(null)
 
@@ -43,6 +45,7 @@ export const HiddenAgenciesTab = () => {
             message: "Are you sure you want to restore this agency? It will become visible to all users.",
         })
         if (confirmed) {
+            setActionLoading(true)
             agencyApiRef.current.hideAgency(id, false).then(res => {
                 if (!res.isError) {
                     setAgencies(prev => prev.filter(a => a.id !== id))
@@ -50,7 +53,7 @@ export const HiddenAgenciesTab = () => {
                 } else {
                     setError(res.error ?? "Failed to restore agency")
                 }
-            })
+            }).finally(() => setActionLoading(false))
         }
     }
 
@@ -59,6 +62,7 @@ export const HiddenAgenciesTab = () => {
             message: "Are you sure you want to permanently delete this agency? It will not be recoverable.",
         })
         if (confirmed) {
+            setActionLoading(true)
             agencyApiRef.current.deleteHiddenAgency(id).then(res => {
                 if (!res.isError) {
                     setAgencies(prev => prev.filter(a => a.id !== id))
@@ -66,12 +70,13 @@ export const HiddenAgenciesTab = () => {
                 } else {
                     setError(res.error ?? "Failed to delete agency")
                 }
-            })
+            }).finally(() => setActionLoading(false))
         }
     }
 
     return (
         <>
+            <BackgroundLoadSpinner loading={actionLoading} />
             <StatusDialog
                 open={changeSuccess != null}
                 onOpenChange={() => setChangeSuccess(null)}

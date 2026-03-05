@@ -132,7 +132,7 @@ export function Paginator<T>({
       </Button>
 
       <span className="text-muted-foreground text-sm ml-1">
-        Page {currentPage} of {pageCount}
+        Page {currentPage} of {pageCount ?? "?"}
       </span>
     </nav>
   );

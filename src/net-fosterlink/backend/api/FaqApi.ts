@@ -18,7 +18,7 @@ export interface FaqApiType {
     getRequests: () => Promise<ErrorWrapper<FaqRequestModel[]>>
     answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
     createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
-    allAuthor: (userId: number, pageNumber?: number) => Promise<ErrorWrapper<FaqModel[]>>
+    allAuthor: (userId: number, pageNumber?: number) => Promise<ErrorWrapper<GetFaqsResponse>>
     getHiddenFaqs: (type: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenFaqsResponse>>
     setFaqHidden: (faqId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
     deleteHiddenFaq: (faqId: number) => Promise<ErrorWrapper<boolean>>
@@ -175,8 +175,8 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 defaultErrorsCreateRequest
             )
         },
-        allAuthor: async(userId: number, pageNumber: number = 0): Promise<ErrorWrapper<FaqModel[]>> => {
-            return doGenericRequest<FaqModel[]>(
+        allAuthor: async(userId: number, pageNumber: number = 0): Promise<ErrorWrapper<GetFaqsResponse>> => {
+            return doGenericRequest<GetFaqsResponse>(
                 auth.api,
                 RequestType.GET,
                 `/faq/allAuthor?userId=${userId}&pageNumber=${pageNumber}`,

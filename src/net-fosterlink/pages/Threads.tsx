@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ThreadModel } from "../backend/models/ThreadModel";
@@ -114,10 +114,7 @@ export const Threads = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-          <Navbar userInfo={auth.getUserInfo()} />
-        </div>
+      <PageLayout auth={auth}>
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex gap-3 mb-6">
             <Skeleton className="h-9 flex-1 rounded-md" />
@@ -136,16 +133,12 @@ export const Threads = () => {
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
       <title>Threads</title>
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-      
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-3 mb-6">
           <Input
@@ -230,6 +223,6 @@ export const Threads = () => {
           />
         ))}
       </div>
-    </div>
+    </PageLayout>
   );
 };

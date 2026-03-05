@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { ListItem } from "./ListItem";
 import { Link } from "react-router";
@@ -12,9 +13,47 @@ import { FaqAuthorOnlyBadge } from "./faq/FaqAuthorOnlyBadge";
 import { useTheme } from "@/ThemeProvider";
 import { Moon, Sun, Monitor, ShieldAlert } from "lucide-react";
 
+const HOVER_LEAVE_DELAY_MS = 100;
+
 export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
   const auth = useAuth();
   const { theme, setTheme } = useTheme();
+  const [openItem, setOpenItem] = useState<string | null>(null);
+  const [isDesktop, setIsDesktop] = useState(true);
+  const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handler = () => setIsDesktop(mq.matches);
+    handler();
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const handleItemEnter = (value: string) => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = null;
+    }
+    if (isDesktop) setOpenItem(value);
+  };
+
+  const handleItemLeave = () => {
+    if (!isDesktop) return;
+    leaveTimeoutRef.current = setTimeout(() => setOpenItem(null), HOVER_LEAVE_DELAY_MS);
+  };
+
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    if (isDesktop) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleValueChange = (value: string) => {
+    if (isDesktop) return;
+    setOpenItem(value || null);
+  };
 
   const cycleTheme = () => {
     setTheme(theme === "light" ? "dark" : theme === "dark" ? "system" : "light");
@@ -30,13 +69,20 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
           </Link>
           
           <div className="flex items-center gap-6">
-            <NavigationMenu>
+            <NavigationMenu value={openItem ?? ""} onValueChange={handleValueChange} viewport={false}>
               <NavigationMenuList className="flex gap-6">
                 <NavigationMenuItem>
                   <Link className="hover:text-primary transition-colors bg-transparent text-foreground font-semibold" to="/">Home</Link>
                 </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
+                <NavigationMenuItem
+                  value="forum"
+                  onMouseEnter={() => handleItemEnter("forum")}
+                  onMouseLeave={handleItemLeave}
+                >
+                  <NavigationMenuTrigger
+                    className="text-muted-foreground hover:text-primary transition-colors bg-transparent"
+                    onClick={handleTriggerClick}
+                  >
                     Forum
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="bg-popover text-popover-foreground">
@@ -63,8 +109,15 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
+                <NavigationMenuItem
+                  value="faq"
+                  onMouseEnter={() => handleItemEnter("faq")}
+                  onMouseLeave={handleItemLeave}
+                >
+                  <NavigationMenuTrigger
+                    className="text-muted-foreground hover:text-primary transition-colors bg-transparent"
+                    onClick={handleTriggerClick}
+                  >
                     FAQ
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="bg-popover text-popover-foreground">
@@ -107,8 +160,15 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
+                <NavigationMenuItem
+                  value="agencies"
+                  onMouseEnter={() => handleItemEnter("agencies")}
+                  onMouseLeave={handleItemLeave}
+                >
+                  <NavigationMenuTrigger
+                    className="text-muted-foreground hover:text-primary transition-colors bg-transparent"
+                    onClick={handleTriggerClick}
+                  >
                     Agencies
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="bg-popover text-popover-foreground">
@@ -152,8 +212,15 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                 </NavigationMenuItem>
 
                 {auth.admin && (
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
+                  <NavigationMenuItem
+                    value="admin"
+                    onMouseEnter={() => handleItemEnter("admin")}
+                    onMouseLeave={handleItemLeave}
+                  >
+                    <NavigationMenuTrigger
+                      className="text-muted-foreground hover:text-primary transition-colors bg-transparent"
+                      onClick={handleTriggerClick}
+                    >
                       Admin
                     </NavigationMenuTrigger>
                     <NavigationMenuContent className="bg-popover text-popover-foreground">
@@ -176,8 +243,15 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                 )}
                 {
                   auth.admin && (
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
+                <NavigationMenuItem
+                  value="devtools"
+                  onMouseEnter={() => handleItemEnter("devtools")}
+                  onMouseLeave={handleItemLeave}
+                >
+                  <NavigationMenuTrigger
+                    className="text-muted-foreground hover:text-primary transition-colors bg-transparent"
+                    onClick={handleTriggerClick}
+                  >
                     DevTools
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="bg-popover text-popover-foreground">
@@ -277,11 +351,18 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                   )
-                }
-                                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-muted-foreground hover:text-primary transition-colors bg-transparent">
-                    My Account
-                  </NavigationMenuTrigger>
+}
+                                <NavigationMenuItem
+                                  value="account"
+                                  onMouseEnter={() => handleItemEnter("account")}
+                                  onMouseLeave={handleItemLeave}
+                                >
+                                  <NavigationMenuTrigger
+                                    className="text-muted-foreground hover:text-primary transition-colors bg-transparent"
+                                    onClick={handleTriggerClick}
+                                  >
+                                    My Account
+                                  </NavigationMenuTrigger>
                   <NavigationMenuContent className="bg-popover text-popover-foreground">
                     <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
                       {auth.isLoggedIn() ? (

@@ -5,6 +5,7 @@ import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { AlertCircleIcon } from "lucide-react"
 import { AgencyCard } from "./AgencyCard"
 import { Button } from "@/components/ui/button"
+import { BackgroundLoadSpinner } from "@/net-fosterlink/components/BackgroundLoadSpinner"
 import { StatusDialog } from "@/net-fosterlink/components/StatusDialog"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Paginator } from "@/net-fosterlink/components/Paginator"
@@ -24,6 +25,7 @@ export const AgencyDeletionRequestsTab = () => {
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const [changeSuccess, setChangeSuccess] = useState<"accepted" | "denied" | null>(null)
+    const [acceptingId, setAcceptingId] = useState<number | null>(null)
 
     useEffect(() => {
         setLoading(true)
@@ -46,6 +48,7 @@ export const AgencyDeletionRequestsTab = () => {
             message: `Are you sure you want to accept this deletion request? The agency "${req.agency.agencyName}" will be permanently deleted and cannot be recovered.`,
         })
         if (confirmed) {
+            setAcceptingId(req.id)
             agencyApiRef.current.approveDeletionRequest(req.id, true).then(res => {
                 if (!res.isError) {
                     setRequests(prev => prev.filter(r => r.id !== req.id))
@@ -53,7 +56,7 @@ export const AgencyDeletionRequestsTab = () => {
                 } else {
                     setError(res.error ?? "Failed to accept deletion request")
                 }
-            })
+            }).finally(() => setAcceptingId(null))
         }
     }
 
@@ -104,21 +107,22 @@ export const AgencyDeletionRequestsTab = () => {
                     {requests.map(req => (
                         <div key={req.id} className="flex flex-col w-full gap-1">
                             <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700" variant="default">
-                                <AlertCircleIcon />
+                                <AlertCircleIcon className="size-4" />
                                 <AlertTitle>
                                     Deletion requested by {req.requestedBy.username} on {formatDate(req.createdAt)}
                                 </AlertTitle>
                             </Alert>
                             <AgencyCard onRemove={() => { return }} agency={req.agency} showRemove={false} />
-                            <div className="w-full flex flex-col mt-1 gap-2">
+                            <div className="w-full flex flex-row flex-wrap items-center gap-2 mt-1">
                                 <Button
                                     variant="outline"
                                     onClick={() => handleAccept(req)}
                                     className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
-                                    disabled={auth.restricted}
+                                    disabled={auth.restricted || acceptingId === req.id}
                                 >
                                     Accept
                                 </Button>
+                                <BackgroundLoadSpinner loading={acceptingId === req.id} />
                                 {/* TODO - privacy concerns with administrators being given too much power over agents being able to control their own agencies info */}
                                 {/*<Button 
                                     variant="outline"
