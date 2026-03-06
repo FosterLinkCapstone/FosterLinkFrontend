@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Home } from 'lucide-react';
-import { Navbar } from '../components/Navbar';
+import { Navbar } from '../components/navbar/Navbar';
 import { useAuth } from '../backend/AuthContext';
 
 export const NotFound = () => {

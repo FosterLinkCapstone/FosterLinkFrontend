@@ -6,10 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
-import { VerifiedCheck } from "../VerifiedCheck";
+import { VerifiedCheck } from "../badges/VerifiedCheck";
 import type { AuthContextType } from "@/net-fosterlink/backend/AuthContext";
-import { useState } from "react";
+import { useCallback } from "react";
 import { threadApi } from "@/net-fosterlink/backend/api/ThreadApi";
+import { formatRelativeDate } from "@/net-fosterlink/util/DateUtil";
+import { useLikeToggle } from "@/net-fosterlink/hooks/useLikeToggle";
 
 interface ThreadPreviewProps {
     thread: ThreadModel,
@@ -18,21 +20,8 @@ interface ThreadPreviewProps {
 }
 
 export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, basePath = "/threads/thread/" }) => {
-  const [isLiked, setIsLiked] = useState<boolean>(thread.liked);
-  const [likeInFlight, setLikeInFlight] = useState(false);
-  const formatDate = (jsonDate: Date) => {
-    const date = new Date(jsonDate)
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
-    
-    return `on ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  };
-
+  const apiCall = useCallback(() => threadApi(auth).likeThread(thread.id), [auth, thread.id]);
+  const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(thread.liked, thread.likeCount, apiCall);
   const navigate = useNavigate()
 
   const goToThread = () => {
@@ -43,29 +32,11 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
     e.stopPropagation()
     navigate(buildProfileUrl(thread.author))
   }
+
   const likeThread = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!auth.isLoggedIn() || likeInFlight) {
-      return;
-    }
-
-    setLikeInFlight(true);
-
-    const wasLiked = isLiked;
-    const delta = wasLiked ? -1 : 1;
-
-    thread.likeCount = Math.max(0, thread.likeCount + delta);
-    setIsLiked(!wasLiked);
-
-    threadApi(auth).likeThread(thread.id).then(res => {
-      if (res.isError) {
-        // Revert the like count change on error
-        thread.likeCount = Math.max(0, thread.likeCount - delta);
-        setIsLiked(wasLiked);
-      }
-    }).finally(() => {
-      setLikeInFlight(false);
-    });
+    if (!auth.isLoggedIn()) return;
+    toggleLike();
   }
 
   return (
@@ -119,7 +90,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
         <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
           <div className="flex items-start gap-2 flex-wrap flex-col">
                         <span className="text-xs text-muted-foreground">
-              Posted {formatDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              Posted {formatRelativeDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <div className="flex flex-row gap-2 items-center">
             {thread.tags && thread.tags.slice(0, 3).map((tag, index) => (
@@ -148,10 +119,10 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
             <button className="flex items-center gap-1.5 hover:bg-accent px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:!cursor-not-allowed disabled:opacity-75" disabled={!auth.isLoggedIn() || likeInFlight || auth.restricted} onClick={e => likeThread(e)}>
                 {isLiked ? <>
                   <Heart fill="currentColor" className="h-4 w-4 text-destructive"/>
-                  <span className="text-sm text-destructive">{thread.likeCount}</span>
+                  <span className="text-sm text-destructive">{likeCount}</span>
                 </> : <>
                   <Heart className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">{thread.likeCount}</span>
+                  <span className="text-sm text-muted-foreground">{likeCount}</span>
                 </>}
               </button>
           </div>

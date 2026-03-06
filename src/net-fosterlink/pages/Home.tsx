@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DummyThread } from '../components/dummy/DummyThread';
 import { DummyFaq } from '../components/dummy/DummyFaq';
 import { DummyAgency } from '../components/dummy/DummyAgency';
-import { Navbar } from '../components/Navbar';
+import { Navbar } from '../components/navbar/Navbar';
 import { useAuth } from '../backend/AuthContext';
 
 export const Home = () => {

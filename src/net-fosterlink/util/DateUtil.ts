@@ -1,6 +1,16 @@
 export const formatDate = (date: Date | string) =>
   new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
+export const formatRelativeDate = (date: Date | string): string => {
+  const d = new Date(date);
+  const now = new Date();
+  const days = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+  return `on ${formatDate(d)}`;
+};
+
 export const formatJoinedText = (dateInput: string | Date | undefined): string => {
   if (!dateInput) return "";
   const created = typeof dateInput === "string" ? new Date(dateInput) : dateInput;

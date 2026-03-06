@@ -16,7 +16,7 @@ import { getInitials } from "../util/StringUtil";
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 import { confirm } from "../components/ConfirmDialog";
 import { useNavigate } from "react-router";
-import { VerifiedCheck } from "../components/VerifiedCheck";
+import { VerifiedCheck } from "../components/badges/VerifiedCheck";
 import { buildProfileUrl } from "../util/UserUtil";
 
 export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) => {

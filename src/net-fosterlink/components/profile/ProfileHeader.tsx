@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Ban, ShieldAlert, ShieldCheck } from "lucide-react";
 import { getInitials } from "../../util/StringUtil";
 import { formatDate } from "../../util/DateUtil";
-import { VerifiedCheck } from "../VerifiedCheck";
+import { VerifiedCheck } from "../badges/VerifiedCheck";
 import type { ProfileMetadataModel } from "../../backend/models/ProfileMetadataModel";
 import type { AccountDeletionRequestModel } from "../../backend/models/AccountDeletionRequestModel";
 import { useAuth } from "../../backend/AuthContext";

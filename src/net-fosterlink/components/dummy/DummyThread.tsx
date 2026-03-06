@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Heart, MessageCircle } from "lucide-react";
-import { VerifiedCheck } from "../VerifiedCheck";
+import { VerifiedCheck } from "../badges/VerifiedCheck";
 
 export const DummyThread = ({ref} : {ref: React.RefObject<HTMLDivElement | null>}) => {
   return (

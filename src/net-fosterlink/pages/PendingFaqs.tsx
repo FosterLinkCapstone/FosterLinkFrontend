@@ -3,12 +3,13 @@ import { Link, useSearchParams } from "react-router";
 import { ApprovalStatus, type PendingFaqModel } from "../backend/models/PendingFaqModel";
 import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
 import type { FaqModel } from "../backend/models/FaqModel";
+
 import { useAuth } from "../backend/AuthContext";
 import { faqApi } from "../backend/api/FaqApi";
 import { PageLayout } from "../components/PageLayout";
 import { FaqDialog } from "../components/faq/FaqDialog";
 import { PendingFaqCard } from "../components/faq/PendingFaqCard";
-import { HiddenFaqCard } from "../components/faq/HiddenFaqCard";
+import { HiddenFaqList } from "../components/faq/HiddenFaqList";
 import { StatusDialog } from "../components/StatusDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 import { Paginator } from "../components/Paginator";
@@ -363,57 +364,3 @@ export const PendingFaqs = () => {
     </PageLayout>
   );
 };
-
-function HiddenFaqList({
-  faqs,
-  loading,
-  error,
-  expandedId,
-  onExpand,
-  onCollapse,
-  onShowDetail,
-  onRestore,
-  onDelete,
-}: {
-  faqs: HiddenFaqModel[];
-  loading: boolean;
-  error: string | null;
-  expandedId: number | null;
-  onExpand: (id: number) => void;
-  onCollapse: () => void;
-  onShowDetail: (faq: HiddenFaqModel) => void;
-  onRestore: (faq: HiddenFaqModel) => void;
-  onDelete: (faq: HiddenFaqModel) => void;
-}) {
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => <FaqCardSkeleton key={i} />)}
-      </div>
-    );
-  }
-  if (faqs.length === 0) {
-    return (
-      <>
-        <p className="text-center text-muted-foreground py-12">No hidden FAQs found.</p>
-        {error && <p className="text-center text-destructive">{error}</p>}
-      </>
-    );
-  }
-  return (
-    <div className="space-y-4">
-      {faqs.map((faq) => (
-        <HiddenFaqCard
-          key={faq.id}
-          faq={faq}
-          onExpand={() => onExpand(faq.id)}
-          onCollapse={onCollapse}
-          onShowDetail={() => onShowDetail(faq)}
-          expanded={expandedId === faq.id}
-          onRestore={onRestore}
-          onDelete={onDelete}
-        />
-      ))}
-    </div>
-  );
-}

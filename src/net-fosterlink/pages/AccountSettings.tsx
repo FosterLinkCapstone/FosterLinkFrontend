@@ -3,70 +3,20 @@ import { useNavigate } from "react-router";
 import { useAuth } from "../backend/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { userApi } from "../backend/api/UserApi";
-import type { UserSettingsModel } from "../backend/models/UserSettingsModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { PhoneNumberInput } from "../components/PhoneNumberInput";
-import { Pencil, Lock, Trash2, AlertCircleIcon, Save, RotateCcw } from "lucide-react";
+import { Pencil, Lock, Trash2, AlertCircleIcon } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import { ProfilePictureDialog } from "../components/account-settings/ProfilePictureDialog";
 import { ChangePasswordDialog } from "../components/account-settings/ChangePasswordDialog";
 import { DeleteAccountDialog } from "../components/account-deletion/DeleteAccountDialog";
 import { StatusDialog } from "../components/StatusDialog";
-
-
-type FormState = Omit<UserSettingsModel, "id">;
-type FormErrors = Partial<Record<keyof FormState, string>>;
-
-const emptyForm = (): FormState => ({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    username: "",
-    profilePictureUrl: "",
-});
-
-const validate = (form: FormState): FormErrors => {
-    const errors: FormErrors = {};
-
-    if (!form.firstName.trim())
-        errors.firstName = "First name is required.";
-    else if (form.firstName.trim().length > 50)
-        errors.firstName = "First name must be 50 characters or fewer.";
-
-    if (!form.lastName.trim())
-        errors.lastName = "Last name is required.";
-    else if (form.lastName.trim().length > 50)
-        errors.lastName = "Last name must be 50 characters or fewer.";
-
-    if (!form.email.trim())
-        errors.email = "Email is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-        errors.email = "Please enter a valid email address.";
-    else if (form.email.length > 255)
-        errors.email = "Email must be 255 characters or fewer.";
-
-    if (!form.username.trim())
-        errors.username = "Username is required.";
-    else if (form.username.length < 3)
-        errors.username = "Username must be at least 3 characters.";
-    else if (form.username.length > 30)
-        errors.username = "Username must be 30 characters or fewer.";
-    else if (!/^[a-zA-Z0-9_]+$/.test(form.username))
-        errors.username = "Username may only contain letters, numbers, and underscores.";
-
-    const phoneDigits = form.phoneNumber.replace(/\D/g, "");
-    if (!form.phoneNumber.trim())
-        errors.phoneNumber = "Phone number is required.";
-    else if (phoneDigits.length < 10)
-        errors.phoneNumber = "Please enter a complete 10-digit phone number.";
-
-    return errors;
-};
+import { UnsavedChangesBar } from "../components/account-settings/UnsavedChangesBar";
+import { emptyForm, validateAccountSettings, type FormState } from "../util/AccountSettingsValidation";
 
 export const AccountSettings = () => {
     const auth = useAuth();
@@ -78,7 +28,6 @@ export const AccountSettings = () => {
     const savedRef = useRef<FormState>(emptyForm());
 
     const [form, setForm] = useState<FormState>(emptyForm());
-
     const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
 
     const [showProfilePicDialog, setShowProfilePicDialog] = useState(false);
@@ -108,7 +57,7 @@ export const AccountSettings = () => {
         });
     }, []);
 
-    const formErrors = useMemo(() => validate(form), [form]);
+    const formErrors = useMemo(() => validateAccountSettings(form), [form]);
     const hasErrors = Object.keys(formErrors).length > 0;
 
     const hasChanges = useMemo(() => {
@@ -132,7 +81,6 @@ export const AccountSettings = () => {
     const handleSave = async () => {
         if (!userId) return;
 
-        // Touch all fields so every error becomes visible on a save attempt
         const allTouched = (Object.keys(form) as (keyof FormState)[]).reduce(
             (acc, k) => ({ ...acc, [k]: true }),
             {} as Record<keyof FormState, boolean>
@@ -166,7 +114,6 @@ export const AccountSettings = () => {
                 });
             } else {
                 setSaveStatus({ msg: "Your settings have been saved.", success: true });
-                // Refresh auth user info
                 const infoRes = await userApi(auth).getInfo();
                 if (!infoRes.isError && infoRes.data?.user) {
                     auth.setUserInfo(infoRes.data.user);
@@ -175,10 +122,6 @@ export const AccountSettings = () => {
         } else {
             setSaveStatus({ msg: res.error ?? "Failed to save settings.", success: false });
         }
-    };
-
-    const handleProfilePicConfirm = (url: string) => {
-        handleField("profilePictureUrl", url);
     };
 
     if (!auth.isLoggedIn()) return null;
@@ -211,12 +154,11 @@ export const AccountSettings = () => {
         <PageLayout auth={auth}>
             <title>Account Settings</title>
 
-            {/* Dialogs */}
             <ProfilePictureDialog
                 open={showProfilePicDialog}
                 onOpenChange={setShowProfilePicDialog}
                 currentUrl={form.profilePictureUrl}
-                onConfirm={handleProfilePicConfirm}
+                onConfirm={(url) => handleField("profilePictureUrl", url)}
             />
             <ChangePasswordDialog
                 open={showChangePasswordDialog}
@@ -270,7 +212,6 @@ export const AccountSettings = () => {
                 <Card className="p-6 space-y-5">
                     <h2 className="text-lg font-semibold">Settings</h2>
 
-                    {/* First Name + Last Name */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <Label htmlFor="first-name">First name</Label>
@@ -302,7 +243,6 @@ export const AccountSettings = () => {
                         </div>
                     </div>
 
-                    {/* Email */}
                     <div className="space-y-1.5">
                         <Label htmlFor="email">Email</Label>
                         <Input
@@ -323,7 +263,6 @@ export const AccountSettings = () => {
                         )}
                     </div>
 
-                    {/* Username */}
                     <div className="space-y-1.5">
                         <Label htmlFor="username">Username</Label>
                         <Input
@@ -339,7 +278,6 @@ export const AccountSettings = () => {
                         )}
                     </div>
 
-                    {/* Phone Number */}
                     <div className="space-y-1.5">
                         <Label htmlFor="phone">Phone number</Label>
                         <div onBlur={() => handleBlur("phoneNumber")}>
@@ -358,7 +296,6 @@ export const AccountSettings = () => {
                     </div>
 
                     <div className="border-t border-border pt-4 space-y-3">
-                        {/* Change Password */}
                         <Button
                             variant="outline"
                             className="w-full justify-center gap-2"
@@ -370,7 +307,6 @@ export const AccountSettings = () => {
                             Change password
                         </Button>
 
-                        {/* Delete Account */}
                         <Button
                             variant="outline"
                             className="w-full justify-center gap-2 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300"
@@ -384,36 +320,14 @@ export const AccountSettings = () => {
                 </Card>
             </div>
 
-            {/* Unsaved Changes Bar */}
             {hasChanges && (
-                <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
-                    <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-                        <span className="text-sm text-muted-foreground font-medium">
-                            {hasErrors ? "Fix errors before saving." : "You have unsaved changes!"}
-                        </span>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleReset}
-                                disabled={saving}
-                                className="gap-1.5"
-                            >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                                Reset
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={handleSave}
-                                disabled={saving || hasErrors || auth.restricted}
-                                className="gap-1.5"
-                            >
-                                <Save className="h-3.5 w-3.5" />
-                                {saving ? "Saving..." : "Save"}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <UnsavedChangesBar
+                    hasErrors={hasErrors}
+                    saving={saving}
+                    restricted={auth.restricted}
+                    onReset={handleReset}
+                    onSave={handleSave}
+                />
             )}
         </PageLayout>
     );

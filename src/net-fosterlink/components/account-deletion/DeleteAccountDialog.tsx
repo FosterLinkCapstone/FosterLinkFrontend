@@ -84,7 +84,6 @@ export const DeleteAccountDialog = ({ open, onOpenChange, onSuccess }: DeleteAcc
 
     return (
         <>
-            {/* Sub-dialog: process info */}
             <InfoDialog open={showProcessInfo} onOpenChange={setShowProcessInfo}>
                 <span className="block mb-3">
                     Once deletion is requested for an account, it is sent for approval. After either
@@ -107,14 +106,12 @@ export const DeleteAccountDialog = ({ open, onOpenChange, onSuccess }: DeleteAcc
                 </span>
             </InfoDialog>
 
-            {/* Sub-dialog: clear data info */}
             <InfoDialog open={showClearInfo} onOpenChange={setShowClearInfo}>
                 Checking this box will delete all data associated with this account. This includes
                 threads, replies, likes, FAQs, agencies, and various requests. This data will not
                 be recoverable.
             </InfoDialog>
 
-            {/* Success status dialog */}
             <StatusDialog
                 open={!!successMsg}
                 onOpenChange={() => setSuccessMsg(null)}
@@ -123,7 +120,6 @@ export const DeleteAccountDialog = ({ open, onOpenChange, onSuccess }: DeleteAcc
                 isSuccess={true}
             />
 
-            {/* Error status dialog */}
             <StatusDialog
                 open={!!errorMsg}
                 onOpenChange={() => setErrorMsg(null)}
@@ -132,7 +128,6 @@ export const DeleteAccountDialog = ({ open, onOpenChange, onSuccess }: DeleteAcc
                 isSuccess={false}
             />
 
-            {/* Main dialog */}
             <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="sm:max-w-md bg-background" showCloseButton={false}>
                     <DialogHeader>

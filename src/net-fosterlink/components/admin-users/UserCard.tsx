@@ -1,0 +1,131 @@
+import { Link } from "react-router";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Ban, ShieldAlert } from "lucide-react";
+import { getInitials } from "@/net-fosterlink/util/StringUtil";
+import type { AdminUserModel } from "@/net-fosterlink/backend/models/AdminUserModel";
+import { ROLE_META, formatRestrictionInfo, hasRole, type RoleKey } from "./AdminRoleConstants";
+import { RestrictPopover } from "./RestrictPopover";
+
+interface UserCardProps {
+    user: AdminUserModel;
+    deleted?: boolean;
+    onRoleToggle: (user: AdminUserModel, key: RoleKey, current: boolean) => void;
+    onBan: (user: AdminUserModel) => void;
+    onUnban: (user: AdminUserModel) => void;
+    onRestrict: (userId: number, until?: string) => void;
+    onUnrestrict: (userId: number) => void;
+}
+
+export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict }: UserCardProps) => {
+    const isBanned = user.bannedAt !== null;
+    const isRestricted = user.restrictedAt !== null;
+    const fullName = `${user.firstName} ${user.lastName}`;
+
+    const profileUrl = `/users/${user.id}?username=${encodeURIComponent(user.username)}&fullName=${encodeURIComponent(fullName)}${user.profilePictureUrl ? `&profilePicUrl=${encodeURIComponent(user.profilePictureUrl)}` : ""}`;
+
+    const stats = [
+        { label: "posts", value: user.postCount },
+        { label: "replies", value: user.replyCount },
+        { label: "agencies", value: user.agencyCount },
+        { label: "FAQ answers", value: user.faqAnswerCount },
+        { label: "FAQ suggestions", value: user.faqSuggestionCount },
+    ];
+
+    return (
+        <Card className="p-4">
+            <div className="grid gap-x-4" style={{ gridTemplateColumns: "auto 1fr auto auto" }}>
+                <Link to={profileUrl} title={`View ${user.username}'s profile`} className="row-span-2 self-start">
+                    <Avatar className="h-12 w-12 hover:opacity-80 transition-opacity">
+                        <AvatarImage src={user.profilePictureUrl ?? undefined} alt={user.username} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                            {getInitials(fullName)}
+                        </AvatarFallback>
+                    </Avatar>
+                </Link>
+
+                <div className="min-w-0 text-left self-start">
+                    <div className="flex items-center gap-2 flex-wrap justify-start">
+                        <Link to={profileUrl} className="font-semibold hover:text-primary hover:underline transition-colors leading-tight">{fullName}</Link>
+                        {isBanned && (
+                            <Badge className="px-2 py-0 text-xs rounded-full border-red-400 dark:border-red-600 bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200">
+                                <Ban className="h-3 w-3 mr-1 inline" /> Banned
+                            </Badge>
+                        )}
+                        {isRestricted && (
+                            <Badge className="px-2 py-0 text-xs rounded-full border-orange-400 dark:border-orange-600 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200">
+                                <ShieldAlert className="h-3 w-3 mr-1 inline" />
+                                Restricted · {formatRestrictionInfo(user.restrictedUntil)}
+                            </Badge>
+                        )}
+                    </div>
+                    <Link to={profileUrl} className="block text-sm text-muted-foreground hover:text-primary transition-colors leading-tight">@{user.username}</Link>
+                    <div className="text-xs text-muted-foreground leading-tight">{user.email}</div>
+                    {user.phoneNumber && (
+                        <div className="text-xs text-muted-foreground leading-tight">{user.phoneNumber}</div>
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-1 items-start min-w-[130px] self-start row-span-2">
+                    {ROLE_META.map((role) => {
+                        const active = hasRole(user, role.key);
+                        const clickable = role.assignable && !deleted;
+                        return (
+                            <Badge
+                                key={role.key}
+                                className={`px-2 py-0.5 text-xs rounded-full border transition-colors ${
+                                    active ? role.activeClass : role.inactiveClass
+                                } ${clickable ? "cursor-pointer hover:opacity-80" : "cursor-default"} ${deleted ? "opacity-40" : ""}`}
+                                onClick={clickable ? () => onRoleToggle(user, role.key, active) : undefined}
+                                title={deleted ? "Cannot modify a deleted account" : role.assignable ? `Click to ${active ? "revoke" : "grant"} ${role.label}` : "Cannot be changed here"}
+                            >
+                                {role.label}
+                            </Badge>
+                        );
+                    })}
+                </div>
+
+                <div className="flex flex-col gap-2 items-stretch min-w-[100px] self-start row-span-2">
+                    {isBanned ? (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onUnban(user)}
+                            disabled={deleted}
+                            className="text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                        >
+                            Unban
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onBan(user)}
+                            disabled={deleted}
+                            className="text-xs border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40"
+                        >
+                            <Ban className="h-3 w-3 mr-1" /> Ban
+                        </Button>
+                    )}
+
+                    <RestrictPopover
+                        user={user}
+                        onRestrict={onRestrict}
+                        onUnrestrict={onUnrestrict}
+                        disabled={deleted}
+                    />
+                </div>
+
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5 pt-1.5 border-t border-border">
+                    {stats.map((s) => (
+                        <span key={s.label} className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">{s.value}</span> {s.label}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        </Card>
+    );
+};

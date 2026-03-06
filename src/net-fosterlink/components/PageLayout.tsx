@@ -1,4 +1,4 @@
-import { Navbar } from "./Navbar";
+import { Navbar } from "./navbar/Navbar";
 import { useAuth } from "../backend/AuthContext";
 
 export const PageLayout: React.FC<{ auth: ReturnType<typeof useAuth>; children: React.ReactNode }> = ({ auth, children }) => (
