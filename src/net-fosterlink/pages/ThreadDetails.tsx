@@ -29,9 +29,11 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [editing, setEditing] = useState<boolean>(false);
     const [editedContent, setEditedContent] = useState<string>(thread.content);
     const [otherThreads, setOtherThreads] = useState<ThreadModel[]>([])
-    const [loading, setLoading] = useState<boolean>(false)
+    const [threadEditLoading, setThreadEditLoading] = useState<boolean>(false)
+    const [tagEditLoading, setTagEditLoading] = useState<boolean>(false)
     const [replies, setReplies] = useState<ReplyModel[]>([])
     const [loadingReplies, setLoadingReplies] = useState<boolean>(true)
+    const [editingTags, setEditingTags] = useState<boolean>(false);
     const auth = useAuth()
     const threadApiRef = threadApi(auth)
     const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(
@@ -100,21 +102,29 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const submitEdit = () => {
         thread.content = editedContent
         setEditing(false)
-        setLoading(true)
+        setThreadEditLoading(true)
         threadApiRef.editThreadContent(thread.id, editedContent).then(() => {
-            setLoading(false)
+            setThreadEditLoading(false)
+        })
+    }
+
+    const tagsUpdated = (editedTags: string[]) => {
+        thread.tags = editedTags;
+        setTagEditLoading(true);
+        threadApiRef.updateTags(thread.id, editedTags).then(() => {
+            setTagEditLoading(false);
         })
     }
 
     const hideThread = async () => {
-        setLoading(true)
+        setThreadEditLoading(true)
         const res = await confirm({ message: 'Are you sure you want to delete this thread?' })
         if (res) {
             threadApiRef.setThreadHidden(thread.id, true).then(() => {
                 window.location.href = `/threads`
-            }).finally(() => setLoading(false))
+            }).finally(() => setThreadEditLoading(false))
         } else {
-            setLoading(false)
+            setThreadEditLoading(false)
         }
     }
 
@@ -170,7 +180,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                 </div>
 
                 <div className="flex-1">
-                    <ThreadHeader thread={thread} />
+                    <ThreadHeader thread={thread} tagsUpdated={tagsUpdated} editingTags={editingTags} setEditingTags={setEditingTags} tagEditLoading={tagEditLoading} />
 
                     <ThreadContentCard
                         content={thread.content}
@@ -185,7 +195,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                             isAdmin={!!auth.admin}
                             isAuthor={isAuthor}
                             editing={editing}
-                            loading={loading}
+                            loading={threadEditLoading}
                             restricted={auth.restricted}
                             onHideOrDelete={hideThread}
                             onToggleEdit={() => setEditing(!editing)}

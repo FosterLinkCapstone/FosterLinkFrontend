@@ -30,7 +30,8 @@ export interface ThreadApiType {
     getHiddenThreads: (hiddenThreadType: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenThreadsResponse>>
     setThreadHidden: (threadId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>,
     getHiddenThread: (threadId: number) => Promise<ErrorWrapper<HiddenThreadModel | undefined>>,
-    deleteHiddenThread: (threadId: number) => Promise<ErrorWrapper<boolean>>
+    deleteHiddenThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
+    updateTags: (threadId: number, tags: string[]) => Promise<ErrorWrapper<boolean>>
 }
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
     
@@ -335,6 +336,21 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                     RequestType.DELETE,
                     `/threads/hidden/delete?threadId=${threadId}`,
                     {},
+                    errors
+                );
+            },
+            updateTags: async(threadId: number, tags: string[]): Promise<ErrorWrapper<boolean>> => {
+                const errors = new Map<number, string>([
+                    [403, "You do not have permission to do that!"],
+                    [404, "Thread not found!"],
+                    [400, "Invalid tags!"],
+                    [-1, "Internal client error"]
+                ]);
+                return doGenericRequest<boolean>(
+                    auth.api,
+                    RequestType.PUT,
+                    `/threads/tags`,
+                    { threadId, tags },
                     errors
                 );
             }

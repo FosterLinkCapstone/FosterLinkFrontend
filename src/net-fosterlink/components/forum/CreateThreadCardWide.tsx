@@ -6,11 +6,8 @@ import { Button } from "@/components/ui/button";
 import { threadApi } from "../../backend/api/ThreadApi";
 import { useAuth } from "../../backend/AuthContext";
 import type { ThreadModel } from "../../backend/models/ThreadModel";
-import { Badge } from "@/components/ui/badge";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { CircleX } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
+import { TagInputField } from "./TagInputField";
 
 
 export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void, onCreate: (thread: ThreadModel) => void}) => {
@@ -19,9 +16,6 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
   const [error, setError] = useState<string>('')
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({})
   const [tags, setTags] = useState<string[]>([])
-  const [tagFieldText, setTagFieldText] = useState<string>('')
-  const [showErrorTooltip, setShowErrorTooltip] = useState<boolean>(false)
-  const [errorTooltipText, setErrorTooltipText] = useState<string>('')
   const [createLoading, setCreateLoading] = useState<boolean>(false)
   const auth = useAuth()
   const threadApiRef = threadApi(auth)
@@ -54,46 +48,6 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
             setCreateLoading(false)
         });
     }
-    const removeTag = (tagToRemove: string) => {
-      setTags(tags.filter(tag => tag != tagToRemove));
-    }
-    const onTagTextChange = (value: string) => {
-      // Clear tooltip when user starts typing again
-      if (showErrorTooltip) {
-        setShowErrorTooltip(false);
-      }
-      if (value.endsWith(',') || value.endsWith(' ')) {
-          const newTag = value.slice(0, -1).trim();
-          if (newTag !== '') {
-            if (newTag.length < 20) {
-              if (tags.length < 10) {
-              if (!tags.includes(newTag)) {
-                  setTags([...tags, newTag]);
-                  setTagFieldText('');
-              } else {
-                  setErrorTooltipText("This tag already exists");
-                  // Tag already exists, show tooltip
-                  setShowErrorTooltip(true);
-                  setTagFieldText('');
-                  // Hide tooltip after 3 seconds
-                  setTimeout(() => setShowErrorTooltip(false), 3000);
-              }
-            } else {
-              setErrorTooltipText("You can only add up to 10 tags");
-              setShowErrorTooltip(true);
-              setTimeout(() => setShowErrorTooltip(false), 3000);
-            }
-            } else {
-              setErrorTooltipText("Tag is too long (max 20 characters)");
-              setShowErrorTooltip(true);
-              setTimeout(() => setShowErrorTooltip(false), 3000);
-            }
-          }
-      } else {
-          setTagFieldText(value);
-      }
-    }
-
   return (
     <Card 
       className="flex overflow-hidden border border-border"
@@ -120,27 +74,7 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
           />
           <span className="text-red-500">{fieldErrors["content"]}</span>
         </div>
-        <TooltipProvider>
-          <InputGroup>
-            <Tooltip open={showErrorTooltip}>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <InputGroupInput placeholder="Enter tags..." value={tagFieldText} onChange={e => onTagTextChange(e.target.value)}/>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="bg-popover text-popover-foreground" align="start">
-                <p>{errorTooltipText}</p>
-              </TooltipContent>
-            </Tooltip>
-            <InputGroupAddon>
-              {
-              tags.map((tag, i) => {
-                return <Badge key={i} variant="default" title="Click to remove" className="cursor-pointer bg-primary text-primary-foreground" onClick={() =>removeTag(tag)}>{tag}&nbsp;<CircleX/></Badge>
-              })
-              }
-            </InputGroupAddon>
-          </InputGroup>
-        </TooltipProvider>
+        <TagInputField inputTags={tags} onTagsChange={setTags} loading={false} className="w-full" />
         {
             error != "" &&
             <h3 className="text-l font-semibold mb-2 text-destructive">{error}</h3>
