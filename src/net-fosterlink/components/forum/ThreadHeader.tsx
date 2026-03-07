@@ -10,6 +10,8 @@ import { TagInputField } from "./TagInputField";
 import { Button } from "@/components/ui/button";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 interface ThreadHeaderProps {
     thread: ThreadModel;
@@ -17,15 +19,73 @@ interface ThreadHeaderProps {
     editingTags: boolean;
     setEditingTags: (editing: boolean) => void;
     tagEditLoading: boolean;
+    titleUpdated: (editedTitle: string) => void;
+    editingTitle: boolean;
+    setEditingTitle: (editing: boolean) => void;
+    titleEditLoading: boolean;
 }
 
-export const ThreadHeader = ({ thread, tagsUpdated, editingTags, setEditingTags, tagEditLoading }: ThreadHeaderProps) => {
+export const ThreadHeader = ({ 
+    thread, 
+    tagsUpdated, 
+    editingTags, 
+    setEditingTags, 
+    tagEditLoading,
+    titleUpdated,
+    editingTitle,
+    setEditingTitle,
+    titleEditLoading }: ThreadHeaderProps) => {
     const navigate = useNavigate();
     const auth = useAuth();
 
+    const [titleTextInput, setTitleTextInput] = useState<string>(thread.title)
+
+    const TITLE_MIN_LENGTH = 5;
+    const TITLE_MAX_LENGTH = 200;
+    const isTitleValid = titleTextInput.length >= TITLE_MIN_LENGTH && titleTextInput.length <= TITLE_MAX_LENGTH;
+    const canSaveTitle = titleTextInput === thread.title || isTitleValid;
+
     return (
         <div className="mb-4">
-            <h1 className="text-3xl font-bold mb-2">{thread.title}</h1>
+            {
+                editingTitle ? (
+                    <div className="flex flex-col gap-1 mb-2">
+                        <div className="flex items-center gap-2">
+                            <Input
+                                value={titleTextInput}
+                                onChange={(e) => setTitleTextInput(e.target.value)}
+                                className="text-2xl font-bold"
+                                maxLength={TITLE_MAX_LENGTH}
+                                aria-invalid={titleTextInput.length > 0 && !isTitleValid}
+                            />
+                            <Button variant="outline" className="self-stretch px-3 text-xs" onClick={() => {
+                                setEditingTitle(false)
+                                if (titleTextInput !== thread.title && isTitleValid) {
+                                    titleUpdated(titleTextInput)
+                                }
+                            }} disabled={titleEditLoading || !canSaveTitle}>Done</Button>
+                            <BackgroundLoadSpinner loading={titleEditLoading} />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {titleTextInput.length}/{TITLE_MAX_LENGTH}
+                            {titleTextInput.length > 0 && titleTextInput.length < TITLE_MIN_LENGTH && (
+                                <span className="text-destructive ml-1">(min {TITLE_MIN_LENGTH} characters)</span>
+                            )}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="mb-2 w-full overflow-hidden">
+                        <div className="flex items-center justify-center gap-2 w-full min-w-0">
+                            <h1 className="text-3xl font-bold break-all min-w-0 text-center">{thread.title}</h1>
+                            <BackgroundLoadSpinner loading={titleEditLoading} />
+                        </div>
+                        <div className="flex justify-center">
+                            <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={() => setEditingTitle(true)} disabled={auth.getUserInfo()?.id !== thread.author.id || auth.restricted}>Edit title</Button>
+                        </div>
+                    </div>
+                )
+                    
+            }
             <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
                 <button
                     type="button"

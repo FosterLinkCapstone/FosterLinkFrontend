@@ -21,7 +21,7 @@ export interface ThreadApiType {
     likeReply: (replyId: number) => Promise<ErrorWrapper<boolean>>,
     likeThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     createThread: (title: string, content: string, tags: string[]) => Promise<CreateThreadResponse>,
-    editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<ThreadModel|undefined>>,
+    editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<void>>,
     editReplyContent: (replyId: number, newContent: string) => Promise<ErrorWrapper<ReplyModel|undefined>>,
     deleteReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
     hideReply: (replyId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
@@ -31,7 +31,8 @@ export interface ThreadApiType {
     setThreadHidden: (threadId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>,
     getHiddenThread: (threadId: number) => Promise<ErrorWrapper<HiddenThreadModel | undefined>>,
     deleteHiddenThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
-    updateTags: (threadId: number, tags: string[]) => Promise<ErrorWrapper<boolean>>
+    updateTags: (threadId: number, tags: string[]) => Promise<ErrorWrapper<boolean>>,
+    updateTitle: (threadId: number, title: string) => Promise<ErrorWrapper<void>>
 }
 export const threadApi = (auth: AuthContextType): ThreadApiType => {
     
@@ -189,7 +190,7 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 validationErrors: result.validationErrors
             };
         },
-        editThreadContent: async(threadId: number, newContent: string): Promise<ErrorWrapper<ThreadModel|undefined>> => {
+        editThreadContent: async(threadId: number, newContent: string): Promise<ErrorWrapper<void>> => {
             const errors = new Map<number, string>([
                 [400, "Invalid thread content!"],
                 [403, "You must be the thread author to do that!"],
@@ -197,7 +198,7 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 [-1, "Internal client error"]
             ]);
 
-            return doGenericRequest<ThreadModel | undefined>(
+            return doGenericRequest<void>(
                 auth.api,
                 RequestType.PUT,
                 "/threads/update",
@@ -351,6 +352,20 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                     RequestType.PUT,
                     `/threads/tags`,
                     { threadId, tags },
+                    errors
+                );
+            },
+            updateTitle: async(threadId: number, title: string): Promise<ErrorWrapper<void>> => {
+                const errors = new Map<number, string>([
+                    [403, "You do not have permission to do that!"],
+                    [404, "Thread not found!"],
+                    [400, "Invalid title!"],
+                    [-1, "Internal server error"]])
+                return doGenericRequest<void>(
+                    auth.api,
+                    RequestType.PUT,
+                    `/threads/update`,
+                    { threadId, title, content: null },
                     errors
                 );
             }

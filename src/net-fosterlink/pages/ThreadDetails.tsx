@@ -34,6 +34,8 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [replies, setReplies] = useState<ReplyModel[]>([])
     const [loadingReplies, setLoadingReplies] = useState<boolean>(true)
     const [editingTags, setEditingTags] = useState<boolean>(false);
+    const [editingTitle, setEditingTitle] = useState<boolean>(false);
+    const [titleEditLoading, setTitleEditLoading] = useState<boolean>(false)
     const auth = useAuth()
     const threadApiRef = threadApi(auth)
     const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(
@@ -115,6 +117,13 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
             setTagEditLoading(false);
         })
     }
+    const titleUpdated = (editedTitle: string) => {
+        thread.title = editedTitle;
+        setTitleEditLoading(true);
+        threadApiRef.updateTitle(thread.id, editedTitle).then(() => {
+            setTitleEditLoading(false);
+        })
+    }
 
     const hideThread = async () => {
         setThreadEditLoading(true)
@@ -180,7 +189,17 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                 </div>
 
                 <div className="flex-1">
-                    <ThreadHeader thread={thread} tagsUpdated={tagsUpdated} editingTags={editingTags} setEditingTags={setEditingTags} tagEditLoading={tagEditLoading} />
+                    <ThreadHeader 
+                        thread={thread} 
+                        tagsUpdated={tagsUpdated} 
+                        editingTags={editingTags} 
+                        setEditingTags={setEditingTags} 
+                        tagEditLoading={tagEditLoading}
+                        titleUpdated={titleUpdated}
+                        editingTitle={editingTitle}
+                        setEditingTitle={setEditingTitle}
+                        titleEditLoading={titleEditLoading}
+                    />
 
                     <ThreadContentCard
                         content={thread.content}
