@@ -3,6 +3,7 @@ import type { AgencyModel } from "@/net-fosterlink/backend/models/AgencyModel"
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi"
 import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { AlertCircleIcon, Loader2 } from "lucide-react"
+import { formatRelativeDate } from "@/net-fosterlink/util/DateUtil"
 import { AgencyCard } from "./AgencyCard"
 import { Button } from "@/components/ui/button"
 import { StatusDialog } from "@/net-fosterlink/components/StatusDialog"
@@ -115,6 +116,12 @@ export const PendingAgenciesTab = () => {
                 <div className="flex flex-col items-center gap-6">
                     {agencies.map(a => (
                         <div key={a.id} className="flex flex-col w-full gap-1">
+                            {a.updatedAt != null && (
+                                <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-400/70">
+                                    <AlertCircleIcon />
+                                    <AlertTitle>This agency was modified — last updated {formatRelativeDate(a.updatedAt!)} at {new Date(a.updatedAt!).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</AlertTitle>
+                                </Alert>
+                            )}
                             {a.approved === 3 && (
                                 <Alert className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70" variant="destructive">
                                     <AlertCircleIcon />

@@ -12,6 +12,10 @@ export interface AgencyModel {
     agentInfo: AgentInfoModel,
     approved: number,
     approvedByUsername: string,
+    /** When the agency was created (ISO date string). */
+    createdAt?: string,
+    /** When the agency was last updated; null if never updated (ISO date string). */
+    updatedAt?: string | null,
     hiddenByUsername?: string,
     /** Set when the owner has requested deletion (pending request). */
     deletionRequestedAt?: string,

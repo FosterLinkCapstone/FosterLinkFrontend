@@ -100,6 +100,12 @@ export const Agencies = () => {
         })
     }
 
+    const onSentToPending = (agencyId: number) => {
+        setAgencies(prev => prev?.filter(a => a.id !== agencyId) ?? [])
+        setPendingCount(prev => prev + 1)
+        setActionResult({ success: true, title: "Changes saved", subtext: "This agency has been sent back to pending approval and is no longer on the public list. An administrator will need to approve it again." })
+    }
+
     const onCancelDeletionRequest = (agencyId: number) => {
         agencyApiRef.cancelDeletionRequest(agencyId).then(res => {
             if (!res.isError) {
@@ -224,7 +230,7 @@ export const Agencies = () => {
                                             </AlertTitle>
                                         </Alert>
                                     )}
-                                    <AgencyCard highlighted={highlightedAgencyId === a.id} onRemove={onRemove} onRequestDeletion={onRequestDeletion} agency={a} showRemove={true} deletionRequested={a.deletionRequestedAt != null} />
+                                    <AgencyCard highlighted={highlightedAgencyId === a.id} onRemove={onRemove} onRequestDeletion={onRequestDeletion} onSentToPending={onSentToPending} agency={a} showRemove={true} deletionRequested={a.deletionRequestedAt != null} />
                                 </div>
                             ))}
                             {!searchParams.has("agencyId") && (
