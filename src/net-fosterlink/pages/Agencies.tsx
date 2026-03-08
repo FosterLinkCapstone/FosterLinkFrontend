@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Paginator } from "../components/Paginator"
 import type { AgencyModel } from "../backend/models/AgencyModel"
-import { agencyApi, type AgencyOrderBy, type AgencySearchBy } from "../backend/api/AgencyApi"
+import { agencyApi, type AgencySearchBy } from "../backend/api/AgencyApi"
 import { useAuth } from "../backend/AuthContext"
 import { PageLayout } from "../components/PageLayout"
 import { AlertCircleIcon, Loader2 } from "lucide-react"
@@ -17,17 +17,10 @@ import { confirm } from "../components/ConfirmDialog"
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { sortByCreatedAt, type CreatedAtOrderBy } from "@/net-fosterlink/util/SortUtil"
+import { OrderByCreatedAtSelect } from "@/net-fosterlink/components/OrderByCreatedAtSelect"
 
-function sortAgenciesByOrder(agencies: AgencyModel[] | null, orderBy: AgencyOrderBy): AgencyModel[] | null {
-    if (agencies == null) return null
-    const sorted = [...agencies]
-    sorted.sort((a, b) => {
-        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
-        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
-        return orderBy === "newest" ? bTime - aTime : aTime - bTime
-    })
-    return sorted
-}
+const getAgencyDate = (a: AgencyModel) => a.createdAt ?? a.updatedAt ?? null
 
 export const Agencies = () => {
     const auth = useAuth()
@@ -44,7 +37,7 @@ export const Agencies = () => {
     const [searchBy, setSearchBy] = useState<AgencySearchBy>("agency")
     const [appliedSearch, setAppliedSearch] = useState("")
     const [appliedSearchBy, setAppliedSearchBy] = useState<AgencySearchBy | undefined>(undefined)
-    const [orderBy, setOrderBy] = useState<AgencyOrderBy>("newest")
+    const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>("newest")
     const navigate = useNavigate()
 
     const highlightedAgencyId = useMemo(() => {
@@ -79,7 +72,10 @@ export const Agencies = () => {
         setCurrentPage(1)
     }
 
-    const displayedAgencies = useMemo(() => sortAgenciesByOrder(agencies, orderBy), [agencies, orderBy])
+    const displayedAgencies = useMemo(
+        () => (agencies == null ? null : sortByCreatedAt(agencies, orderBy, getAgencyDate)),
+        [agencies, orderBy]
+    )
     useEffect(() => {
         if (auth.agent && searchParams.has("creating")) {
             setCreatingAgency(searchParams.get("creating") === "true")
@@ -261,15 +257,7 @@ export const Agencies = () => {
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Select value={orderBy} onValueChange={(v) => setOrderBy(v as AgencyOrderBy)}>
-                                    <SelectTrigger className="w-full sm:w-[140px] shrink-0">
-                                        <SelectValue placeholder="Order by" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="newest">Newest first</SelectItem>
-                                        <SelectItem value="oldest">Oldest first</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} className="shrink-0" />
                                 <Input
                                     type="search"
                                     placeholder="Search..."

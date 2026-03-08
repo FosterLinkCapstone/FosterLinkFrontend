@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
 import type { FaqModel } from "../backend/models/FaqModel";
@@ -6,6 +6,8 @@ import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Paginator } from "../components/Paginator";
+import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
+import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
 import { faqApi } from "../backend/api/FaqApi";
 import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
@@ -35,6 +37,7 @@ export const HiddenFaqs = () => {
   const hiddenByFilter = tabToFilter(activeTab);
 
   const [faqs, setFaqs] = useState<HiddenFaqModel[]>([]);
+  const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>("newest");
   const [error, setError] = useState<string | null>(null);
   const [changeSuccess, setChangeSuccess] = useState<"restore" | "delete" | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
@@ -44,6 +47,8 @@ export const HiddenFaqs = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detailFaq, setDetailFaq] = useState<FaqModel | null>(null);
   const faqContent = useRef<string>("");
+
+  const sortedFaqs = useMemo(() => sortByCreatedAt(faqs, orderBy), [faqs, orderBy]);
 
   useEffect(() => {
     setLoading(true);
@@ -158,13 +163,18 @@ export const HiddenFaqs = () => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value={activeTab} className="mt-4">
+            {!loading && faqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} />
+              </div>
+            )}
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
               </div>
             ) : (
               <FaqList
-                faqs={faqs}
+                faqs={sortedFaqs}
                 error={error}
                 expandedId={expandedId}
                 onExpand={setExpandedId}

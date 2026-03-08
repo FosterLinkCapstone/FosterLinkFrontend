@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import type { AgencyModel } from "@/net-fosterlink/backend/models/AgencyModel"
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi"
 import { useAuth } from "@/net-fosterlink/backend/AuthContext"
@@ -6,10 +6,14 @@ import { AlertCircleIcon } from "lucide-react"
 import { AgencyCard } from "./AgencyCard"
 import { Button } from "@/components/ui/button"
 import { StatusDialog } from "@/net-fosterlink/components/StatusDialog"
+import { sortByCreatedAt, type CreatedAtOrderBy } from "@/net-fosterlink/util/SortUtil"
+import { OrderByCreatedAtSelect } from "@/net-fosterlink/components/OrderByCreatedAtSelect"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Paginator } from "@/net-fosterlink/components/Paginator"
 import { confirm } from "@/net-fosterlink/components/ConfirmDialog"
 import { BackgroundLoadSpinner } from "@/net-fosterlink/components/BackgroundLoadSpinner"
+
+const getAgencyDate = (a: AgencyModel) => a.createdAt ?? a.updatedAt ?? null
 
 export const HiddenAgenciesTab = () => {
     const auth = useAuth()
@@ -17,12 +21,18 @@ export const HiddenAgenciesTab = () => {
     agencyApiRef.current = agencyApi(auth)
 
     const [agencies, setAgencies] = useState<AgencyModel[]>([])
+    const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>("newest")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [totalPages, setTotalPages] = useState<number>(0)
     const [loading, setLoading] = useState<boolean>(true)
     const [actionLoading, setActionLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const [changeSuccess, setChangeSuccess] = useState<"restore" | "delete" | null>(null)
+
+    const sortedAgencies = useMemo(
+        () => sortByCreatedAt(agencies, orderBy, getAgencyDate),
+        [agencies, orderBy]
+    )
 
     useEffect(() => {
         setLoading(true)
@@ -103,7 +113,10 @@ export const HiddenAgenciesTab = () => {
                 </>
             ) : (
                 <div className="flex flex-col items-center gap-6">
-                    {agencies.map(a => (
+                    <div className="w-full">
+                        <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} />
+                    </div>
+                    {sortedAgencies.map(a => (
                         <div key={a.id} className="flex flex-col w-full gap-1">
                             <Alert className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70" variant="destructive">
                                 <AlertCircleIcon />

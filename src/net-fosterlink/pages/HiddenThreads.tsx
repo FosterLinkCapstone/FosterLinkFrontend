@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import type { HiddenThreadModel } from "../backend/models/HiddenThreadModel";
 import { PageLayout } from "../components/PageLayout";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 import { Paginator } from "../components/Paginator";
+import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
+import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
 import { threadApi } from "../backend/api/ThreadApi";
 import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
 import { StatusDialog } from "../components/StatusDialog";
@@ -36,12 +38,15 @@ export const HiddenThreads = () => {
   const hiddenByFilter = tabToFilter(activeTab);
 
   const [threads, setThreads] = useState<HiddenThreadModel[]>([]);
+  const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>("newest");
   const [error, setError] = useState<string | null>(null);
   const [changeSuccess, setChangeSuccess] = useState<"restore" | "delete" | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
+
+  const sortedThreads = useMemo(() => sortByCreatedAt(threads, orderBy), [threads, orderBy]);
 
   useEffect(() => {
     setLoading(true);
@@ -143,13 +148,18 @@ export const HiddenThreads = () => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value={activeTab} className="mt-4">
+            {!loading && threads.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} />
+              </div>
+            )}
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
               </div>
             ) : (
               <ThreadList
-                threads={threads}
+                threads={sortedThreads}
                 error={error}
                 auth={auth}
                 getHiddenByName={getHiddenByName}

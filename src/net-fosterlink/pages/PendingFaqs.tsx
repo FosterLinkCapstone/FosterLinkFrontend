@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ApprovalStatus, type PendingFaqModel } from "../backend/models/PendingFaqModel";
 import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
@@ -18,6 +18,8 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 import { formatRelativeDate } from "../util/DateUtil";
 import { confirm } from "../components/ConfirmDialog";
+import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
+import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
 
 const TAB_PENDING = "pending";
 const TAB_HIDDEN_USER = "hidden-user";
@@ -47,6 +49,8 @@ export const PendingFaqs = () => {
   const [hiddenLoading, setHiddenLoading] = useState<boolean>(false);
   const [hiddenError, setHiddenError] = useState<string | null>(null);
   const [hiddenChangeSuccess, setHiddenChangeSuccess] = useState<"restore" | "delete" | null>(null);
+  const [pendingOrderBy, setPendingOrderBy] = useState<CreatedAtOrderBy>("newest");
+  const [hiddenOrderBy, setHiddenOrderBy] = useState<CreatedAtOrderBy>("newest");
 
   const tabFromUrl = searchParams.get(TAB_PARAM) ?? TAB_PENDING;
   const activeTab: ActiveTab = isValidTab(tabFromUrl) ? tabFromUrl : TAB_PENDING;
@@ -220,6 +224,16 @@ export const PendingFaqs = () => {
 
   const hiddenType = activeTab === TAB_HIDDEN_ADMIN ? "ADMIN" : "USER";
 
+  const sortedPendingFaqs = useMemo(
+    () => sortByCreatedAt(faqs, pendingOrderBy),
+    [faqs, pendingOrderBy]
+  );
+
+  const sortedHiddenFaqs = useMemo(
+    () => sortByCreatedAt(hiddenFaqs, hiddenOrderBy),
+    [hiddenFaqs, hiddenOrderBy]
+  );
+
   return (
     <PageLayout auth={auth}>
       <title>Pending FAQs</title>
@@ -264,6 +278,11 @@ export const PendingFaqs = () => {
           </TabsList>
 
           <TabsContent value={TAB_PENDING} className="mt-4">
+            {!loading && faqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={pendingOrderBy} onValueChange={setPendingOrderBy} />
+              </div>
+            )}
             {loading && (
               <div className="space-y-4">
                 {[...Array(4)].map((_, i) => <FaqCardSkeleton key={i} />)}
@@ -272,7 +291,7 @@ export const PendingFaqs = () => {
             {!loading && faqs.length === 0 && (
               <h2 className="text-2xl font-bold my-2 text-center">No content!</h2>
             )}
-            {faqs.map((faq) => (
+            {sortedPendingFaqs.map((faq) => (
               <div key={faq.id} className="flex flex-col w-full gap-1">
                 {faq.updatedAt != null && (
                   <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-400/70">
@@ -309,8 +328,13 @@ export const PendingFaqs = () => {
           </TabsContent>
 
           <TabsContent value={TAB_HIDDEN_USER} className="mt-4">
+            {!hiddenLoading && hiddenFaqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={hiddenOrderBy} onValueChange={setHiddenOrderBy} />
+              </div>
+            )}
             <HiddenFaqList
-              faqs={hiddenFaqs}
+              faqs={sortedHiddenFaqs}
               loading={hiddenLoading}
               error={hiddenError}
               expandedId={expandedHiddenId}
@@ -337,8 +361,13 @@ export const PendingFaqs = () => {
           </TabsContent>
 
           <TabsContent value={TAB_HIDDEN_ADMIN} className="mt-4">
+            {!hiddenLoading && hiddenFaqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={hiddenOrderBy} onValueChange={setHiddenOrderBy} />
+              </div>
+            )}
             <HiddenFaqList
-              faqs={hiddenFaqs}
+              faqs={sortedHiddenFaqs}
               loading={hiddenLoading}
               error={hiddenError}
               expandedId={expandedHiddenId}

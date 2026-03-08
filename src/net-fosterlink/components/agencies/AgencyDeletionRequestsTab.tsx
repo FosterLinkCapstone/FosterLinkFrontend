@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import type { AgencyDeletionRequestModel } from "@/net-fosterlink/backend/models/AgencyDeletionRequestModel"
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi"
 import { useAuth } from "@/net-fosterlink/backend/AuthContext"
@@ -6,6 +6,8 @@ import { AlertCircleIcon } from "lucide-react"
 import { AgencyCard } from "./AgencyCard"
 import { Button } from "@/components/ui/button"
 import { BackgroundLoadSpinner } from "@/net-fosterlink/components/BackgroundLoadSpinner"
+import { sortByCreatedAt, type CreatedAtOrderBy } from "@/net-fosterlink/util/SortUtil"
+import { OrderByCreatedAtSelect } from "@/net-fosterlink/components/OrderByCreatedAtSelect"
 import { StatusDialog } from "@/net-fosterlink/components/StatusDialog"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Paginator } from "@/net-fosterlink/components/Paginator"
@@ -20,12 +22,18 @@ export const AgencyDeletionRequestsTab = () => {
     agencyApiRef.current = agencyApi(auth)
 
     const [requests, setRequests] = useState<AgencyDeletionRequestModel[]>([])
+    const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>("newest")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [totalPages, setTotalPages] = useState<number>(0)
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const [changeSuccess, setChangeSuccess] = useState<"accepted" | "denied" | null>(null)
     const [acceptingId, setAcceptingId] = useState<number | null>(null)
+
+    const sortedRequests = useMemo(
+        () => sortByCreatedAt(requests, orderBy),
+        [requests, orderBy]
+    )
 
     useEffect(() => {
         setLoading(true)
@@ -104,7 +112,10 @@ export const AgencyDeletionRequestsTab = () => {
                 </>
             ) : (
                 <div className="flex flex-col items-center gap-6">
-                    {requests.map(req => (
+                    <div className="w-full">
+                        <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} />
+                    </div>
+                    {sortedRequests.map(req => (
                         <div key={req.id} className="flex flex-col w-full gap-1">
                             <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700" variant="default">
                                 <AlertCircleIcon className="size-4" />

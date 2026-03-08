@@ -9,8 +9,6 @@ import type { GetAgencyDeletionRequestsResponse } from "../models/api/GetAgencyD
 /** Search by: agency (name, mission), agent (full name, username, email, phone), location (city, state, zip). */
 export type AgencySearchBy = "agency" | "agent" | "location";
 
-export type AgencyOrderBy = "newest" | "oldest";
-
 export interface AgencyGetAllParams {
     search?: string;
     searchBy?: AgencySearchBy;

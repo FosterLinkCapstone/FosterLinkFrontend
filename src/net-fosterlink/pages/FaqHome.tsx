@@ -20,7 +20,9 @@ import type { GetFaqsResponse } from '../backend/models/api/GetFaqsResponse';
 import { FaqCardSkeleton } from '../components/faq/FaqCardSkeleton';
 import { Paginator } from '../components/Paginator';
 import { BackgroundLoadSpinner } from '../components/BackgroundLoadSpinner';
-import type { FaqOrderBy, FaqSearchBy } from '../backend/api/FaqApi';
+import type { FaqSearchBy } from '../backend/api/FaqApi';
+import { sortByCreatedAt, type CreatedAtOrderBy } from '../util/SortUtil';
+import { OrderByCreatedAtSelect } from '../components/OrderByCreatedAtSelect';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -46,7 +48,7 @@ export const FaqHome = () => {
   const [searchBy, setSearchBy] = useState<FaqSearchBy>('title')
   const [appliedSearch, setAppliedSearch] = useState<string>('')
   const [appliedSearchBy, setAppliedSearchBy] = useState<FaqSearchBy | undefined>(undefined)
-  const [orderBy, setOrderBy] = useState<FaqOrderBy>('newest')
+  const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>('newest')
 
   const [createError, setCreateError] = useState<ErrorWrapper<undefined> | undefined>(undefined)
   const [createSuccessDialogOpen, setCreateSuccessDialogOpen] = useState<boolean>(false)
@@ -70,17 +72,7 @@ export const FaqHome = () => {
     })
   }
 
-  const sortFaqsByOrder = (list: FaqModel[], order: FaqOrderBy): FaqModel[] => {
-    const sorted = [...list]
-    sorted.sort((a, b) => {
-      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0
-      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0
-      return order === 'newest' ? db - da : da - db
-    })
-    return sorted
-  }
-
-  const displayedFaqs = useMemo(() => sortFaqsByOrder(faqs, orderBy), [faqs, orderBy])
+  const displayedFaqs = useMemo(() => sortByCreatedAt(faqs, orderBy), [faqs, orderBy])
 
   const handleSearchClick = () => {
     const trimmed = searchInput.trim()
@@ -273,15 +265,7 @@ export const FaqHome = () => {
               <SelectItem value="authorUsername">Author username</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={orderBy} onValueChange={(v) => setOrderBy(v as FaqOrderBy)}>
-            <SelectTrigger className="w-full sm:w-[120px] shrink-0">
-              <SelectValue placeholder="Order by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-            </SelectContent>
-          </Select>
+          <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} className="shrink-0" />
           <Input
             type="search"
             placeholder="Search..."

@@ -14,8 +14,6 @@ export interface UpdateFaqPayload {
     content?: string;
 }
 
-export type FaqOrderBy = 'newest' | 'oldest'
-
 export type FaqSearchBy = 'authorFullName' | 'authorUsername' | 'title' | 'summary'
 
 export interface FaqGetAllParams {
