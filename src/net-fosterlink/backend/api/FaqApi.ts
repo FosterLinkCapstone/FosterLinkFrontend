@@ -22,11 +22,10 @@ export interface FaqGetAllParams {
     pageNumber: number
     search?: string
     searchBy?: FaqSearchBy
-    orderBy?: FaqOrderBy
 }
 
 export interface FaqApiType {
-    getAll: (pageNumber: number, params?: { search?: string; searchBy?: FaqSearchBy; orderBy?: FaqOrderBy }) => Promise<ErrorWrapper<GetFaqsResponse>>
+    getAll: (pageNumber: number, params?: { search?: string; searchBy?: FaqSearchBy }) => Promise<ErrorWrapper<GetFaqsResponse>>
     getContent: (faqId: number) => Promise<ErrorWrapper<string>>
     getPending: (pageNumber: number) => Promise<ErrorWrapper<GetPendingFaqsResponse>>
     approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
@@ -119,11 +118,10 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
     ])
 
     return {
-        getAll: async (pageNumber: number, params?: { search?: string; searchBy?: FaqSearchBy; orderBy?: FaqOrderBy }): Promise<ErrorWrapper<GetFaqsResponse>> => {
+        getAll: async (pageNumber: number, params?: { search?: string; searchBy?: FaqSearchBy }): Promise<ErrorWrapper<GetFaqsResponse>> => {
             const searchParams = new URLSearchParams({ pageNumber: String(pageNumber) })
             if (params?.search?.trim()) searchParams.set('search', params.search.trim())
             if (params?.searchBy) searchParams.set('searchBy', params.searchBy)
-            if (params?.orderBy && params.orderBy !== 'newest') searchParams.set('orderBy', params.orderBy)
             return doGenericRequest<GetFaqsResponse>(
                 auth.api,
                 RequestType.GET,

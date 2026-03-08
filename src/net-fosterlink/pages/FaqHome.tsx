@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FaqModel } from '../backend/models/FaqModel';
 import { FaqCard } from '../components/faq/FaqCard';
 import { useAuth } from '../backend/AuthContext';
@@ -63,24 +63,40 @@ export const FaqHome = () => {
   const auth = useAuth()
   const faqApiRef = faqApi(auth);
     
-  const fetchFaqs = (pageNumber: number, searchTerm: string, searchByCategory: FaqSearchBy | undefined, order?: FaqOrderBy) => {
-    const o = order ?? orderBy
+  const fetchFaqs = (pageNumber: number, searchTerm: string, searchByCategory: FaqSearchBy | undefined) => {
     return faqApiRef.getAll(pageNumber, {
       search: searchTerm.trim() || undefined,
-      searchBy: searchTerm.trim() ? searchByCategory : undefined,
-      orderBy: o
+      searchBy: searchTerm.trim() ? searchByCategory : undefined
     })
   }
 
+  const sortFaqsByOrder = (list: FaqModel[], order: FaqOrderBy): FaqModel[] => {
+    const sorted = [...list]
+    sorted.sort((a, b) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return order === 'newest' ? db - da : da - db
+    })
+    return sorted
+  }
+
+  const displayedFaqs = useMemo(() => sortFaqsByOrder(faqs, orderBy), [faqs, orderBy])
+
   const handleSearchClick = () => {
-    setAppliedSearch(searchInput.trim())
-    setAppliedSearchBy(searchBy)
-    setCurrentPage(1)
+    const trimmed = searchInput.trim()
+    const newSearch = trimmed || ''
+    const newSearchBy = trimmed ? searchBy : undefined
+    // Only update and trigger fetch when the applied search actually changed
+    if (newSearch !== appliedSearch || newSearchBy !== appliedSearchBy) {
+      setAppliedSearch(newSearch)
+      setAppliedSearchBy(newSearchBy)
+      setCurrentPage(1)
+    }
   }
 
   useEffect(() => {
     setLoading(true)
-    fetchFaqs(0, appliedSearch, appliedSearchBy, orderBy).then(res => {
+    fetchFaqs(0, appliedSearch, appliedSearchBy).then(res => {
       if (!res.isError && res.data) {
         setFaqs(res.data.faqs)
         setTotalPages(res.data.totalPages)
@@ -92,7 +108,7 @@ export const FaqHome = () => {
         }
       }
     }).finally(() => { setLoading(false) })
-  }, [appliedSearch, appliedSearchBy, orderBy])
+  }, [appliedSearch, appliedSearchBy])
     useEffect(() => {
       if (auth.admin || auth.faqAuthor) {
         faqApiRef.checkApprovalStatus().then(res => {
@@ -309,7 +325,7 @@ export const FaqHome = () => {
           </div>
         }
 
-        {!loading && faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
+        {!loading && displayedFaqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : displayedFaqs.map((faq) => (
             <FaqCard
                 key={faq.id}
                 faq={faq}
@@ -338,7 +354,7 @@ export const FaqHome = () => {
             setTotalPages(data.totalPages);
           }}
           onPageChanged={async (pageNum) => {
-            const res = await fetchFaqs(pageNum - 1, appliedSearch, appliedSearchBy, orderBy);
+            const res = await fetchFaqs(pageNum - 1, appliedSearch, appliedSearchBy);
             if (!res.isError && res.data) {
               return res.data;
             }

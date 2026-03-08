@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Paginator } from "../components/Paginator"
 import type { AgencyModel } from "../backend/models/AgencyModel"
-import { agencyApi } from "../backend/api/AgencyApi"
+import { agencyApi, type AgencyOrderBy, type AgencySearchBy } from "../backend/api/AgencyApi"
 import { useAuth } from "../backend/AuthContext"
 import { PageLayout } from "../components/PageLayout"
 import { AlertCircleIcon, Loader2 } from "lucide-react"
@@ -15,6 +15,19 @@ import type { ErrorWrapper } from "../util/ErrorWrapper"
 import { StatusDialog } from "../components/StatusDialog"
 import { confirm } from "../components/ConfirmDialog"
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+function sortAgenciesByOrder(agencies: AgencyModel[] | null, orderBy: AgencyOrderBy): AgencyModel[] | null {
+    if (agencies == null) return null
+    const sorted = [...agencies]
+    sorted.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return orderBy === "newest" ? bTime - aTime : aTime - bTime
+    })
+    return sorted
+}
 
 export const Agencies = () => {
     const auth = useAuth()
@@ -27,6 +40,11 @@ export const Agencies = () => {
     const [createError, setCreateError] = useState<ErrorWrapper<AgencyModel> | null>(null)
     const [actionResult, setActionResult] = useState<{ success: boolean; title: string; subtext: string } | null>(null)
     const [hideLoading, setHideLoading] = useState<boolean>(false)
+    const [searchInput, setSearchInput] = useState("")
+    const [searchBy, setSearchBy] = useState<AgencySearchBy>("agency")
+    const [appliedSearch, setAppliedSearch] = useState("")
+    const [appliedSearchBy, setAppliedSearchBy] = useState<AgencySearchBy | undefined>(undefined)
+    const [orderBy, setOrderBy] = useState<AgencyOrderBy>("newest")
     const navigate = useNavigate()
 
     const highlightedAgencyId = useMemo(() => {
@@ -36,16 +54,32 @@ export const Agencies = () => {
     }, [searchParams])
 
     const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
+
+    const fetchAgencies = useCallback((pageNumber: number, searchTerm: string, searchByCategory: AgencySearchBy | undefined) => {
+        const params = searchTerm.trim()
+            ? { search: searchTerm.trim(), searchBy: searchByCategory ?? "agency" }
+            : undefined
+        return agencyApiRef.getAll(pageNumber, params)
+    }, [agencyApiRef])
+
     useEffect(() => {
-        agencyApiRef.getAll(0).then(res => {
+        setCurrentPage(1)
+        fetchAgencies(0, appliedSearch, appliedSearchBy ?? "agency").then(res => {
             if (!res.isError && res.data) {
                 setAgencies(res.data.agencies)
                 setTotalPages(res.data.totalPages)
                 setCurrentPage(1)
             }
         })
+    }, [appliedSearch, appliedSearchBy, fetchAgencies])
 
-    }, [])
+    const handleSearchClick = () => {
+        setAppliedSearch(searchInput.trim())
+        setAppliedSearchBy(searchBy)
+        setCurrentPage(1)
+    }
+
+    const displayedAgencies = useMemo(() => sortAgenciesByOrder(agencies, orderBy), [agencies, orderBy])
     useEffect(() => {
         if (auth.agent && searchParams.has("creating")) {
             setCreatingAgency(searchParams.get("creating") === "true")
@@ -164,9 +198,9 @@ export const Agencies = () => {
                         <Loader2 className="h-16 w-16 animate-spin text-primary" />
                     </div>
                     :
-                    <div className="w-screen h-full items-center justify-items-center">
+                    <div className="w-full max-w-full min-w-0 h-full items-center justify-items-center">
                         <h1 className="text-3xl font-bold my-2 text-center">Agencies</h1>
-                        <div className="w-7xl mx-auto h-full flex flex-col items-center gap-2 pb-3">
+                        <div className="w-7xl max-w-full mx-auto h-full flex flex-col items-center gap-2 pb-3 min-w-0">
                             {
                                 auth.admin &&
                                 <Alert className='w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700' variant="default">
@@ -197,7 +231,56 @@ export const Agencies = () => {
                                     />
                                 </>
                             }
-                            {agencies.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : agencies.filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => (
+                            <div className="flex flex-col sm:flex-row gap-3 flex-wrap w-full max-w-full min-w-0 mb-4">
+                                <Select value={searchBy} onValueChange={(v) => setSearchBy(v as AgencySearchBy)}>
+                                    <SelectTrigger className="w-full sm:w-[200px] shrink-0">
+                                        <SelectValue placeholder="Search in">
+                                            {searchBy === "agency" && "Agency"}
+                                            {searchBy === "agent" && "Agent"}
+                                            {searchBy === "location" && "Location"}
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="agency">
+                                            <span className="flex flex-col items-start gap-0.5">
+                                                <span>Agency</span>
+                                                <span className="text-xs font-normal text-muted-foreground">Name, mission statement</span>
+                                            </span>
+                                        </SelectItem>
+                                        <SelectItem value="agent">
+                                            <span className="flex flex-col items-start gap-0.5">
+                                                <span>Agent</span>
+                                                <span className="text-xs font-normal text-muted-foreground">Full name, username, email, phone</span>
+                                            </span>
+                                        </SelectItem>
+                                        <SelectItem value="location">
+                                            <span className="flex flex-col items-start gap-0.5">
+                                                <span>Location</span>
+                                                <span className="text-xs font-normal text-muted-foreground">City, state, zip code</span>
+                                            </span>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Select value={orderBy} onValueChange={(v) => setOrderBy(v as AgencyOrderBy)}>
+                                    <SelectTrigger className="w-full sm:w-[140px] shrink-0">
+                                        <SelectValue placeholder="Order by" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="newest">Newest first</SelectItem>
+                                        <SelectItem value="oldest">Oldest first</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    type="search"
+                                    placeholder="Search..."
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
+                                    className="flex-1 min-w-0"
+                                />
+                                <Button type="button" variant="secondary" onClick={handleSearchClick} className="shrink-0">Search</Button>
+                            </div>
+                            {(displayedAgencies?.length ?? 0) === 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : (displayedAgencies ?? []).filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => (
                                 <div key={a.id} className="flex flex-col w-full gap-1">
                                     {a.deletionRequestedByUsername && (
                                         <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700" variant="default">
@@ -244,7 +327,7 @@ export const Agencies = () => {
                                     setCurrentPage={setCurrentPage}
                                     onDataChanged={setAgencies}
                                     onPageChanged={async (pageNum) => {
-                                        const res = await agencyApiRef.getAll(pageNum - 1);
+                                        const res = await fetchAgencies(pageNum - 1, appliedSearch, appliedSearchBy ?? "agency");
                                         if (res.data) {
                                             setTotalPages(res.data.totalPages);
                                             return res.data.agencies;

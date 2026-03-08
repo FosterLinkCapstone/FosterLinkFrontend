@@ -6,6 +6,16 @@ import type { CreateAgencyModel } from "../models/api/CreateAgencyModel";
 import type { GetAgenciesResponse } from "../models/api/GetAgenciesResponse";
 import type { GetAgencyDeletionRequestsResponse } from "../models/api/GetAgencyDeletionRequestsResponse";
 
+/** Search by: agency (name, mission), agent (full name, username, email, phone), location (city, state, zip). */
+export type AgencySearchBy = "agency" | "agent" | "location";
+
+export type AgencyOrderBy = "newest" | "oldest";
+
+export interface AgencyGetAllParams {
+    search?: string;
+    searchBy?: AgencySearchBy;
+}
+
 export interface UpdateAgencyLocationPayload {
     locationAddrLine1: string;
     locationAddrLine2?: string;
@@ -15,7 +25,7 @@ export interface UpdateAgencyLocationPayload {
 }
 
 export interface AgencyApiType {
-    getAll: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
+    getAll: (pageNumber: number, params?: AgencyGetAllParams) => Promise<ErrorWrapper<GetAgenciesResponse>>
     getPending: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
     approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     countPending: () => Promise<ErrorWrapper<number>>
@@ -102,14 +112,17 @@ export const agencyApi = (auth: AuthContextType): AgencyApiType => {
     ]);
 
     return {
-        getAll: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
+        getAll: async (pageNumber: number, params?: AgencyGetAllParams): Promise<ErrorWrapper<GetAgenciesResponse>> => {
+            const searchParams = new URLSearchParams({ pageNumber: String(pageNumber) });
+            if (params?.search?.trim()) searchParams.set("search", params.search.trim());
+            if (params?.searchBy) searchParams.set("searchBy", params.searchBy);
             return doGenericRequest<GetAgenciesResponse>(
                 auth.api,
                 RequestType.GET,
-                `/agencies/all?pageNumber=${pageNumber}`,
+                `/agencies/all?${searchParams.toString()}`,
                 {},
                 defaultErrorsAll
-            )
+            );
         },
         getPending: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
             return doGenericRequest<GetAgenciesResponse>(
