@@ -113,9 +113,11 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
                 : `This thread was hidden by its author.`}
             </p>
             <div className="flex gap-2">
-              <Button className="flex-1" onClick={restoreThread} disabled={auth.restricted}>
-                Restore
-              </Button>
+              {(thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id) || (!thread.postMetadata.userDeleted && auth.admin) ? (
+                <Button className="flex-1" onClick={restoreThread} disabled={auth.restricted}>
+                  Restore
+                </Button>
+              ) : null}
               <Button variant="destructive" className="flex-1" onClick={permanentlyDeleteThread} disabled={auth.restricted}>
                 Delete
               </Button>
@@ -173,8 +175,10 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
           </Card>
 
           <div className="flex items-center gap-1.5 mb-4">
-            <Button variant="outline" onClick={restoreThread}>Restore</Button>
-            <Button variant="outline" className="bg-red-200 text-red-400" onClick={permanentlyDeleteThread}>Delete</Button>
+            {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id) || (!thread.postMetadata.userDeleted && auth.admin)) && (
+              <Button variant="outline" onClick={restoreThread}>Restore</Button>
+            )}
+            <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={permanentlyDeleteThread}>Delete</Button>
             <BackgroundLoadSpinner loading={loading} />
           </div>
 

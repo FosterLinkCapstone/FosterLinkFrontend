@@ -36,19 +36,22 @@ export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
         </Alert>
     );
 
+    const canRestore = (faq.hiddenByAuthor && auth.isLoggedIn() && auth.getUserInfo()!.id === faq.author.id) || (!faq.hiddenByAuthor && auth.admin);
     const actionButtons = (
         <>
-            <Button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onRestore(faq);
-                }}
-                className="flex-1 min-w-0 text-sm text-green-700 hover:text-green-800 font-medium dark:text-green-300 dark:hover:text-green-200 dark:bg-emerald-500/20 dark:border-emerald-400/50 dark:hover:bg-emerald-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
-                variant="outline"
-                disabled={auth.restricted}
-            >
-                Restore
-            </Button>
+            {canRestore && (
+                <Button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRestore(faq);
+                    }}
+                    className="flex-1 min-w-0 text-sm text-green-700 hover:text-green-800 font-medium dark:text-green-300 dark:hover:text-green-200 dark:bg-emerald-500/20 dark:border-emerald-400/50 dark:hover:bg-emerald-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
+                    variant="outline"
+                    disabled={auth.restricted}
+                >
+                    Restore
+                </Button>
+            )}
             <Button
                 onClick={(e) => {
                     e.stopPropagation();

@@ -91,7 +91,7 @@ export const FaqHome = () => {
   const onRemove = async (id: number) => {
     const message = auth.admin
       ? "Are you sure you want to hide this FAQ response? It can be restored from the Hidden FAQs page."
-      : "Are you sure you want to delete this FAQ response? It can be restored from the Hidden FAQs page.";
+      : "Are you sure you want to delete this FAQ response?";
     const confirmed = await confirm({ message });
     if (confirmed) {
       setHideLoading(true);

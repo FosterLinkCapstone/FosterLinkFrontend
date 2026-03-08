@@ -26,7 +26,7 @@ export const ThreadActionsBar = ({
         {(isAdmin || isAuthor) && (
             <Button
                 variant="outline"
-                className="mb-4 bg-red-200 text-red-400"
+                className="mb-4 bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70"
                 onClick={onHideOrDelete}
                 disabled={restricted}
             >

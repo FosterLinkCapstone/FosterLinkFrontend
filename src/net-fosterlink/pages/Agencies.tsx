@@ -74,10 +74,14 @@ export const Agencies = () => {
             }
         })
     }
-    const onRemove = (agencyId: number) => {
+    const onRemove = async (agencyId: number) => {
+        const confirmed = await confirm({
+            message: "Remove this agency from the public list? It will be moved to the hidden list and can be restored or permanently deleted later.",
+        })
+        if (!confirmed) return
         setHideLoading(true)
         agencyApiRef.hideAgency(agencyId, true).then(res => {
-            if (!res.isError && res.data) {
+            if (!res.isError) {
                 setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
                 setActionResult({ success: true, title: "Successfully removed agency!", subtext: "" })
             } else {

@@ -32,7 +32,8 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
     const [loading, setLoading] = useState<boolean>(false)
 
-    if (reply.postMetadata?.hidden && auth.admin) {
+    const isReplyAuthor = auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id;
+    if (reply.postMetadata?.hidden && (auth.admin || isReplyAuthor)) {
         return (
             <HiddenReplyCard
                 reply={reply}
@@ -144,14 +145,14 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
             <div className="flex flex-row gap-2 flex-wrap">
                 {auth.isLoggedIn() && auth.admin && (
                     <div className="mt-2 flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="bg-red-200 text-red-400" onClick={hideReply} disabled={auth.restricted}>
+                        <Button variant="outline" size="sm" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={hideReply} disabled={auth.restricted}>
                             Hide
                         </Button>
                     </div>
                 )}
                 {auth.isLoggedIn() && !auth.admin && auth.getUserInfo()!.id === reply.author.id && (
                     <div className="mt-2 flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="bg-red-200 text-red-400" onClick={deleteReply} disabled={auth.restricted}>
+                        <Button variant="outline" size="sm" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={deleteReply} disabled={auth.restricted}>
                             Delete
                         </Button>
                     </div>

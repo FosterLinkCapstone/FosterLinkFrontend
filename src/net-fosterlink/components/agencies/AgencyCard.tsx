@@ -208,7 +208,7 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPendin
           )}
           {!agency.createdAt && <div className="mb-4" />}
           {(agency.approved === 2 && auth.admin && showRemove) && (
-            <Button variant="outline" className="bg-red-200 text-red-400 mb-4" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>Remove</Button>
+            <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70 mb-4" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>Remove</Button>
           )}
           {(agency.approved === 2 && isOwner && !auth.admin && onRequestDeletion) && (
             <Button variant="outline" className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700/60 mb-4" disabled={deletionRequested || auth.restricted} onClick={() => onRequestDeletion(agency.id)}>Request Deletion</Button>

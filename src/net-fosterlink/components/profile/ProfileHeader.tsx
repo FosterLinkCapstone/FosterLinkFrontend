@@ -112,7 +112,7 @@ export const ProfileHeader = ({
           variant="outline"
           size="sm"
           onClick={onNavigateAdmin}
-          className="text-xs border-primary/40 text-primary hover:bg-primary/10"
+          className="text-xs border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/40"
         >
           <ShieldCheck className="h-3 w-3 mr-1" /> Manage in Admin Panel
         </Button>
