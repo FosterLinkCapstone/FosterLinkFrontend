@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+function formatFaqDate(value: Date | string): string {
+    const d = typeof value === "string" ? new Date(value) : value;
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
@@ -13,6 +18,7 @@ interface BaseFaqData {
     title: string;
     summary: string;
     author: UserModel;
+    createdAt?: Date | string;
 }
 
 interface BaseFaqCardProps {
@@ -24,9 +30,7 @@ interface BaseFaqCardProps {
     contentLoading?: boolean;
     statusBanner?: ReactNode;
     actionButtons?: ReactNode;
-    /** When true and expanded, an Edit button is shown to enter edit mode */
     canEdit?: boolean;
-    /** When true (and canEdit + expanded), title/summary inputs and "Edit full content" are shown */
     editMode?: boolean;
     onEditClick?: () => void;
     editTitle?: string;
@@ -92,7 +96,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             ) : (
                                 <h3 className="text-xl font-semibold mb-2">{displayTitle}</h3>
                             )}
-                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                            <div className="flex items-center justify-center gap-2 flex-wrap text-sm text-muted-foreground">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -109,6 +113,11 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                                     </Avatar>
                                     <span className="font-medium">{faq.author.username}</span>
                                 </button>
+                                {faq.createdAt != null && (
+                                    <span className="text-muted-foreground">
+                                        · Posted {formatFaqDate(faq.createdAt)}
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <button

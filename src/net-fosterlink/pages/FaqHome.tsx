@@ -20,6 +20,9 @@ import type { GetFaqsResponse } from '../backend/models/api/GetFaqsResponse';
 import { FaqCardSkeleton } from '../components/faq/FaqCardSkeleton';
 import { Paginator } from '../components/Paginator';
 import { BackgroundLoadSpinner } from '../components/BackgroundLoadSpinner';
+import type { FaqOrderBy, FaqSearchBy } from '../backend/api/FaqApi';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const FaqHome = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -39,6 +42,12 @@ export const FaqHome = () => {
   const [faqs, setFaqs] = useState<FaqModel[]>([])
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number>(1)
+  const [searchInput, setSearchInput] = useState<string>('')
+  const [searchBy, setSearchBy] = useState<FaqSearchBy>('title')
+  const [appliedSearch, setAppliedSearch] = useState<string>('')
+  const [appliedSearchBy, setAppliedSearchBy] = useState<FaqSearchBy | undefined>(undefined)
+  const [orderBy, setOrderBy] = useState<FaqOrderBy>('newest')
+
   const [createError, setCreateError] = useState<ErrorWrapper<undefined> | undefined>(undefined)
   const [createSuccessDialogOpen, setCreateSuccessDialogOpen] = useState<boolean>(false)
   const [createFailureDialogOpen, setCreateFailureDialogOpen] = useState<boolean>(false)
@@ -54,21 +63,36 @@ export const FaqHome = () => {
   const auth = useAuth()
   const faqApiRef = faqApi(auth);
     
+  const fetchFaqs = (pageNumber: number, searchTerm: string, searchByCategory: FaqSearchBy | undefined, order?: FaqOrderBy) => {
+    const o = order ?? orderBy
+    return faqApiRef.getAll(pageNumber, {
+      search: searchTerm.trim() || undefined,
+      searchBy: searchTerm.trim() ? searchByCategory : undefined,
+      orderBy: o
+    })
+  }
+
+  const handleSearchClick = () => {
+    setAppliedSearch(searchInput.trim())
+    setAppliedSearchBy(searchBy)
+    setCurrentPage(1)
+  }
+
   useEffect(() => {
     setLoading(true)
-        faqApiRef.getAll(0).then(res => {
-            if (!res.isError && res.data) {
-                setFaqs(res.data.faqs)
-                setTotalPages(res.data.totalPages)
-                setCurrentPage(1)
-                const opened = searchParams.get("openId")
-                if (opened != null) {
-                    const faq = res.data.faqs.find(f => f.id == +opened)
-                    if (faq) handleShowDetail(faq)
-                }
-            }
-        }).finally(() => { setLoading(false) })
-    }, [])
+    fetchFaqs(0, appliedSearch, appliedSearchBy, orderBy).then(res => {
+      if (!res.isError && res.data) {
+        setFaqs(res.data.faqs)
+        setTotalPages(res.data.totalPages)
+        setCurrentPage(1)
+        const opened = searchParams.get("openId")
+        if (opened != null) {
+          const faq = res.data.faqs.find(f => f.id == +opened)
+          if (faq) handleShowDetail(faq)
+        }
+      }
+    }).finally(() => { setLoading(false) })
+  }, [appliedSearch, appliedSearchBy, orderBy])
     useEffect(() => {
       if (auth.admin || auth.faqAuthor) {
         faqApiRef.checkApprovalStatus().then(res => {
@@ -220,6 +244,39 @@ export const FaqHome = () => {
         {
           (auth.faqAuthor || auth.admin) && <Button className="w-full mb-6" variant='outline' onClick={handleCreateFaq} disabled={auth.restricted}>Create</Button>
         }
+
+        <div className="flex flex-col sm:flex-row gap-3 flex-wrap mb-6">
+          <Select value={searchBy} onValueChange={(v) => setSearchBy(v as FaqSearchBy)}>
+            <SelectTrigger className="w-full sm:w-[130px] shrink-0">
+              <SelectValue placeholder="Search in" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">FAQ title</SelectItem>
+              <SelectItem value="summary">FAQ summary</SelectItem>
+              <SelectItem value="authorFullName">Author name</SelectItem>
+              <SelectItem value="authorUsername">Author username</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={orderBy} onValueChange={(v) => setOrderBy(v as FaqOrderBy)}>
+            <SelectTrigger className="w-full sm:w-[120px] shrink-0">
+              <SelectValue placeholder="Order by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            type="search"
+            placeholder="Search..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
+            className="flex-1 min-w-0"
+          />
+          <Button type="button" variant="secondary" onClick={handleSearchClick} className="shrink-0">Search</Button>
+        </div>
+
         {
           creating && <CreateFaqCard
             handleSubmitResponse={handleSubmitFaqResponse}
@@ -281,7 +338,7 @@ export const FaqHome = () => {
             setTotalPages(data.totalPages);
           }}
           onPageChanged={async (pageNum) => {
-            const res = await faqApiRef.getAll(pageNum - 1);
+            const res = await fetchFaqs(pageNum - 1, appliedSearch, appliedSearchBy, orderBy);
             if (!res.isError && res.data) {
               return res.data;
             }
