@@ -14,6 +14,9 @@ import { StatusDialog } from "../components/StatusDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 import { Paginator } from "../components/Paginator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { AlertCircleIcon } from "lucide-react";
+import { formatRelativeDate } from "../util/DateUtil";
 import { confirm } from "../components/ConfirmDialog";
 
 const TAB_PENDING = "pending";
@@ -102,7 +105,7 @@ export const PendingFaqs = () => {
       title: faq.title,
       summary: faq.summary,
       createdAt: faq.createdAt,
-      updatedAt: faq.updatedAt,
+      updatedAt: faq.updatedAt ?? undefined,
       author: faq.author,
       approvedByUsername: faq.deniedByUsername ?? '',
     };
@@ -120,7 +123,7 @@ export const PendingFaqs = () => {
       title: faq.title,
       summary: faq.summary,
       createdAt: faq.createdAt,
-      updatedAt: faq.updatedAt,
+      updatedAt: faq.updatedAt ?? undefined,
       author: faq.author,
       approvedByUsername: '',
     };
@@ -270,17 +273,24 @@ export const PendingFaqs = () => {
               <h2 className="text-2xl font-bold my-2 text-center">No content!</h2>
             )}
             {faqs.map((faq) => (
-              <PendingFaqCard
-                key={faq.id}
-                faq={faq}
-                onExpand={() => handleExpand(faq.id)}
-                onCollapse={handleCollapse}
-                onShowDetail={() => handleShowDetail(faq)}
-                expanded={expandedId === faq.id}
-                onApprove={handleApprove}
-                onDeny={handleDeny}
-                onDelete={handleDeletePending}
-              />
+              <div key={faq.id} className="flex flex-col w-full gap-1">
+                {faq.updatedAt != null && (
+                  <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-400/70">
+                    <AlertCircleIcon />
+                    <AlertTitle>This FAQ was modified — last updated {formatRelativeDate(faq.updatedAt)} at {new Date(faq.updatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</AlertTitle>
+                  </Alert>
+                )}
+                <PendingFaqCard
+                  faq={faq}
+                  onExpand={() => handleExpand(faq.id)}
+                  onCollapse={handleCollapse}
+                  onShowDetail={() => handleShowDetail(faq)}
+                  expanded={expandedId === faq.id}
+                  onApprove={handleApprove}
+                  onDeny={handleDeny}
+                  onDelete={handleDeletePending}
+                />
+              </div>
             ))}
             <Paginator<PendingFaqModel[]>
               pageCount={totalPages}

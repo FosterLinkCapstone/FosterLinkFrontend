@@ -43,6 +43,7 @@ export const FaqHome = () => {
   const [createSuccessDialogOpen, setCreateSuccessDialogOpen] = useState<boolean>(false)
   const [createFailureDialogOpen, setCreateFailureDialogOpen] = useState<boolean>(false)
   const [faqRemoved, setFaqRemoved] = useState<boolean>(false)
+  const [sentToPending, setSentToPending] = useState<boolean>(false)
 
   const [loading, setLoading] = useState<boolean>(true)
   const [hideLoading, setHideLoading] = useState<boolean>(false)
@@ -190,6 +191,7 @@ export const FaqHome = () => {
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
       <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={auth.admin ? "FAQ response successfully hidden" : "FAQ response deleted"} subtext={auth.admin ? 'It can be restored from the Hidden FAQs page' : ""}/>
+      <StatusDialog open={sentToPending} isSuccess={true} onOpenChange={setSentToPending} title="Changes saved" subtext="This FAQ has been sent back to pending approval and is no longer on the public list. An administrator will need to approve it again."/>
       <StatusDialog open={getRequestsError != ''} onOpenChange={() => setRequestsError('')} isSuccess={false} title="Error loading requests" subtext={getRequestsError}/>
       {
         (suggestionCreationError !== null) && ((suggestionCreationError !== '') ? 
@@ -259,8 +261,14 @@ export const FaqHome = () => {
                 onShowDetail={() => handleShowDetail(faq)}
                 expanded={expandedId === faq.id}
                 contentLoading={contentLoadingId === faq.id}
-                canEdit={auth.admin || (!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id)}
+                canEdit={!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id}
+                canRemove={auth.admin || faq.author.id === auth.getUserInfo()?.id}
                 onRemove={onRemove}
+                contentForFaq={detailFaq?.id === faq.id ? faqContent.current : null}
+                onSentToPending={(faqId) => {
+                  setFaqs(faqs.filter(f => f.id !== faqId))
+                  setSentToPending(true)
+                }}
             />
         ))}
 

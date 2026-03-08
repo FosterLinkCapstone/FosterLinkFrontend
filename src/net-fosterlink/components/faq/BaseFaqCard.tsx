@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import type { UserModel } from "@/net-fosterlink/backend/models/UserModel";
+import { UnsavedChangesBar } from "@/net-fosterlink/components/account-settings/UnsavedChangesBar";
 
 interface BaseFaqData {
     title: string;
@@ -22,6 +24,21 @@ interface BaseFaqCardProps {
     contentLoading?: boolean;
     statusBanner?: ReactNode;
     actionButtons?: ReactNode;
+    /** When true and expanded, an Edit button is shown to enter edit mode */
+    canEdit?: boolean;
+    /** When true (and canEdit + expanded), title/summary inputs and "Edit full content" are shown */
+    editMode?: boolean;
+    onEditClick?: () => void;
+    editTitle?: string;
+    editSummary?: string;
+    onEditTitleChange?: (value: string) => void;
+    onEditSummaryChange?: (value: string) => void;
+    onEditContentClick?: () => void;
+    hasChanges?: boolean;
+    onSave?: () => void;
+    onReset?: () => void;
+    saving?: boolean;
+    restricted?: boolean;
 }
 
 export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
@@ -33,8 +50,25 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
     contentLoading,
     statusBanner,
     actionButtons,
+    canEdit,
+    editMode,
+    onEditClick,
+    editTitle,
+    editSummary,
+    onEditTitleChange,
+    onEditSummaryChange,
+    onEditContentClick,
+    hasChanges,
+    onSave,
+    onReset,
+    saving,
+    restricted,
 }) => {
     const navigate = useNavigate();
+    const isEditing = canEdit && expanded && editMode;
+    const displayTitle = isEditing && editTitle !== undefined ? editTitle : faq.title;
+    const displaySummary = isEditing && editSummary !== undefined ? editSummary : faq.summary;
+    const showEditButton = canEdit && expanded && !editMode && onEditClick;
 
     return (
         <div className="flex flex-col w-full gap-1">
@@ -47,7 +81,17 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="w-10 ml-4"></div>
                         <div className="flex-1 text-center">
-                            <h3 className="text-xl font-semibold mb-2">{faq.title}</h3>
+                            {isEditing && onEditTitleChange ? (
+                                <Input
+                                    value={editTitle ?? faq.title}
+                                    onChange={(e) => onEditTitleChange(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-xl font-semibold text-center mb-2"
+                                    placeholder="Title"
+                                />
+                            ) : (
+                                <h3 className="text-xl font-semibold mb-2">{displayTitle}</h3>
+                            )}
                             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                                 <button
                                     onClick={(e) => {
@@ -90,8 +134,18 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                 {expanded && (
                     <>
                         <div className="bg-muted p-6 text-center">
-                            <p className="text-foreground mb-4">{faq.summary}</p>
-                            <div className="flex items-center justify-center gap-2">
+                            {isEditing && onEditSummaryChange ? (
+                                <textarea
+                                    value={editSummary ?? faq.summary}
+                                    onChange={(e) => onEditSummaryChange(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full min-h-[80px] text-foreground mb-4 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                                    placeholder="Summary"
+                                />
+                            ) : (
+                                <p className="text-foreground mb-4">{displaySummary}</p>
+                            )}
+                            <div className="flex items-center justify-center gap-2 flex-wrap">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -102,6 +156,41 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                                 >
                                     Click for more!
                                 </button>
+                                {showEditButton && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEditClick!();
+                                        }}
+                                        className="text-sm text-primary hover:text-primary/90 font-medium inline-flex items-center gap-1"
+                                    >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                        Edit
+                                    </button>
+                                )}
+                                {isEditing && onEditContentClick && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEditContentClick();
+                                        }}
+                                        className="text-sm text-primary hover:text-primary/90 font-medium inline-flex items-center gap-1"
+                                    >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                        Edit full content
+                                    </button>
+                                )}
+                                {isEditing && onReset && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onReset();
+                                        }}
+                                        className="text-sm text-muted-foreground hover:text-foreground font-medium"
+                                    >
+                                        Cancel editing
+                                    </button>
+                                )}
                                 {contentLoading && (
                                     <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" aria-hidden />
                                 )}
@@ -115,6 +204,15 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                     </>
                 )}
             </Card>
+            {hasChanges && onSave && onReset && (
+                <UnsavedChangesBar
+                    hasErrors={false}
+                    saving={saving ?? false}
+                    restricted={restricted ?? false}
+                    onReset={onReset}
+                    onSave={onSave}
+                />
+            )}
         </div>
     );
 };

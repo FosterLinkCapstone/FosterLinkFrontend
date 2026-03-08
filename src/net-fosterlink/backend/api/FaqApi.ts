@@ -8,12 +8,19 @@ import type { GetFaqsResponse } from "../models/api/GetFaqsResponse"
 import type { GetPendingFaqsResponse } from "../models/api/GetPendingFaqsResponse"
 import type { GetHiddenFaqsResponse } from "../models/api/GetHiddenFaqsResponse"
 
+export interface UpdateFaqPayload {
+    title?: string;
+    summary?: string;
+    content?: string;
+}
+
 export interface FaqApiType {
     getAll: (pageNumber: number) => Promise<ErrorWrapper<GetFaqsResponse>>
     getContent: (faqId: number) => Promise<ErrorWrapper<string>>
     getPending: (pageNumber: number) => Promise<ErrorWrapper<GetPendingFaqsResponse>>
     approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     create: (title: string, summary: string, content: string) => Promise<ErrorWrapper<FaqModel>>
+    update: (id: number, payload: UpdateFaqPayload) => Promise<ErrorWrapper<boolean>>
     checkApprovalStatus: () => Promise<ApprovalCheckModel>
     getRequests: () => Promise<ErrorWrapper<FaqRequestModel[]>>
     answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
@@ -92,6 +99,14 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
         [404, "FAQ not found!"],
         [-1, "Internal server error"]
     ])
+
+    const defaultErrorsUpdateFaq: Map<number, string> = new Map<number, string>([
+        [400, "Invalid FAQ data. Please provide at least one of title, summary, or content."],
+        [403, "You do not have permission to update this FAQ!"],
+        [404, "FAQ not found!"],
+        [-1, "Internal server error"]
+    ])
+
     return {
         getAll: async (pageNumber: number): Promise<ErrorWrapper<GetFaqsResponse>> => {
             return doGenericRequest<GetFaqsResponse>(
@@ -136,6 +151,15 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 `/faq/create`,
                 { title, summary, content },
                 defaultErrorsCreateFaq
+            )
+        },
+        update: async(id: number, payload: UpdateFaqPayload): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.PUT,
+                `/faq/update`,
+                { id, ...payload },
+                defaultErrorsUpdateFaq
             )
         },
         checkApprovalStatus: async(): Promise<ApprovalCheckModel> => {
