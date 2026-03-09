@@ -23,6 +23,11 @@ import { AccountDeletionRequests } from './net-fosterlink/pages/AccountDeletionR
 import { AccountSettings } from './net-fosterlink/pages/AccountSettings'
 import { RestrictGateway } from './net-fosterlink/gateways/UnbannedOnly'
 import { AdminUsers } from './net-fosterlink/pages/AdminUsers'
+import { AdminUserFaqSuggestions } from './net-fosterlink/pages/AdminUserFaqSuggestions'
+import { AdminUserFaqAnswers } from './net-fosterlink/pages/AdminUserFaqAnswers'
+import { AdminUserAgencies } from './net-fosterlink/pages/AdminUserAgencies'
+import { AdminUserReplies } from './net-fosterlink/pages/AdminUserReplies'
+import { AdminUserThreads } from './net-fosterlink/pages/AdminUserThreads'
 
 function App() {
 
@@ -55,6 +60,11 @@ function App() {
               <Route path="/agencies/pending" element={<AdminOnly><PendingAgencies/></AdminOnly>}/>
               <Route path="/admin/account-deletion-requests" element={<AdminOnly><AccountDeletionRequests/></AdminOnly>}/>
               <Route path="/admin/users" element={<AdminOnly><AdminUsers/></AdminOnly>}/>
+              <Route path="/admin/users/:userId/faq-suggestions" element={<AdminOnly><AdminUserFaqSuggestions/></AdminOnly>}/>
+              <Route path="/admin/users/:userId/faq-answers" element={<AdminOnly><AdminUserFaqAnswers/></AdminOnly>}/>
+              <Route path="/admin/users/:userId/agencies" element={<AdminOnly><AdminUserAgencies/></AdminOnly>}/>
+              <Route path="/admin/users/:userId/replies" element={<AdminOnly><AdminUserReplies/></AdminOnly>}/>
+              <Route path="/admin/users/:userId/threads" element={<AdminOnly><AdminUserThreads/></AdminOnly>}/>
               <Route path="/users/:userId" element={<UserProfile/>}/>
               <Route path="/settings" element={<AccountSettings/>}/>
               <Route path="/banned" element={<Banned/>}/>

@@ -185,7 +185,7 @@ export const FaqHome = () => {
     if (suggestion !== "") {
       setSuggestionFieldErrors({})
       faqApiRef.createRequest(suggestion).then(res => {
-        if (!res.isError && res.data) {
+        if (!res.isError) {
           setCreatingSuggestion(false)
           setSuggestionCreationError('')
         } else {

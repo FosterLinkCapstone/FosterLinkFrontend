@@ -7,7 +7,9 @@ import { Ban, ShieldAlert } from "lucide-react";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import type { AdminUserModel } from "@/net-fosterlink/backend/models/AdminUserModel";
 import { ROLE_META, formatRestrictionInfo, hasRole, type RoleKey } from "./AdminRoleConstants";
+import { useState } from "react";
 import { RestrictPopover } from "./RestrictPopover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UserCardProps {
     user: AdminUserModel;
@@ -20,18 +22,24 @@ interface UserCardProps {
 }
 
 export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict }: UserCardProps) => {
+    const [openZeroTooltipLabel, setOpenZeroTooltipLabel] = useState<string | null>(null);
     const isBanned = user.bannedAt !== null;
     const isRestricted = user.restrictedAt !== null;
     const fullName = `${user.firstName} ${user.lastName}`;
 
     const profileUrl = `/users/${user.id}?username=${encodeURIComponent(user.username)}&fullName=${encodeURIComponent(fullName)}${user.profilePictureUrl ? `&profilePicUrl=${encodeURIComponent(user.profilePictureUrl)}` : ""}`;
 
+    const faqSuggestionsUrl = `/admin/users/${user.id}/faq-suggestions`;
+    const faqAnswersUrl = `/admin/users/${user.id}/faq-answers`;
+    const agenciesUrl = `/admin/users/${user.id}/agencies`;
+    const repliesUrl = `/admin/users/${user.id}/replies`;
+    const threadsUrl = `/admin/users/${user.id}/threads`;
     const stats = [
-        { label: "posts", value: user.postCount },
-        { label: "replies", value: user.replyCount },
-        { label: "agencies", value: user.agencyCount },
-        { label: "FAQ answers", value: user.faqAnswerCount },
-        { label: "FAQ suggestions", value: user.faqSuggestionCount },
+        { label: "threads", value: user.postCount, href: threadsUrl },
+        { label: "replies", value: user.replyCount, href: repliesUrl },
+        { label: "agencies", value: user.agencyCount, href: agenciesUrl },
+        { label: "FAQ answers", value: user.faqAnswerCount, href: faqAnswersUrl },
+        { label: "FAQ suggestions", value: user.faqSuggestionCount, href: faqSuggestionsUrl },
     ];
 
     return (
@@ -121,7 +129,38 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5 pt-1.5 border-t border-border">
                     {stats.map((s) => (
                         <span key={s.label} className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">{s.value}</span> {s.label}
+                            {"href" in s ? (
+                                s.value > 0 ? (
+                                    <Link to={s.href} className="inline group">
+                                        <span className="font-medium text-foreground group-hover:text-primary">{s.value}</span>{" "}
+                                        <span className="text-muted-foreground group-hover:text-primary">{s.label}</span>
+                                    </Link>
+                                ) : (
+                                    <TooltipProvider>
+                                        <Tooltip open={openZeroTooltipLabel === s.label} onOpenChange={(open) => setOpenZeroTooltipLabel(open ? s.label : null)}>
+                                            <TooltipTrigger asChild>
+                                                <span
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    className="cursor-pointer inline group"
+                                                    onClick={(e) => { e.preventDefault(); setOpenZeroTooltipLabel(s.label); }}
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenZeroTooltipLabel(s.label); } }}
+                                                >
+                                                    <span className="font-medium text-foreground group-hover:text-primary">{s.value}</span>{" "}
+                                                    <span className="text-muted-foreground group-hover:text-primary">{s.label}</span>
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                No {s.label}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )
+                            ) : (
+                                <>
+                                    <span className="font-medium text-foreground">{s.value}</span> {s.label}
+                                </>
+                            )}
                         </span>
                     ))}
                 </div>

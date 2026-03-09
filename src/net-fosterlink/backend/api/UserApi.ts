@@ -6,6 +6,11 @@ import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 import type { UserSettingsModel } from "../models/UserSettingsModel";
 import type { AdminUserStatsModel, GetAdminUsersResponse } from "../models/AdminUserModel";
+import type { AdminFaqSuggestionModel } from "../models/AdminFaqSuggestionModel";
+import type { AdminFaqForUserModel } from "../models/AdminFaqForUserModel";
+import type { AdminAgencyForUserModel } from "../models/AdminAgencyForUserModel";
+import type { AdminReplyForUserModel } from "../models/AdminReplyForUserModel";
+import type { AdminThreadForUserModel } from "../models/AdminThreadForUserModel";
 
 export interface UpdateUserPayload {
     userId: number;
@@ -38,6 +43,11 @@ export interface UserApiType {
     getDeletedUsers: (page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
     searchUsers: (searchBy: string, query: string, page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
     setUserRole: (userId: number, role: string, enabled: boolean) => Promise<ErrorWrapper<void>>,
+    getFaqSuggestionsForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqSuggestionModel[]>>,
+    getFaqAnswersForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqForUserModel[]>>,
+    getAgenciesForUser: (userId: number) => Promise<ErrorWrapper<AdminAgencyForUserModel[]>>,
+    getRepliesForUser: (userId: number) => Promise<ErrorWrapper<AdminReplyForUserModel[]>>,
+    getThreadsForUser: (userId: number) => Promise<ErrorWrapper<AdminThreadForUserModel[]>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -342,6 +352,79 @@ export const userApi = (auth: AuthContextType): UserApiType => {
             );
         },
 
+        getFaqSuggestionsForUser: async(userId: number): Promise<ErrorWrapper<AdminFaqSuggestionModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's FAQ suggestions."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminFaqSuggestionModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/faq-suggestions`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getFaqAnswersForUser: async(userId: number): Promise<ErrorWrapper<AdminFaqForUserModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's FAQ answers."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminFaqForUserModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/faq-answers`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getAgenciesForUser: async(userId: number): Promise<ErrorWrapper<AdminAgencyForUserModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's agencies."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminAgencyForUserModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/agencies`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getRepliesForUser: async(userId: number): Promise<ErrorWrapper<AdminReplyForUserModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's replies."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminReplyForUserModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/replies`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getThreadsForUser: async(userId: number): Promise<ErrorWrapper<AdminThreadForUserModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's threads."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminThreadForUserModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/threads`,
+                {},
+                defaultErrors
+            );
+        },
     }
-    
-    }
+}
