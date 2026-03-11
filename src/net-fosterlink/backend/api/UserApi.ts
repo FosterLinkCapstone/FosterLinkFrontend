@@ -24,7 +24,7 @@ export interface UpdateUserPayload {
 }
 
 export interface UserApiType {
-    login: (email: string, password: string) => Promise<ErrorWrapper<string>>,
+    login: (email: string, password: string, stayLoggedIn?: boolean) => Promise<ErrorWrapper<string>>,
     getInfo: () => Promise<ErrorWrapper<UserInfoResponse>>,
     register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<ErrorWrapper<string>>
     isAdmin: () => Promise<ErrorWrapper<boolean>>
@@ -43,6 +43,8 @@ export interface UserApiType {
     getDeletedUsers: (page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
     searchUsers: (searchBy: string, query: string, page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
     setUserRole: (userId: number, role: string, enabled: boolean) => Promise<ErrorWrapper<void>>,
+    requestAdminRole: (userId: number) => Promise<ErrorWrapper<void>>,
+    requestRevokeAdminRole: (userId: number) => Promise<ErrorWrapper<void>>,
     getFaqSuggestionsForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqSuggestionModel[]>>,
     getFaqAnswersForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqForUserModel[]>>,
     getAgenciesForUser: (userId: number) => Promise<ErrorWrapper<AdminAgencyForUserModel[]>>,
@@ -95,12 +97,12 @@ export const userApi = (auth: AuthContextType): UserApiType => {
     ]);
 
     return {
-        login: async (email: string, password: string): Promise<ErrorWrapper<string>> => {
+        login: async (email: string, password: string, stayLoggedIn?: boolean): Promise<ErrorWrapper<string>> => {
             return doGenericRequest<string>(
                 auth.api,
                 RequestType.POST,
                 "/users/login",
-                { email, password },
+                { email, password, stayLoggedIn: stayLoggedIn ?? false },
                 defaultErrorsLogin,
                 (data: any) => data.token as string
             );
@@ -347,6 +349,38 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 auth.api,
                 RequestType.POST,
                 `/admin/users/setRole?userId=${userId}&role=${encodeURIComponent(role)}&enabled=${enabled}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        requestAdminRole: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to request administrator role assignment."],
+                [404, "User not found."],
+                [409, "User is already an administrator or account is deleted."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/requestAdminRole?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        requestRevokeAdminRole: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to request administrator role revocation."],
+                [404, "User not found."],
+                [409, "User is not an administrator or account is deleted."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/requestRevokeAdminRole?userId=${userId}`,
                 {},
                 defaultErrors
             );

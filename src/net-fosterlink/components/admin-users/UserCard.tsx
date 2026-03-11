@@ -87,7 +87,7 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
                                     active ? role.activeClass : role.inactiveClass
                                 } ${clickable ? "cursor-pointer hover:opacity-80" : "cursor-default"} ${deleted ? "opacity-40" : ""}`}
                                 onClick={clickable ? () => onRoleToggle(user, role.key, active) : undefined}
-                                title={deleted ? "Cannot modify a deleted account" : role.assignable ? `Click to ${active ? "revoke" : "grant"} ${role.label}` : "Cannot be changed here"}
+                                title={deleted ? "Cannot modify a deleted account" : role.assignable ? (role.key === "ADMINISTRATOR" ? (active ? "Click to request Administrator revocation (requires founder approval)" : "Click to request Administrator role (requires founder approval)") : `Click to ${active ? "revoke" : "grant"} ${role.label}`) : "Cannot be changed here"}
                             >
                                 {role.label}
                             </Badge>

@@ -13,7 +13,7 @@ export const ROLE_META: RoleMeta[] = [
     {
         key: "ADMINISTRATOR",
         label: "Administrator",
-        assignable: false,
+        assignable: true,
         activeClass: "border-amber-400 dark:border-amber-600 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200",
         inactiveClass: "border-amber-300/50 dark:border-amber-700/40 bg-transparent text-amber-600/60 dark:text-amber-400/50",
     },

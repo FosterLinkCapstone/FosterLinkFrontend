@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { PhoneNumberInput } from "../components/PhoneNumberInput";
-import { Pencil, Lock, Trash2, AlertCircleIcon } from "lucide-react";
+import { Pencil, Lock, Trash2, AlertCircleIcon, LogOut } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import { ProfilePictureDialog } from "../components/account-settings/ProfilePictureDialog";
 import { ChangePasswordDialog } from "../components/account-settings/ChangePasswordDialog";
@@ -17,6 +17,7 @@ import { DeleteAccountDialog } from "../components/account-deletion/DeleteAccoun
 import { StatusDialog } from "../components/StatusDialog";
 import { UnsavedChangesBar } from "../components/account-settings/UnsavedChangesBar";
 import { emptyForm, validateAccountSettings, type FormState } from "../util/AccountSettingsValidation";
+import { EmailPreferencesCard, type EmailPreferencesCardHandle } from "../components/account-settings/EmailPreferencesCard";
 
 export const AccountSettings = () => {
     const auth = useAuth();
@@ -33,18 +34,32 @@ export const AccountSettings = () => {
     const [showProfilePicDialog, setShowProfilePicDialog] = useState(false);
     const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [logoutAllLoading, setLogoutAllLoading] = useState(false);
 
     const [saveStatus, setSaveStatus] = useState<{ msg: string; success: boolean } | null>(null);
     const [saving, setSaving] = useState(false);
     const pendingLogout = useRef(false);
 
+    const emailPrefsRef = useRef<EmailPreferencesCardHandle>(null);
+    const [emailPrefsHasChanges, setEmailPrefsHasChanges] = useState(false);
+
     useEffect(() => {
-        if (!auth.isLoggedIn()) {
-            navigate("/login?currentPage=/settings", { replace: true });
-            return;
-        }
-        setLoading(true);
-        userApi(auth).getSettings().then(res => {
+        let cancelled = false;
+
+        const loadSettings = async () => {
+            setLoading(true);
+            setLoadError(null);
+
+            let res = await userApi(auth).getSettings();
+            // Safeguard for rare first-request auth race: retry once if we appear logged in
+            // but the initial settings call returns unauthorized.
+            if (res.isError && auth.isLoggedIn() && res.error === "You must be logged in to view your settings.") {
+                await new Promise(resolve => setTimeout(resolve, 150));
+                res = await userApi(auth).getSettings();
+            }
+
+            if (cancelled) return;
+
             if (res.isError) {
                 setLoadError(res.error ?? "Failed to load account settings.");
             } else if (res.data) {
@@ -53,8 +68,19 @@ export const AccountSettings = () => {
                 setForm(fields);
                 savedRef.current = { ...fields };
             }
+
             setLoading(false);
-        });
+        };
+
+        if (!auth.isLoggedIn()) {
+            navigate("/login?currentPage=/settings", { replace: true });
+            return;
+        }
+        void loadSettings();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const formErrors = useMemo(() => validateAccountSettings(form), [form]);
@@ -62,8 +88,9 @@ export const AccountSettings = () => {
 
     const hasChanges = useMemo(() => {
         const saved = savedRef.current;
-        return (Object.keys(form) as (keyof FormState)[]).some(k => form[k] !== saved[k]);
-    }, [form]);
+        const formChanged = (Object.keys(form) as (keyof FormState)[]).some(k => form[k] !== saved[k]);
+        return formChanged || emailPrefsHasChanges;
+    }, [form, emailPrefsHasChanges]);
 
     const handleField = (field: keyof FormState, value: string) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -76,6 +103,7 @@ export const AccountSettings = () => {
     const handleReset = () => {
         setForm({ ...savedRef.current });
         setTouched({});
+        emailPrefsRef.current?.reset();
     };
 
     const handleSave = async () => {
@@ -101,11 +129,33 @@ export const AccountSettings = () => {
 
         const willLogout = "email" in payload || "phoneNumber" in payload;
 
-        const res = await userApi(auth).updateUser(payload as any);
+        const profileChanged = Object.keys(payload).length > 1;
+        const emailPrefsChanged = emailPrefsRef.current?.hasChanges ?? false;
+
+        let profileError: string | null = null;
+
+        if (profileChanged) {
+            const res = await userApi(auth).updateUser(payload as any);
+            if (!res.isError) {
+                savedRef.current = { ...form };
+            } else {
+                profileError = res.error ?? "Failed to save settings.";
+            }
+        }
+
+        if (emailPrefsChanged) {
+            // save() reports errors via onSaveError callback which sets saveStatus directly
+            await emailPrefsRef.current?.save();
+        }
+
         setSaving(false);
 
-        if (!res.isError) {
-            savedRef.current = { ...form };
+        if (profileError) {
+            setSaveStatus({ msg: profileError, success: false });
+            return;
+        }
+
+        if (profileChanged) {
             if (willLogout) {
                 pendingLogout.current = true;
                 setSaveStatus({
@@ -119,8 +169,8 @@ export const AccountSettings = () => {
                     auth.setUserInfo(infoRes.data.user);
                 }
             }
-        } else {
-            setSaveStatus({ msg: res.error ?? "Failed to save settings.", success: false });
+        } else if (emailPrefsChanged) {
+            setSaveStatus({ msg: "Your settings have been saved.", success: true });
         }
     };
 
@@ -182,7 +232,7 @@ export const AccountSettings = () => {
                 isSuccess={saveStatus?.success ?? false}
             />
 
-            <div className="max-w-2xl mx-auto px-4 py-8 pb-24">
+            <div className="max-w-2xl mx-auto px-4 py-8 pb-24 space-y-6">
                 {/* Profile Header */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="relative group mb-4">
@@ -309,6 +359,20 @@ export const AccountSettings = () => {
 
                         <Button
                             variant="outline"
+                            className="w-full justify-center gap-2"
+                            onClick={() => {
+                                setLogoutAllLoading(true)
+                                auth.logoutAll()
+                            }}
+                            type="button"
+                            disabled={logoutAllLoading}
+                        >
+                            <LogOut className="h-4 w-4" />
+                            {logoutAllLoading ? "Signing out everywhere…" : "Log out everywhere"}
+                        </Button>
+
+                        <Button
+                            variant="outline"
                             className="w-full justify-center gap-2 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300"
                             onClick={() => setShowDeleteDialog(true)}
                             type="button"
@@ -318,6 +382,15 @@ export const AccountSettings = () => {
                         </Button>
                     </div>
                 </Card>
+
+                {/* Email Preferences */}
+                <EmailPreferencesCard
+                    ref={emailPrefsRef}
+                    onHasChanges={setEmailPrefsHasChanges}
+                    setSaving={setSaving}
+                    onSaveError={(msg) => setSaveStatus({ msg, success: false })}
+                    onSaveSuccess={() => {}}
+                />
             </div>
 
             {hasChanges && (

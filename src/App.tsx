@@ -28,6 +28,7 @@ import { AdminUserFaqAnswers } from './net-fosterlink/pages/AdminUserFaqAnswers'
 import { AdminUserAgencies } from './net-fosterlink/pages/AdminUserAgencies'
 import { AdminUserReplies } from './net-fosterlink/pages/AdminUserReplies'
 import { AdminUserThreads } from './net-fosterlink/pages/AdminUserThreads'
+import { TokenAction } from './net-fosterlink/pages/TokenAction'
 
 function App() {
 
@@ -68,6 +69,7 @@ function App() {
               <Route path="/users/:userId" element={<UserProfile/>}/>
               <Route path="/settings" element={<AccountSettings/>}/>
               <Route path="/banned" element={<Banned/>}/>
+              <Route path="/token-action" element={<TokenAction/>}/>
               <Route path="*" element={<NotFound/>}/>
             </Routes>
             </RestrictGateway>

@@ -150,6 +150,42 @@ export const AdminUsers = () => {
 
     const handleRoleToggle = async (user: AdminUserModel, key: RoleKey, current: boolean) => {
         const meta = ROLE_META.find(r => r.key === key);
+
+        if (key === "ADMINISTRATOR") {
+            if (current) {
+                const confirmed = await confirm({
+                    message: `Request to revoke administrator role from @${user.username}? This will send approval emails to site developers. The role will only be revoked after approval.`,
+                });
+                if (!confirmed) return;
+
+                const res = await apiRef.current.requestRevokeAdminRole(user.id);
+                if (!res.isError) {
+                    setStatusMsg({
+                        msg: `Revocation request sent. The Administrator role for @${user.username} will only be removed after additional approval.`,
+                        success: true,
+                    });
+                } else {
+                    setStatusMsg({ msg: res.error ?? "Failed to send revocation request.", success: false });
+                }
+                return;
+            }
+            const confirmed = await confirm({
+                message: `Request administrator role for @${user.username}? This will send approval emails to site developers. The role will only be granted after approval.`,
+            });
+            if (!confirmed) return;
+
+            const res = await apiRef.current.requestAdminRole(user.id);
+            if (!res.isError) {
+                setStatusMsg({
+                    msg: `Approval request sent. The Administrator role for @${user.username} requires additional approval before it is granted.`,
+                    success: true,
+                });
+            } else {
+                setStatusMsg({ msg: res.error ?? "Failed to send approval request.", success: false });
+            }
+            return;
+        }
+
         const action = current ? "revoke" : "grant";
         const confirmed = await confirm({
             message: `Are you sure you want to ${action} the ${meta?.label} role ${current ? "from" : "to"} @${user.username}?`,
