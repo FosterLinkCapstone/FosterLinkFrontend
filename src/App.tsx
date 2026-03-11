@@ -29,6 +29,8 @@ import { AdminUserAgencies } from './net-fosterlink/pages/AdminUserAgencies'
 import { AdminUserReplies } from './net-fosterlink/pages/AdminUserReplies'
 import { AdminUserThreads } from './net-fosterlink/pages/AdminUserThreads'
 import { TokenAction } from './net-fosterlink/pages/TokenAction'
+import { ForgotPassword } from './net-fosterlink/pages/ForgotPassword'
+import { ResetPassword } from './net-fosterlink/pages/ResetPassword'
 
 function App() {
 
@@ -70,6 +72,8 @@ function App() {
               <Route path="/settings" element={<AccountSettings/>}/>
               <Route path="/banned" element={<Banned/>}/>
               <Route path="/token-action" element={<TokenAction/>}/>
+              <Route path="/forgot-password" element={<ForgotPassword/>}/>
+              <Route path="/reset-password" element={<ResetPassword/>}/>
               <Route path="*" element={<NotFound/>}/>
             </Routes>
             </RestrictGateway>

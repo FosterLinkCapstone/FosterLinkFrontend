@@ -65,7 +65,10 @@ export const Login = () => {
                             <span className="text-red-500">{fieldErrors["email"]}</span>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/90">Forgot password?</Link>
+                            </div>
                             <Input id="password" type="password" onChange={(event) => password.current = event.target.value} required/>
                             <span className="text-red-500">{fieldErrors["password"]}</span>
                         </div>

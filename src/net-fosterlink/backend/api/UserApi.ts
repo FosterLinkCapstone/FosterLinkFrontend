@@ -25,6 +25,8 @@ export interface UpdateUserPayload {
 
 export interface UserApiType {
     login: (email: string, password: string, stayLoggedIn?: boolean) => Promise<ErrorWrapper<string>>,
+    forgotPassword: (email: string) => Promise<ErrorWrapper<void>>,
+    resetPassword: (token: string, userId: string, newPassword: string) => Promise<ErrorWrapper<void>>,
     getInfo: () => Promise<ErrorWrapper<UserInfoResponse>>,
     register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<ErrorWrapper<string>>
     isAdmin: () => Promise<ErrorWrapper<boolean>>
@@ -106,6 +108,36 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 { email, password, stayLoggedIn: stayLoggedIn ?? false },
                 defaultErrorsLogin,
                 (data: any) => data.token as string
+            );
+        },
+        forgotPassword: async (email: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid email address."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Unknown error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/users/forgotPassword",
+                { email },
+                defaultErrors
+            );
+        },
+        resetPassword: async (token: string, userId: string, newPassword: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid request."],
+                [403, "This reset link is invalid or has expired."],
+                [404, "Account not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Unknown error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/resetPassword?token=${encodeURIComponent(token)}&userId=${encodeURIComponent(userId)}`,
+                { newPassword },
+                defaultErrors
             );
         },
         getInfo: async (): Promise<ErrorWrapper<UserInfoResponse>> => {
