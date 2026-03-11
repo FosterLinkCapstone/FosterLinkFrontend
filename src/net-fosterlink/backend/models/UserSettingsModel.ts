@@ -6,4 +6,5 @@ export interface UserSettingsModel {
     phoneNumber: string;
     username: string;
     profilePictureUrl: string;
+    emailVerified: boolean;
 }

@@ -32,6 +32,7 @@ export interface UserApiType {
     getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
     getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>,
     getSettings: () => Promise<ErrorWrapper<UserSettingsModel>>,
+    resendVerificationEmail: () => Promise<ErrorWrapper<void>>,
     updateUser: (data: UpdateUserPayload) => Promise<ErrorWrapper<void>>,
     changePassword: (oldPassword: string, newPassword: string) => Promise<ErrorWrapper<void>>,
     banUser: (userId: number) => Promise<ErrorWrapper<void>>,
@@ -180,6 +181,22 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 auth.api,
                 RequestType.GET,
                 "/users/getSettings",
+                {},
+                defaultErrors
+            );
+        },
+
+        resendVerificationEmail: async(): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in."],
+                [404, "User not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/users/resendVerificationEmail",
                 {},
                 defaultErrors
             );

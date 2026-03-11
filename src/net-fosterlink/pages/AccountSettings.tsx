@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PhoneNumberInput } from "../components/PhoneNumberInput";
 import { Pencil, Lock, Trash2, AlertCircleIcon, LogOut } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
@@ -38,6 +39,7 @@ export const AccountSettings = () => {
 
     const [saveStatus, setSaveStatus] = useState<{ msg: string; success: boolean } | null>(null);
     const [saving, setSaving] = useState(false);
+    const [resendVerifyLoading, setResendVerifyLoading] = useState(false);
     const pendingLogout = useRef(false);
 
     const emailPrefsRef = useRef<EmailPreferencesCardHandle>(null);
@@ -310,6 +312,38 @@ export const AccountSettings = () => {
                             <p className="text-xs text-amber-600 dark:text-amber-400">
                                 Changing your email will log you out.
                             </p>
+                        )}
+                        {form.emailVerified === false && (
+                            <Alert
+                                variant="default"
+                                className="mt-2 bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700"
+                            >
+                                <AlertCircleIcon className="h-4 w-4" />
+                                <AlertTitle className="text-left">Email not verified</AlertTitle>
+                                <AlertDescription className="text-amber-900 dark:text-amber-100">
+                                    <p>
+                                        Check your inbox for a verification link, or{" "}
+                                        <button
+                                            type="button"
+                                            className="font-medium underline underline-offset-2 text-amber-900 dark:text-amber-100 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled={resendVerifyLoading || auth.restricted}
+                                            onClick={async () => {
+                                                setResendVerifyLoading(true);
+                                                const res = await userApi(auth).resendVerificationEmail();
+                                                setResendVerifyLoading(false);
+                                                if (res.isError) {
+                                                    setSaveStatus({ msg: res.error ?? "Failed to send verification email.", success: false });
+                                                } else {
+                                                    setSaveStatus({ msg: "Verification email sent. Check your inbox.", success: true });
+                                                }
+                                            }}
+                                        >
+                                            {resendVerifyLoading ? "Sending…" : "request a new one"}
+                                        </button>
+                                        .
+                                    </p>
+                                </AlertDescription>
+                            </Alert>
                         )}
                     </div>
 

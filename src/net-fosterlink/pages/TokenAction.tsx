@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "../backend/AuthContext";
 
 type ActionState = "loading" | "success" | "error" | "invalid";
-type TokenAction = "approve" | "deny" | "approve-revoke" | "deny-revoke";
+type TokenAction = "approve" | "deny" | "approve-revoke" | "deny-revoke" | "unsubscribe" | "verify-email";
 
 const MESSAGES: Record<TokenAction, { success: string; error: string }> = {
     approve: {
@@ -24,6 +24,14 @@ const MESSAGES: Record<TokenAction, { success: string; error: string }> = {
         success: "The administrator role revocation has been denied. All pending revocation requests for this user have been cancelled.",
         error: "This denial link is invalid or has already been used.",
     },
+    unsubscribe: {
+        success: "You have been unsubscribed from all FosterLink emails. You can re-enable emails at any time from your account settings.",
+        error: "This unsubscribe link is invalid. Please visit your account settings to manage email preferences.",
+    },
+    "verify-email": {
+        success: "Your email has been verified. Thank you!",
+        error: "This verification link is invalid or has expired. You can request a new one from your account settings.",
+    },
 };
 
 export const TokenAction = () => {
@@ -41,7 +49,7 @@ export const TokenAction = () => {
         if (hasFired.current) return;
         hasFired.current = true;
 
-        const validActions: TokenAction[] = ["approve", "deny", "approve-revoke", "deny-revoke"];
+        const validActions: TokenAction[] = ["approve", "deny", "approve-revoke", "deny-revoke", "unsubscribe", "verify-email"];
         if (!action || !validActions.includes(action as TokenAction) || !token || !userId) {
             setState("invalid");
             setMessage("This link is malformed. Please check that you copied the full URL from your email.");
@@ -52,6 +60,8 @@ export const TokenAction = () => {
         let endpoint: string;
         if (typedAction === "approve") endpoint = "/token/assignAdmin";
         else if (typedAction === "approve-revoke") endpoint = "/token/revokeAdmin";
+        else if (typedAction === "unsubscribe") endpoint = "/token/unsubscribeAll";
+        else if (typedAction === "verify-email") endpoint = "/token/verifyEmail";
         else endpoint = "/token/cancel";
         const msgs = MESSAGES[typedAction];
 
@@ -78,7 +88,7 @@ export const TokenAction = () => {
 
                 <div className="flex flex-col items-center gap-2">
                     <span className="text-2xl font-bold tracking-tight text-foreground">FosterLink</span>
-                    <span className="text-sm text-muted-foreground">Role Assignment</span>
+                    <span className="text-sm text-muted-foreground">Email Action</span>
                 </div>
 
                 {isLoading ? (

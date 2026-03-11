@@ -10,6 +10,7 @@ export const emptyForm = (): FormState => ({
     phoneNumber: "",
     username: "",
     profilePictureUrl: "",
+    emailVerified: false,
 });
 
 export const validateAccountSettings = (form: FormState): FormErrors => {
