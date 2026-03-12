@@ -267,6 +267,26 @@ export const AdminUsers = () => {
         }
     };
 
+    const handleClearProfile = async (userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean) => {
+        const user = users.find(u => u.id === userId);
+        const fields = [
+            clearFullName && "full name",
+            clearUsername && "username",
+            clearProfilePicture && "profile picture",
+        ].filter(Boolean).join(", ");
+        const confirmed = await confirm({
+            message: `Are you sure you want to clear the ${fields} for @${user?.username}? This action cannot be undone.`,
+        });
+        if (!confirmed) return;
+        const res = await apiRef.current.clearUserProfile(userId, clearFullName, clearUsername, clearProfilePicture);
+        if (!res.isError && res.data) {
+            setUsers(prev => prev.map(u => u.id === userId ? res.data! : u));
+            setStatusMsg({ msg: `Profile fields cleared for @${res.data.username}.`, success: true });
+        } else {
+            setStatusMsg({ msg: res.error ?? "Failed to clear profile.", success: false });
+        }
+    };
+
     return (
         <PageLayout auth={auth}>
             <title>User Management</title>
@@ -403,6 +423,7 @@ export const AdminUsers = () => {
                                 onUnban={handleUnban}
                                 onRestrict={handleRestrict}
                                 onUnrestrict={handleUnrestrict}
+                                onClear={handleClearProfile}
                             />
                         ))}
                     </div>

@@ -79,9 +79,11 @@ export const ThreadHeader = ({
                             <h1 className="text-3xl font-bold break-all min-w-0 text-center">{thread.title}</h1>
                             <BackgroundLoadSpinner loading={titleEditLoading} />
                         </div>
-                        <div className="flex justify-center">
-                            <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={() => setEditingTitle(true)} disabled={auth.getUserInfo()?.id !== thread.author.id || auth.restricted}>Edit title</Button>
-                        </div>
+                        {(thread.author.id === auth.getUserInfo()?.id && !auth.restricted) && (
+                            <div className="flex justify-center">
+                                <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={() => setEditingTitle(true)} disabled={titleEditLoading}>Edit title</Button>
+                            </div>
+                        )}
                     </div>
                 )
                     

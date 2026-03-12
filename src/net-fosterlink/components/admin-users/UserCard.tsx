@@ -9,6 +9,7 @@ import type { AdminUserModel } from "@/net-fosterlink/backend/models/AdminUserMo
 import { ROLE_META, formatRestrictionInfo, hasRole, type RoleKey } from "./AdminRoleConstants";
 import { useState } from "react";
 import { RestrictPopover } from "./RestrictPopover";
+import { ClearProfilePopover } from "./ClearProfilePopover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UserCardProps {
@@ -19,9 +20,10 @@ interface UserCardProps {
     onUnban: (user: AdminUserModel) => void;
     onRestrict: (userId: number, until?: string) => void;
     onUnrestrict: (userId: number) => void;
+    onClear: (userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean) => void;
 }
 
-export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict }: UserCardProps) => {
+export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict, onClear }: UserCardProps) => {
     const [openZeroTooltipLabel, setOpenZeroTooltipLabel] = useState<string | null>(null);
     const isBanned = user.bannedAt !== null;
     const isRestricted = user.restrictedAt !== null;
@@ -122,6 +124,12 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
                         user={user}
                         onRestrict={onRestrict}
                         onUnrestrict={onUnrestrict}
+                        disabled={deleted}
+                    />
+
+                    <ClearProfilePopover
+                        user={user}
+                        onClear={onClear}
                         disabled={deleted}
                     />
                 </div>

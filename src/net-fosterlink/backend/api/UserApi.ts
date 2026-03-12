@@ -5,7 +5,7 @@ import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 import type { UserSettingsModel } from "../models/UserSettingsModel";
-import type { AdminUserStatsModel, GetAdminUsersResponse } from "../models/AdminUserModel";
+import type { AdminUserModel, AdminUserStatsModel, GetAdminUsersResponse } from "../models/AdminUserModel";
 import type { AdminFaqSuggestionModel } from "../models/AdminFaqSuggestionModel";
 import type { GetAdminFaqAnswersForUserResponse } from "../models/AdminFaqForUserModel";
 import type { AdminAgencyForUserModel } from "../models/AdminAgencyForUserModel";
@@ -55,6 +55,7 @@ export interface UserApiType {
     getRepliesForUser: (userId: number) => Promise<ErrorWrapper<AdminReplyForUserModel[]>>,
     getThreadsForUser: (userId: number, page: number) => Promise<ErrorWrapper<GetAdminThreadsForUserResponse>>,
     getAuditLog: (page: number) => Promise<ErrorWrapper<GetAuditLogModel>>,
+    clearUserProfile: (userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean) => Promise<ErrorWrapper<AdminUserModel>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -529,6 +530,23 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 auth.api,
                 RequestType.GET,
                 `/admin/users/audit-log?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        clearUserProfile: async(userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean): Promise<ErrorWrapper<AdminUserModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "At least one field must be selected for clearing."],
+                [403, "You do not have permission to clear user profiles."],
+                [404, "User not found."],
+                [409, "Cannot modify a deleted account."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminUserModel>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/clearProfile?userId=${userId}&clearFullName=${clearFullName}&clearUsername=${clearUsername}&clearProfilePicture=${clearProfilePicture}`,
                 {},
                 defaultErrors
             );
