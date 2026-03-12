@@ -7,7 +7,6 @@ export interface AuditLogEntryModel {
     displayMessage: string;
 }
 
-export interface GetAuditLogModel {
-    entries: AuditLogEntryModel[];
-    totalPages: number;
-}
+import type { PaginatedResponse } from "./api/PaginatedResponse";
+
+export type GetAuditLogModel = PaginatedResponse<AuditLogEntryModel>;

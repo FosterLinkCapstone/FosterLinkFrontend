@@ -67,11 +67,11 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPendin
     if (draftLocation) {
       return {
         ...agency.location,
-        addrLine1: draftLocation.locationAddrLine1,
-        addrLine2: draftLocation.locationAddrLine2 ?? "",
-        city: draftLocation.locationCity,
-        state: draftLocation.locationState,
-        zipCode: draftLocation.locationZipCode,
+        addrLine1: draftLocation.addrLine1,
+        addrLine2: draftLocation.addrLine2 ?? "",
+        city: draftLocation.city,
+        state: draftLocation.state,
+        zipCode: draftLocation.zipCode,
       };
     }
     return agency.location;
@@ -87,11 +87,11 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPendin
     if (draftName !== s.name || draftMission !== s.mission || draftWebsite !== s.website) return true;
     if (draftLocation) {
       return (
-        draftLocation.locationAddrLine1 !== s.addrLine1 ||
-        (draftLocation.locationAddrLine2 ?? "") !== s.addrLine2 ||
-        draftLocation.locationCity !== s.city ||
-        draftLocation.locationState !== s.state ||
-        draftLocation.locationZipCode !== s.zipCode
+        draftLocation.addrLine1 !== s.addrLine1 ||
+        (draftLocation.addrLine2 ?? "") !== s.addrLine2 ||
+        draftLocation.city !== s.city ||
+        draftLocation.state !== s.state ||
+        draftLocation.zipCode !== s.zipCode
       );
     }
     return false;
@@ -123,11 +123,11 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPendin
     const missionChanged = draftMission !== s.mission;
     const websiteChanged = draftWebsite !== s.website;
     const locationChanged = draftLocation
-      ? draftLocation.locationAddrLine1 !== s.addrLine1 ||
-        (draftLocation.locationAddrLine2 ?? "") !== s.addrLine2 ||
-        draftLocation.locationCity !== s.city ||
-        draftLocation.locationState !== s.state ||
-        draftLocation.locationZipCode !== s.zipCode
+      ? draftLocation.addrLine1 !== s.addrLine1 ||
+        (draftLocation.addrLine2 ?? "") !== s.addrLine2 ||
+        draftLocation.city !== s.city ||
+        draftLocation.state !== s.state ||
+        draftLocation.zipCode !== s.zipCode
       : false;
 
     try {
@@ -338,11 +338,11 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPendin
         initialLocation={
           draftLocation
             ? {
-                addrLine1: draftLocation.locationAddrLine1,
-                addrLine2: draftLocation.locationAddrLine2,
-                city: draftLocation.locationCity,
-                state: draftLocation.locationState,
-                zipCode: draftLocation.locationZipCode,
+                addrLine1: draftLocation.addrLine1,
+                addrLine2: draftLocation.addrLine2,
+                city: draftLocation.city,
+                state: draftLocation.state,
+                zipCode: draftLocation.zipCode,
               }
             : undefined
         }

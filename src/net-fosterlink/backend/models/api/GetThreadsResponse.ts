@@ -1,6 +1,4 @@
 import type { ThreadModel } from "../ThreadModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetThreadsResponse {
-    threads: ThreadModel[];
-    totalPages: number;
-}
+export type GetThreadsResponse = PaginatedResponse<ThreadModel>;

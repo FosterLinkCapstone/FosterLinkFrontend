@@ -54,7 +54,7 @@ export const HiddenFaqs = () => {
     setLoading(true);
     faqApiRef.current.getHiddenFaqs(hiddenByFilter, 0).then((res) => {
       if (!res.isError && res.data) {
-        setFaqs(res.data.faqs);
+        setFaqs(res.data.items);
         setTotalPages(res.data.totalPages);
         setCurrentPage(1);
         setError(null);
@@ -195,7 +195,7 @@ export const HiddenFaqs = () => {
             const res = await faqApiRef.current.getHiddenFaqs(hiddenByFilter, pageNum - 1);
             if (res.data) {
               setTotalPages(res.data.totalPages);
-              return res.data.faqs;
+              return res.data.items;
             }
             return [];
           }}

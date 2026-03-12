@@ -43,11 +43,11 @@ export const AdminUserThreads = () => {
         const res = await userApiRef.current.getThreadsForUser(id, page);
         setLoading(false);
         if (!res.isError && res.data) {
-            setItems(res.data.threads);
+            setItems(res.data.items);
             setTotalPages(res.data.totalPages);
             setCurrentPage(page + 1);
-            if (res.data.threads.length > 0 && res.data.threads[0].author?.username) {
-                setUsername(res.data.threads[0].author.username);
+            if (res.data.items.length > 0 && res.data.items[0].author?.username) {
+                setUsername(res.data.items[0].author.username);
             }
         } else {
             setError(res.error ?? "Failed to load threads.");
@@ -124,7 +124,7 @@ export const AdminUserThreads = () => {
                                 const res = await userApiRef.current.getThreadsForUser(id, pageNum - 1);
                                 if (res.data) {
                                     setTotalPages(res.data.totalPages);
-                                    return res.data.threads;
+                                    return res.data.items;
                                 }
                                 return [];
                             }}

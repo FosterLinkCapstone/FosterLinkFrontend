@@ -90,12 +90,12 @@ export const FaqHome = () => {
     setLoading(true)
     fetchFaqs(0, appliedSearch, appliedSearchBy).then(res => {
       if (!res.isError && res.data) {
-        setFaqs(res.data.faqs)
+        setFaqs(res.data.items)
         setTotalPages(res.data.totalPages)
         setCurrentPage(1)
         const opened = searchParams.get("openId")
         if (opened != null) {
-          const faq = res.data.faqs.find(f => f.id == +opened)
+          const faq = res.data.items.find(f => f.id == +opened)
           if (faq) handleShowDetail(faq)
         }
       }
@@ -334,7 +334,7 @@ export const FaqHome = () => {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           onDataChanged={(data) => {
-            setFaqs(data.faqs);
+            setFaqs(data.items);
             setTotalPages(data.totalPages);
           }}
           onPageChanged={async (pageNum) => {

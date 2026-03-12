@@ -28,7 +28,7 @@ export const AdminAgencyCard: React.FC<AdminAgencyCardProps> = ({ item }) => {
         <div className="flex flex-col w-full gap-1">
             {statusBanner}
             <AgencyCard
-                agency={item.agency}
+                agency={item.entity}
                 onRemove={() => {}}
                 showRemove={false}
             />

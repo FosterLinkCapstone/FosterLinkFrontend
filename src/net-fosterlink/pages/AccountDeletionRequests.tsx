@@ -175,7 +175,7 @@ export const AccountDeletionRequests = () => {
         const res = await apiRef.current.getRequests(page - 1, sort)
         if (!res.isError && res.data) {
             setTotalPages(res.data.totalPages)
-            return res.data.requests
+            return res.data.items
         }
         return []
     }
@@ -184,7 +184,7 @@ export const AccountDeletionRequests = () => {
         setLoading(true)
         apiRef.current.getRequests(0, sortBy).then(res => {
             if (!res.isError && res.data) {
-                setRequests(res.data.requests)
+                setRequests(res.data.items)
                 setTotalPages(res.data.totalPages)
                 setCurrentPage(1)
                 setError(null)
@@ -311,7 +311,7 @@ export const AccountDeletionRequests = () => {
                                 const res = await apiRef.current.getRequests(pageNum - 1, sortBy)
                                 if (res.data) {
                                     setTotalPages(res.data.totalPages)
-                                    return res.data.requests
+                                    return res.data.items
                                 }
                                 return []
                             }}

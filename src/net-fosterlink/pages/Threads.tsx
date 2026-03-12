@@ -47,7 +47,7 @@ export const Threads = () => {
   const loadThreads = useCallback(async (o: OrderBy) => {
     const res = await threadApiRef.current.getThreads(orderByToApi(o), 0);
     if (!res.isError && res.data) {
-      setThreads(res.data.threads);
+      setThreads(res.data.items);
       setTotalPages(res.data.totalPages);
       setCurrentPage(1);
       setLoading(false);
@@ -214,7 +214,7 @@ export const Threads = () => {
             onPageChanged={async (pageNum) => {
               const res = await threadApiRef.current.getThreads(orderByToApi(orderBy), pageNum - 1);
               const payload = res.data;
-              const data = payload?.threads ?? [];
+              const data = payload?.items ?? [];
               if (payload) {
                 setTotalPages(payload.totalPages);
               }

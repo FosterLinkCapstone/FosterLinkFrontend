@@ -39,7 +39,7 @@ export const AgencyDeletionRequestsTab = () => {
         setLoading(true)
         agencyApiRef.current.getDeletionRequests(0).then(res => {
             if (!res.isError && res.data) {
-                setRequests(res.data.requests)
+                setRequests(res.data.items)
                 setTotalPages(res.data.totalPages)
                 setCurrentPage(1)
                 setError(null)
@@ -154,7 +154,7 @@ export const AgencyDeletionRequestsTab = () => {
                             const res = await agencyApiRef.current.getDeletionRequests(pageNum - 1)
                             if (res.data) {
                                 setTotalPages(res.data.totalPages)
-                                return res.data.requests
+                                return res.data.items
                             }
                             return []
                         }}

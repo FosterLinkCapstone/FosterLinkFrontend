@@ -53,7 +53,7 @@ export const AdminUsers = () => {
             : await apiRef.current.searchUsers(by, q, page - 1);
         setLoading(false);
         if (!res.isError && res.data) {
-            setUsers(res.data.users);
+            setUsers(res.data.items);
             setTotalPages(res.data.totalPages);
         } else {
             setStatusMsg({ msg: res.error ?? "Failed to load users.", success: false });
@@ -413,7 +413,7 @@ export const AdminUsers = () => {
                     currentPage={currentPage}
                     setCurrentPage={setCurrentPage}
                     onDataChanged={(data) => {
-                        setUsers(data.users);
+                        setUsers(data.items);
                         setTotalPages(data.totalPages);
                     }}
                     onPageChanged={handlePageChange}

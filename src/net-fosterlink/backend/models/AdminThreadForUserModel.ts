@@ -1,9 +1,7 @@
 import type { UserModel } from "./UserModel";
+import type { PaginatedResponse } from "./api/PaginatedResponse";
 
-export interface GetAdminThreadsForUserResponse {
-    threads: AdminThreadForUserModel[];
-    totalPages: number;
-}
+export type GetAdminThreadsForUserResponse = PaginatedResponse<AdminThreadForUserModel>;
 
 export interface AdminThreadForUserModel {
     id: number;

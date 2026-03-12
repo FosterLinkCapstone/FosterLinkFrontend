@@ -41,7 +41,7 @@ export const AdminFaqAnswerCard: React.FC<AdminFaqAnswerCardProps> = ({
 
     return (
         <BaseFaqCard
-            faq={item.faq}
+            faq={item.entity}
             onExpand={onExpand}
             onCollapse={onCollapse}
             onShowDetail={onShowDetail}

@@ -1,4 +1,5 @@
 import type { UserModel } from "./UserModel";
+import type { PaginatedResponse } from "./api/PaginatedResponse";
 
 export interface AccountDeletionRequestModel {
     id: number
@@ -13,7 +14,4 @@ export interface AccountDeletionRequestModel {
     reviewedBy: UserModel | null
 }
 
-export interface GetAccountDeletionRequestsResponse {
-    requests: AccountDeletionRequestModel[]
-    totalPages: number
-}
+export type GetAccountDeletionRequestsResponse = PaginatedResponse<AccountDeletionRequestModel>;

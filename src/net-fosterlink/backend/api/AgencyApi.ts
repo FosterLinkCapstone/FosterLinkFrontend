@@ -5,6 +5,7 @@ import type { AgencyModel } from "../models/AgencyModel";
 import type { CreateAgencyModel } from "../models/api/CreateAgencyModel";
 import type { GetAgenciesResponse } from "../models/api/GetAgenciesResponse";
 import type { GetAgencyDeletionRequestsResponse } from "../models/api/GetAgencyDeletionRequestsResponse";
+import type { LocationInput } from "../models/api/LocationInput";
 
 /** Search by: agency (name, mission), agent (full name, username, email, phone), location (city, state, zip). */
 export type AgencySearchBy = "agency" | "agent" | "location";
@@ -14,13 +15,7 @@ export interface AgencyGetAllParams {
     searchBy?: AgencySearchBy;
 }
 
-export interface UpdateAgencyLocationPayload {
-    locationAddrLine1: string;
-    locationAddrLine2?: string;
-    locationCity: string;
-    locationState: string;
-    locationZipCode: number;
-}
+export type UpdateAgencyLocationPayload = LocationInput;
 
 export interface AgencyApiType {
     getAll: (pageNumber: number, params?: AgencyGetAllParams) => Promise<ErrorWrapper<GetAgenciesResponse>>
@@ -36,7 +31,7 @@ export interface AgencyApiType {
     getDeletionRequests: (pageNumber: number) => Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>>
     approveDeletionRequest: (requestId: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     updateAgency: (id: number, name: string|null, missionStatement: string|null, websiteUrl: string|null) => Promise<ErrorWrapper<void>>
-    updateAgencyLocation: (agencyId: number, payload: UpdateAgencyLocationPayload) => Promise<ErrorWrapper<void>>
+    updateAgencyLocation: (agencyId: number, location: UpdateAgencyLocationPayload) => Promise<ErrorWrapper<void>>
 }
 
 export const agencyApi = (auth: AuthContextType): AgencyApiType => {
@@ -236,12 +231,12 @@ export const agencyApi = (auth: AuthContextType): AgencyApiType => {
                     ])
                 );
         },
-        updateAgencyLocation: async (agencyId: number, payload: UpdateAgencyLocationPayload): Promise<ErrorWrapper<void>> => {
+        updateAgencyLocation: async (agencyId: number, location: UpdateAgencyLocationPayload): Promise<ErrorWrapper<void>> => {
             return doGenericRequest<void>(
                 auth.api,
                 RequestType.PUT,
                 "/agencies/update-location",
-                { agencyId, ...payload },
+                { agencyId, location },
                 new Map<number, string>([
                     [400, "Invalid address. Check zip code (501–99950) and required fields."],
                     [403, "You must be the owner of this agency to update its location."],

@@ -1,6 +1,4 @@
 import type { AgencyDeletionRequestModel } from "../AgencyDeletionRequestModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetAgencyDeletionRequestsResponse {
-    requests: AgencyDeletionRequestModel[],
-    totalPages: number
-}
+export type GetAgencyDeletionRequestsResponse = PaginatedResponse<AgencyDeletionRequestModel>;

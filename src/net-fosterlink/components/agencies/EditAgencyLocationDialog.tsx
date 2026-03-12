@@ -66,30 +66,30 @@ export function EditAgencyLocationDialog({
 
   const handleSave = () => {
     if (!canSave) return;
-    const payload: UpdateAgencyLocationPayload = {
-      locationAddrLine1: addrLine1.trim(),
-      locationAddrLine2: addrLine2.trim() || undefined,
-      locationCity: city.trim(),
-      locationState: state.trim(),
-      locationZipCode: zipNum,
+    const location: UpdateAgencyLocationPayload = {
+      addrLine1: addrLine1.trim(),
+      addrLine2: addrLine2.trim() || undefined,
+      city: city.trim(),
+      state: state.trim(),
+      zipCode: zipNum,
     };
     if (submitMode === "draft" && onDraftLocation) {
-      onDraftLocation(payload);
+      onDraftLocation(location);
       onOpenChange(false);
       return;
     }
     setLoading(true);
     agencyApi(auth)
-      .updateAgencyLocation(agency.id, payload)
+      .updateAgencyLocation(agency.id, location)
       .then((res) => {
         if (!res.isError && onSaved) {
           const updatedLocation: LocationModel = {
             ...agency.location,
-            addrLine1: payload.locationAddrLine1,
-            addrLine2: payload.locationAddrLine2 ?? "",
-            city: payload.locationCity,
-            state: payload.locationState,
-            zipCode: payload.locationZipCode,
+            addrLine1: location.addrLine1,
+            addrLine2: location.addrLine2 ?? "",
+            city: location.city,
+            state: location.state,
+            zipCode: location.zipCode,
           };
           onSaved(updatedLocation);
           onOpenChange(false);

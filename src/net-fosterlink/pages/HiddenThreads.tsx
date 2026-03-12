@@ -52,7 +52,7 @@ export const HiddenThreads = () => {
     setLoading(true);
     threadApiRef.current.getHiddenThreads(hiddenByFilter, 0).then((res) => {
       if (!res.isError && res.data) {
-        setThreads(res.data.threads);
+        setThreads(res.data.items);
         setTotalPages(res.data.totalPages);
         setCurrentPage(1);
         setError(null);

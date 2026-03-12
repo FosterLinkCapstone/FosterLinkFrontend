@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 
 const getAgencyDate = (item: AdminAgencyForUserModel) =>
-    item.agency.createdAt ?? item.agency.updatedAt ?? null;
+    item.entity.createdAt ?? item.entity.updatedAt ?? null;
 
 export const AdminUserAgencies = () => {
     const { userId } = useParams<{ userId: string }>();
@@ -109,7 +109,7 @@ export const AdminUserAgencies = () => {
                 {!loading && displayedItems.length > 0 && (
                     <div className="space-y-6">
                         {displayedItems.map((item) => (
-                            <AdminAgencyCard key={item.agency.id} item={item} />
+                            <AdminAgencyCard key={item.entity.id} item={item} />
                         ))}
                     </div>
                 )}

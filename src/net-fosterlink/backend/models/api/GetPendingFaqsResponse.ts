@@ -1,6 +1,4 @@
 import type { PendingFaqModel } from "../PendingFaqModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetPendingFaqsResponse {
-    faqs: PendingFaqModel[];
-    totalPages: number;
-}
+export type GetPendingFaqsResponse = PaginatedResponse<PendingFaqModel>;

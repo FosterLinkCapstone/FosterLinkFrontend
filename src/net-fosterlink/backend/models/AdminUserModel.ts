@@ -27,10 +27,9 @@ export interface AdminUserModel {
     faqSuggestionCount: number;
 }
 
-export interface GetAdminUsersResponse {
-    users: AdminUserModel[];
-    totalPages: number;
-}
+import type { PaginatedResponse } from "./api/PaginatedResponse";
+
+export type GetAdminUsersResponse = PaginatedResponse<AdminUserModel>;
 
 export interface AdminUserStatsModel {
     totalUsers: number;

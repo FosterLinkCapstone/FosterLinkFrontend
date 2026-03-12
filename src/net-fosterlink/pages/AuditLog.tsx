@@ -35,7 +35,7 @@ export const AuditLog = () => {
         setLoading(true)
         apiRef.current.getAuditLog(0).then(res => {
             if (!res.isError && res.data) {
-                setEntries(res.data.entries)
+                setEntries(res.data.items)
                 setTotalPages(res.data.totalPages)
                 setCurrentPage(1)
                 setError(null)
@@ -74,7 +74,7 @@ export const AuditLog = () => {
                                 const res = await apiRef.current.getAuditLog(pageNum - 1)
                                 if (res.data) {
                                     setTotalPages(res.data.totalPages)
-                                    return res.data.entries
+                                    return res.data.items
                                 }
                                 return []
                             }}

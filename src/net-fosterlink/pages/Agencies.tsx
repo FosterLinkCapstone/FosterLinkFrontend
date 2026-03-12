@@ -59,7 +59,7 @@ export const Agencies = () => {
         setCurrentPage(1)
         fetchAgencies(0, appliedSearch, appliedSearchBy ?? "agency").then(res => {
             if (!res.isError && res.data) {
-                setAgencies(res.data.agencies)
+                setAgencies(res.data.items)
                 setTotalPages(res.data.totalPages)
                 setCurrentPage(1)
             }
@@ -318,7 +318,7 @@ export const Agencies = () => {
                                         const res = await fetchAgencies(pageNum - 1, appliedSearch, appliedSearchBy ?? "agency");
                                         if (res.data) {
                                             setTotalPages(res.data.totalPages);
-                                            return res.data.agencies;
+                                            return res.data.items;
                                         }
                                         return [];
                                     }}

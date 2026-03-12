@@ -38,7 +38,7 @@ export const HiddenAgenciesTab = () => {
         setLoading(true)
         agencyApiRef.current.getHiddenAgencies(0).then(res => {
             if (!res.isError && res.data) {
-                setAgencies(res.data.agencies)
+                setAgencies(res.data.items)
                 setTotalPages(res.data.totalPages)
                 setCurrentPage(1)
                 setError(null)
@@ -152,7 +152,7 @@ export const HiddenAgenciesTab = () => {
                             const res = await agencyApiRef.current.getHiddenAgencies(pageNum - 1)
                             if (res.data) {
                                 setTotalPages(res.data.totalPages)
-                                return res.data.agencies
+                                return res.data.items
                             }
                             return []
                         }}

@@ -63,12 +63,12 @@ export const PendingFaqs = () => {
     setLoading(true);
     faqApiRef.current.getPending(0).then(res => {
       if (!res.isError && res.data) {
-        setFaqs(res.data.faqs);
+        setFaqs(res.data.items);
         setTotalPages(res.data.totalPages);
         setCurrentPage(1);
         const opened = searchParams.get("openId");
         if (opened != null) {
-          const faq = res.data.faqs.find(f => f.id == +opened);
+          const faq = res.data.items.find(f => f.id == +opened);
           if (faq) handleShowDetail(faq);
         }
       }
@@ -320,7 +320,7 @@ export const PendingFaqs = () => {
                 const res = await faqApiRef.current.getPending(pageNum - 1);
                 if (res.data) {
                   setTotalPages(res.data.totalPages);
-                  return res.data.faqs;
+                  return res.data.items;
                 }
                 return [];
               }}
@@ -353,7 +353,7 @@ export const PendingFaqs = () => {
                 const res = await faqApiRef.current.getHiddenFaqs(hiddenType, pageNum - 1);
                 if (res.data) {
                   setHiddenTotalPages(res.data.totalPages);
-                  return res.data.faqs;
+                  return res.data.items;
                 }
                 return [];
               }}
@@ -386,7 +386,7 @@ export const PendingFaqs = () => {
                 const res = await faqApiRef.current.getHiddenFaqs(hiddenType, pageNum - 1);
                 if (res.data) {
                   setHiddenTotalPages(res.data.totalPages);
-                  return res.data.faqs;
+                  return res.data.items;
                 }
                 return [];
               }}

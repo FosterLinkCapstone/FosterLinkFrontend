@@ -38,7 +38,7 @@ export const AdminUserFaqAnswers = () => {
     const [contentLoadingId, setContentLoadingId] = useState<number | null>(null);
 
     const displayedItems = useMemo(
-        () => sortByCreatedAt(items, orderBy, (item) => item.faq.createdAt),
+        () => sortByCreatedAt(items, orderBy, (item) => item.entity.createdAt),
         [items, orderBy]
     );
 
@@ -57,8 +57,8 @@ export const AdminUserFaqAnswers = () => {
             setItems(res.data.items);
             setTotalPages(res.data.totalPages);
             setCurrentPage(page + 1);
-            if (res.data.items.length > 0 && res.data.items[0].faq?.author?.username) {
-                setUsername(res.data.items[0].faq.author.username);
+            if (res.data.items.length > 0 && res.data.items[0].entity?.author?.username) {
+                setUsername(res.data.items[0].entity.author.username);
             }
         } else {
             setError(res.error ?? "Failed to load FAQ answers.");
@@ -145,13 +145,13 @@ export const AdminUserFaqAnswers = () => {
                     <div className="space-y-4">
                         {displayedItems.map((item) => (
                             <AdminFaqAnswerCard
-                                key={item.faq.id}
+                                key={item.entity.id}
                                 item={item}
-                                onExpand={() => handleExpand(item.faq.id)}
+                                onExpand={() => handleExpand(item.entity.id)}
                                 onCollapse={handleCollapse}
-                                onShowDetail={() => handleShowDetail(item.faq)}
-                                expanded={expandedId === item.faq.id}
-                                contentLoading={contentLoadingId === item.faq.id}
+                                onShowDetail={() => handleShowDetail(item.entity)}
+                                expanded={expandedId === item.entity.id}
+                                contentLoading={contentLoadingId === item.entity.id}
                             />
                         ))}
                         <Paginator<AdminFaqForUserModel[]>

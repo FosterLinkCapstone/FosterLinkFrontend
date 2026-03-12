@@ -112,7 +112,7 @@ export const UserProfile = () => {
       }
 
       if (!threadRes.isError && threadRes.data) {
-        setThreads(threadRes.data.threads);
+        setThreads(threadRes.data.items);
         setThreadsTotalPages(threadRes.data.totalPages);
       } else {
         setError(prev => appendError(prev, threadRes.error || "Unable to load user posts."));
@@ -121,7 +121,7 @@ export const UserProfile = () => {
 
     faqApi(auth).allAuthor(numericUserId, 0).then(res => {
       if (!res.isError && res.data) {
-        setFaqResponses(res.data.faqs);
+        setFaqResponses(res.data.items);
         setFaqsTotalPages(res.data.totalPages);
         setFaqsCurrentPage(1);
       } else {
@@ -339,7 +339,7 @@ export const UserProfile = () => {
           onCurrentPageChange={setFaqsCurrentPage}
           onPageChanged={handleFaqPageChange}
           onDataChanged={(data) => {
-            setFaqResponses(data.faqs);
+            setFaqResponses(data.items);
             setFaqsTotalPages(data.totalPages);
           }}
           onViewFaq={(faq) => {

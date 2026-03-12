@@ -1,12 +1,11 @@
 import type { FaqModel } from "./FaqModel";
 
-export interface GetAdminFaqAnswersForUserResponse {
-    items: AdminFaqForUserModel[];
-    totalPages: number;
-}
+import type { PaginatedResponse } from "./api/PaginatedResponse";
+
+export type GetAdminFaqAnswersForUserResponse = PaginatedResponse<AdminFaqForUserModel>;
 
 export interface AdminFaqForUserModel {
-    faq: FaqModel;
+    entity: FaqModel;
     entityStatus: "PENDING" | "APPROVED" | "DENIED" | "HIDDEN";
     hidden: boolean;
     hiddenByAuthor: boolean;
