@@ -10,12 +10,13 @@ interface DelayDialogProps {
     newAutoApproveBy: Date
     onConfirm: (reason: string) => void
     loading?: boolean
+    title?: string
 }
 
 const formatDate = (date: Date) =>
     new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 
-export const DelayDialog = ({ open, onOpenChange, newAutoApproveBy, onConfirm, loading }: DelayDialogProps) => {
+export const DelayDialog = ({ open, onOpenChange, newAutoApproveBy, onConfirm, loading, title }: DelayDialogProps) => {
     const [reason, setReason] = useState("")
 
     const handleConfirm = () => {
@@ -37,7 +38,7 @@ export const DelayDialog = ({ open, onOpenChange, newAutoApproveBy, onConfirm, l
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-1">
                         <Clock className="h-6 w-6 text-amber-500 flex-shrink-0" strokeWidth={2} />
-                        <DialogTitle className="text-left">Why are you delaying the deletion of this account?</DialogTitle>
+                        <DialogTitle className="text-left">{title ?? "Why are you delaying the deletion of this account?"}</DialogTitle>
                     </div>
                     <DialogDescription className="text-left">
                         Deletion will take place automatically 30 days from now, on{" "}

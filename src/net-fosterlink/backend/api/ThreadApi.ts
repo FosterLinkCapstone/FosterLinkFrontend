@@ -23,12 +23,12 @@ export interface ThreadApiType {
     createThread: (title: string, content: string, tags: string[]) => Promise<CreateThreadResponse>,
     editThreadContent: (threadId: number, newContent: string) => Promise<ErrorWrapper<void>>,
     editReplyContent: (replyId: number, newContent: string) => Promise<ErrorWrapper<ReplyModel|undefined>>,
-    deleteReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
+    deleteReply: (replyId: number, markAsUserDeleted?: boolean) => Promise<ErrorWrapper<boolean>>
     hideReply: (replyId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
     deleteHiddenReply: (replyId: number) => Promise<ErrorWrapper<boolean>>
     searchByUser: (userId: number, pageNumber: number) => Promise<ErrorWrapper<GetThreadsResponse>>
     getHiddenThreads: (hiddenThreadType: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenThreadsResponse>>
-    setThreadHidden: (threadId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>,
+    setThreadHidden: (threadId: number, hidden: boolean, markAsUserDeleted?: boolean) => Promise<ErrorWrapper<boolean>>,
     getHiddenThread: (threadId: number) => Promise<ErrorWrapper<HiddenThreadModel | undefined>>,
     deleteHiddenThread: (threadId: number) => Promise<ErrorWrapper<boolean>>,
     updateTags: (threadId: number, tags: string[]) => Promise<ErrorWrapper<boolean>>,
@@ -222,17 +222,18 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                 errors
             );
         },
-        deleteReply: async(replyId: number): Promise<ErrorWrapper<boolean>> => {
+        deleteReply: async(replyId: number, markAsUserDeleted?: boolean): Promise<ErrorWrapper<boolean>> => {
             const errors = new Map<number, string>([
                 [403, "You must be the reply author to do that!"],
                 [404, "Reply not found!"],
                 [-1, "Internal server error"]
             ]);
-
+            const params = new URLSearchParams({ replyId: String(replyId) });
+            if (markAsUserDeleted) params.set("markAsUserDeleted", "true");
             return doGenericRequest<boolean>(
                 auth.api,
                 RequestType.DELETE,
-                `/threads/replies/delete?replyId=${replyId}`,
+                `/threads/replies/delete?${params.toString()}`,
                 {},
                 errors
             );
@@ -295,17 +296,18 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
                     errors
                 );
             },
-            setThreadHidden: async(threadId: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
+            setThreadHidden: async(threadId: number, hidden: boolean, markAsUserDeleted?: boolean): Promise<ErrorWrapper<boolean>> => {
                 const errors = new Map<number, string>([
                     [403, "You do not have permission to do that!"],
                     [404, "Thread not found!"],
                     [-1, "Internal client error"]
                 ]);
-
+                const params = new URLSearchParams({ threadId: String(threadId), hidden: String(hidden) });
+                if (markAsUserDeleted) params.set("markAsUserDeleted", "true");
                 return doGenericRequest<boolean>(
                     auth.api,
                     RequestType.POST,
-                    `/threads/hide?threadId=${threadId}&hidden=${hidden}`,
+                    `/threads/hide?${params.toString()}`,
                     {},
                     errors
                 );

@@ -41,7 +41,7 @@ function getSnapshot(agency: AgencyModel): SavedSnapshot {
   };
 }
 
-export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPending, highlighted, showRemove = false, deletionRequested = false } : { agency: AgencyModel, onRemove: (agencyId: number) => void, onRequestDeletion?: (agencyId: number) => void, onSentToPending?: (agencyId: number) => void, highlighted?: boolean, showRemove?: boolean, deletionRequested? : boolean }) => {
+export const AgencyCard = ({ agency, onRemove, onDelete, onRequestDeletion, onSentToPending, highlighted, showRemove = false, deletionRequested = false } : { agency: AgencyModel, onRemove: (agencyId: number) => void, onDelete?: (agencyId: number) => void, onRequestDeletion?: (agencyId: number) => void, onSentToPending?: (agencyId: number) => void, highlighted?: boolean, showRemove?: boolean, deletionRequested? : boolean }) => {
   const savedRef = useRef<SavedSnapshot>(getSnapshot(agency));
   const [draftName, setDraftName] = useState(agency.agencyName);
   const [draftMission, setDraftMission] = useState(agency.agencyMissionStatement ?? "");
@@ -208,7 +208,16 @@ export const AgencyCard = ({ agency, onRemove, onRequestDeletion, onSentToPendin
           )}
           {!agency.createdAt && <div className="mb-4" />}
           {(agency.approved === 2 && auth.admin && showRemove) && (
-            <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70 mb-4" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>Remove</Button>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button variant="outline" className="bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700/70 dark:hover:bg-amber-900/70" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>
+                Hide
+              </Button>
+              {onDelete && (
+                <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={() => onDelete(agency.id)} disabled={auth.restricted}>
+                  Delete
+                </Button>
+              )}
+            </div>
           )}
           {(agency.approved === 2 && isOwner && !auth.admin && onRequestDeletion) && (
             <Button variant="outline" className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700/60 mb-4" disabled={deletionRequested || auth.restricted} onClick={() => onRequestDeletion(agency.id)}>Request Deletion</Button>

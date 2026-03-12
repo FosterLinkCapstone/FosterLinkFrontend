@@ -35,7 +35,7 @@ export interface FaqApiType {
     createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
     allAuthor: (userId: number, pageNumber?: number) => Promise<ErrorWrapper<GetFaqsResponse>>
     getHiddenFaqs: (type: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenFaqsResponse>>
-    setFaqHidden: (faqId: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
+    setFaqHidden: (faqId: number, hidden: boolean, markAsUserDeleted?: boolean) => Promise<ErrorWrapper<boolean>>
     deleteHiddenFaq: (faqId: number) => Promise<ErrorWrapper<boolean>>
     deleteFaq: (faqId: number) => Promise<ErrorWrapper<boolean>>
 }
@@ -228,11 +228,13 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 defaultErrorsGetHiddenFaqs
             )
         },
-        setFaqHidden: async(faqId: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
+        setFaqHidden: async(faqId: number, hidden: boolean, markAsUserDeleted?: boolean): Promise<ErrorWrapper<boolean>> => {
+            const params = new URLSearchParams({ faqId: String(faqId), hidden: String(hidden) });
+            if (markAsUserDeleted) params.set("markAsUserDeleted", "true");
             return doGenericRequest<boolean>(
                 auth.api,
                 RequestType.POST,
-                `/faq/hide?faqId=${faqId}&hidden=${hidden}`,
+                `/faq/hide?${params.toString()}`,
                 {},
                 defaultErrorsSetFaqHidden
             )

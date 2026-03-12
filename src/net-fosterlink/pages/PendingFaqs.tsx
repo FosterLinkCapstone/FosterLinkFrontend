@@ -81,7 +81,7 @@ export const PendingFaqs = () => {
       setHiddenLoading(true);
       faqApiRef.current.getHiddenFaqs(type, 0).then(res => {
         if (!res.isError && res.data) {
-          setHiddenFaqs(res.data.faqs);
+          setHiddenFaqs(res.data.items);
           setHiddenTotalPages(res.data.totalPages);
           setHiddenCurrentPage(1);
           setHiddenError(null);

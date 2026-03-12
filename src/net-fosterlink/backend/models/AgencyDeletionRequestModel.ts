@@ -4,6 +4,10 @@ import type { UserModel } from "./UserModel";
 export interface AgencyDeletionRequestModel {
     id: number,
     createdAt: Date,
+    autoApproveBy: Date,
+    autoApproved: boolean,
+    delayNote: string | null,
     agency: AgencyModel,
-    requestedBy: UserModel
+    requestedBy: UserModel,
+    reviewedBy: UserModel | null
 }

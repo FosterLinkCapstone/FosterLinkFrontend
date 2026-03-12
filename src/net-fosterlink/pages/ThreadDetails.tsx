@@ -129,7 +129,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
 
     const hideThread = async () => {
         setThreadEditLoading(true)
-        const res = await confirm({ message: 'Are you sure you want to delete this thread?' })
+        const res = await confirm({ message: auth.admin ? 'Are you sure you want to hide this thread? It can be restored from the Hidden Threads page.' : 'Are you sure you want to delete this thread?' })
         if (res) {
             threadApiRef.setThreadHidden(thread.id, true).then(() => {
                 navigate('/threads')
@@ -137,6 +137,17 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
         } else {
             setThreadEditLoading(false)
         }
+    }
+
+    const deleteThreadAsUser = async () => {
+        const res = await confirm({ message: 'Are you sure you want to delete this thread?' })
+        if (!res) return
+        setThreadEditLoading(true)
+        threadApiRef.setThreadHidden(thread.id, true, true).then((hideRes) => {
+            if (!hideRes.isError) {
+                navigate('/threads')
+            }
+        }).finally(() => setThreadEditLoading(false))
     }
 
     const handleCancelReply = () => {
@@ -219,6 +230,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                             loading={threadEditLoading}
                             restricted={auth.restricted}
                             onHideOrDelete={hideThread}
+                            onPermanentDelete={auth.admin && isAuthor ? deleteThreadAsUser : undefined}
                             onToggleEdit={() => setEditing(!editing)}
                             onSubmitEdit={submitEdit}
                         />

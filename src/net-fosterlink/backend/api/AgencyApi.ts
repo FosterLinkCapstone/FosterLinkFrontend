@@ -28,8 +28,9 @@ export interface AgencyApiType {
     deleteHiddenAgency: (id: number) => Promise<ErrorWrapper<boolean>>
     requestDeletion: (agencyId: number) => Promise<ErrorWrapper<boolean>>
     cancelDeletionRequest: (agencyId: number) => Promise<ErrorWrapper<boolean>>
-    getDeletionRequests: (pageNumber: number) => Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>>
-    approveDeletionRequest: (requestId: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
+    getDeletionRequests: (pageNumber: number, sortBy?: string) => Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>>
+    approveDeletionRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
+    delayDeletionRequest: (requestId: number, reason: string) => Promise<ErrorWrapper<boolean>>
     updateAgency: (id: number, name: string|null, missionStatement: string|null, websiteUrl: string|null) => Promise<ErrorWrapper<void>>
     updateAgencyLocation: (agencyId: number, location: UpdateAgencyLocationPayload) => Promise<ErrorWrapper<void>>
 }
@@ -198,22 +199,37 @@ export const agencyApi = (auth: AuthContextType): AgencyApiType => {
                 defaultErrorsCancelDeletionRequest
             );
         },
-        getDeletionRequests: async (pageNumber: number): Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>> => {
+        getDeletionRequests: async (pageNumber: number, sortBy?: string): Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>> => {
+            const params = new URLSearchParams({ pageNumber: String(pageNumber) });
+            if (sortBy) params.set("sortBy", sortBy);
             return doGenericRequest<GetAgencyDeletionRequestsResponse>(
                 auth.api,
                 RequestType.GET,
-                `/agencies/deletion-requests?pageNumber=${pageNumber}`,
+                `/agencies/deletion-requests?${params.toString()}`,
                 {},
                 defaultErrorsGetDeletionRequests
             );
         },
-        approveDeletionRequest: async (requestId: number, approved: boolean): Promise<ErrorWrapper<boolean>> => {
+        approveDeletionRequest: async (requestId: number): Promise<ErrorWrapper<boolean>> => {
             return doGenericRequest<boolean>(
                 auth.api,
                 RequestType.POST,
-                `/agencies/deletion-request/approve?requestId=${requestId}&approved=${approved}`,
+                `/agencies/deletion-request/approve?requestId=${requestId}`,
                 {},
                 defaultErrorsApproveDeletionRequest
+            );
+        },
+        delayDeletionRequest: async (requestId: number, reason: string): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/agencies/deletion-request/delay`,
+                { requestId, reason },
+                new Map<number, string>([
+                    [403, "Only administrators can delay deletion requests."],
+                    [404, "Deletion request not found!"],
+                    [-1, "Internal server error"]
+                ])
             );
         },
         updateAgency: async (agencyId: number, name: string|null, missionStatement: string|null, websiteUrl: string|null): Promise<ErrorWrapper<void>> => {

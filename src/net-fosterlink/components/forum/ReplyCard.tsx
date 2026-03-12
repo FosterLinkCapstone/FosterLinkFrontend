@@ -97,6 +97,19 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
         }
     }
 
+    const deleteReplyAsUser = async () => {
+        const res = await confirm({
+            message: 'Are you sure you want to delete this reply?',
+        })
+        if (!res) return
+        setLoading(true)
+        threadApiRef.deleteReply(reply.id, true).then((result) => {
+            if (!result.isError && onReplyDelete) {
+                onReplyDelete(reply.id)
+            }
+        }).finally(() => setLoading(false))
+    }
+
     const replyContent = (
         <>
             {editing ? (
@@ -145,9 +158,14 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
             <div className="flex flex-row gap-2 flex-wrap">
                 {auth.isLoggedIn() && auth.admin && (
                     <div className="mt-2 flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={hideReply} disabled={auth.restricted}>
+                        <Button variant="outline" size="sm" className="bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700/70 dark:hover:bg-amber-900/70" onClick={hideReply} disabled={auth.restricted}>
                             Hide
                         </Button>
+                        {isReplyAuthor && (
+                            <Button variant="outline" size="sm" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={deleteReplyAsUser} disabled={auth.restricted}>
+                                Delete
+                            </Button>
+                        )}
                     </div>
                 )}
                 {auth.isLoggedIn() && !auth.admin && auth.getUserInfo()!.id === reply.author.id && (

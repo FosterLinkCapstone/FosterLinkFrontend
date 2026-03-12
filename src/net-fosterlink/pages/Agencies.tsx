@@ -120,6 +120,24 @@ export const Agencies = () => {
         }).finally(() => setHideLoading(false))
     }
 
+    const onDelete = async (agencyId: number) => {
+        const confirmed = await confirm({
+            message: "Are you sure you want to delete this agency? It will be sent for review, and will auto-delete after 30 days if not approved. Contact admin@fosterlink.net for expedited approval.",
+        })
+        if (!confirmed) return
+        agencyApiRef.requestDeletion(agencyId).then(res => {
+            if (!res.isError) {
+                const user = auth.getUserInfo()
+                setAgencies(prev => prev?.map(a => a.id === agencyId && user
+                    ? { ...a, deletionRequestedAt: new Date().toISOString(), deletionRequestedByUsername: user.username }
+                    : a) ?? null)
+                setActionResult({ success: true, title: "Deletion request submitted", subtext: "It will appear in the deletion requests list for review." })
+            } else {
+                setActionResult({ success: false, title: "Could not submit deletion request", subtext: res.error ?? "" })
+            }
+        })
+    }
+
     const onRequestDeletion = (agencyId: number) => {
         agencyApiRef.requestDeletion(agencyId).then(res => {
             if (!res.isError) {
@@ -158,7 +176,7 @@ export const Agencies = () => {
             message: `Are you sure you want to accept this deletion request? The agency "${agency.agencyName}" will be permanently deleted and cannot be recovered.`,
         })
         if (!ok) return
-        const res = await agencyApiRef.approveDeletionRequest(agency.deletionRequestId, true)
+        const res = await agencyApiRef.approveDeletionRequest(agency.deletionRequestId)
         if (!res.isError) {
             setAgencies(prev => prev?.filter(a => a.id !== agency.id) ?? [])
             setActionResult({ success: true, title: "Deletion request accepted — agency deleted", subtext: "" })
@@ -305,7 +323,7 @@ export const Agencies = () => {
                                             </AlertTitle>
                                         </Alert>
                                     )}
-                                    <AgencyCard highlighted={highlightedAgencyId === a.id} onRemove={onRemove} onRequestDeletion={onRequestDeletion} onSentToPending={onSentToPending} agency={a} showRemove={true} deletionRequested={a.deletionRequestedAt != null} />
+                                    <AgencyCard highlighted={highlightedAgencyId === a.id} onRemove={onRemove} onDelete={auth.admin ? onDelete : undefined} onRequestDeletion={onRequestDeletion} onSentToPending={onSentToPending} agency={a} showRemove={true} deletionRequested={a.deletionRequestedAt != null} />
                                 </div>
                             ))}
                             {!searchParams.has("agencyId") && (

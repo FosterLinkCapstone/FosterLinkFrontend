@@ -32,11 +32,11 @@ export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
             variant="destructive"
         >
             <AlertCircleIcon />
-            <AlertTitle>Hidden by {faq.hiddenBy}</AlertTitle>
+            <AlertTitle>Hidden by {faq.hiddenBy ?? faq.author.username}</AlertTitle>
         </Alert>
     );
 
-    const canRestore = (faq.hiddenByAuthor && auth.isLoggedIn() && auth.getUserInfo()!.id === faq.author.id) || (!faq.hiddenByAuthor && auth.admin);
+    const canRestore = (faq.hiddenByAuthor && auth.isLoggedIn() && auth.getUserInfo()!.id === faq.author.id && !auth.admin) || (!faq.hiddenByAuthor && auth.admin);
     const actionButtons = (
         <>
             {canRestore && (

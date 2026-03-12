@@ -62,7 +62,7 @@ export const HiddenReplyCard: React.FC<HiddenReplyCardProps> = ({ reply, onReply
         <>
             <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
             <div className="flex flex-row gap-2 flex-wrap items-center">
-                {((reply.postMetadata?.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id) || (!reply.postMetadata?.userDeleted && auth.admin)) && (
+                {((reply.postMetadata?.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id && !auth.admin) || (!reply.postMetadata?.userDeleted && auth.admin)) && (
                     <Button variant="outline" size="sm" onClick={restoreReply} disabled={auth.restricted}>
                         Restore
                     </Button>

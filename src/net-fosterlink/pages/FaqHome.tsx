@@ -136,6 +136,18 @@ export const FaqHome = () => {
     }
   };
 
+  const onDelete = async (id: number) => {
+    const confirmed = await confirm({ message: "Are you sure you want to delete this FAQ response?" });
+    if (!confirmed) return;
+    setHideLoading(true);
+    faqApiRef.setFaqHidden(id, true, true).then(res => {
+      if (!res.isError) {
+        setFaqs(faqs.filter(f => f.id !== id));
+        setFaqRemoved(true);
+      }
+    }).finally(() => setHideLoading(false));
+  };
+
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
         setContentLoadingId(faq.id);
@@ -321,6 +333,7 @@ export const FaqHome = () => {
                 canEdit={!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id}
                 canRemove={auth.admin || faq.author.id === auth.getUserInfo()?.id}
                 onRemove={onRemove}
+                onDelete={auth.admin && faq.author.id === auth.getUserInfo()?.id ? onDelete : undefined}
                 contentForFaq={detailFaq?.id === faq.id ? faqContent.current : null}
                 onSentToPending={(faqId) => {
                   setFaqs(faqs.filter(f => f.id !== faqId))
