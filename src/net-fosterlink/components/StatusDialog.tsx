@@ -5,8 +5,8 @@ import { CheckCircle2, XCircle } from "lucide-react";
 export const StatusDialog = ({ title, subtext, open, onOpenChange, isSuccess } : {open: boolean, onOpenChange: (open: boolean) => void, title: string, subtext: string, isSuccess: boolean}) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-6 rounded-2xl [&>button]:hidden bg-background dark:border-border">
-        <div className="flex items-center justify-between gap-6">
+      <DialogContent className="max-w-md w-[calc(100vw-2rem)] p-6 rounded-2xl [&>button]:hidden bg-background dark:border-border">
+        <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
               {
@@ -22,7 +22,7 @@ export const StatusDialog = ({ title, subtext, open, onOpenChange, isSuccess } :
           <Button 
             onClick={() => onOpenChange(false)}
             variant="outline"
-            className="px-8 dark:bg-muted dark:border-border dark:hover:bg-muted/80"
+            className="w-full sm:w-auto px-8 dark:bg-muted dark:border-border dark:hover:bg-muted/80"
           >
             OK
           </Button>

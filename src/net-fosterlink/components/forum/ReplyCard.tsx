@@ -125,7 +125,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                 <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between">
                 <span className="text-xs text-muted-foreground">
                     Posted at {formatDate(new Date(reply.createdAt))}
                 </span>

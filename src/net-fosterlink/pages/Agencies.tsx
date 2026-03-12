@@ -212,9 +212,9 @@ export const Agencies = () => {
                         <Loader2 className="h-16 w-16 animate-spin text-primary" />
                     </div>
                     :
-                    <div className="w-full max-w-full min-w-0 h-full items-center justify-items-center">
-                        <h1 className="text-3xl font-bold my-2 text-center">Agencies</h1>
-                        <div className="w-7xl max-w-full mx-auto h-full flex flex-col items-center gap-2 pb-3 min-w-0">
+                    <div className="w-full max-w-7xl mx-auto px-4 py-4 min-w-0">
+                        <h1 className="text-2xl sm:text-3xl font-bold my-2 text-center">Agencies</h1>
+                        <div className="h-full flex flex-col items-center gap-2 pb-3 min-w-0">
                             {
                                 auth.admin &&
                                 <Alert className='w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700' variant="default">
@@ -288,14 +288,18 @@ export const Agencies = () => {
                             </div>
                             {(displayedAgencies?.length ?? 0) === 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : (displayedAgencies ?? []).filter(a => searchParams.has("agencyId") ? a.id === parseInt(searchParams.get("agencyId")!) : true).map(a => (
                                 <div key={a.id} className="flex flex-col w-full gap-1">
-                                    {a.deletionRequestedByUsername && (
+                                    {a.deletionRequestedAt && (
                                         <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-700" variant="default">
                                             <AlertCircleIcon />
                                             <AlertTitle>
                                                 <div className="flex flex-row gap-3 justify-center items-center">
-                                                <span>Deletion requested by {a.deletionRequestedByUsername}
-                                                {a.deletionRequestedAt && ` on ${new Date(a.deletionRequestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}</span>
-                                                {auth.getUserInfo()?.username === a.deletionRequestedByUsername && (
+                                                <span>
+                                                    {a.deletionRequestedByUsername
+                                                        ? `Deletion requested by ${a.deletionRequestedByUsername}`
+                                                        : "Deletion requested"}
+                                                    {` on ${new Date(a.deletionRequestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                                                </span>
+                                                {(auth.getUserInfo()?.username === a.deletionRequestedByUsername || auth.getUserInfo()?.id === a.agent.id) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

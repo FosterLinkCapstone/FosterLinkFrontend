@@ -404,8 +404,7 @@ export const AdminUsers = () => {
                 {!loading && users.length > 0 && (
                     <div className="space-y-3">
                         <div
-                            className="grid gap-x-4 px-4 pb-2 border-b border-border"
-                            style={{ gridTemplateColumns: "48px 1fr 130px 100px" }}
+                            className="hidden sm:grid gap-x-4 px-4 pb-2 border-b border-border sm:grid-cols-[48px_1fr_130px_100px]"
                         >
                             <div />
                             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">User Info</div>

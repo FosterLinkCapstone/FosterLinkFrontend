@@ -41,10 +41,10 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
 
   return (
     <Card 
-      className="flex overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-border"
+      className="flex flex-col sm:flex-row overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-border"
       onClick={goToThread}
     >
-      <div className="flex flex-col items-center mx-6 py-2 rounded-md bg-muted min-w-[180px]">
+      <div className="flex flex-col items-center mx-6 py-2 rounded-md bg-muted min-w-0 sm:min-w-[180px]">
         <button
           type="button"
           onClick={goToProfile}
@@ -78,7 +78,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
         </div>
       </div>
 
-      <div className="flex-1 px-6 flex flex-col">
+      <div className="flex-1 px-4 sm:px-6 flex flex-col">
         <h3 className="text-xl font-semibold mb-2 text-foreground">
           {thread.title}
         </h3>

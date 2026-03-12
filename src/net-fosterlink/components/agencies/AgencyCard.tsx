@@ -208,12 +208,12 @@ export const AgencyCard = ({ agency, onRemove, onDelete, onRequestDeletion, onSe
           )}
           {!agency.createdAt && <div className="mb-4" />}
           {(agency.approved === 2 && auth.admin && showRemove) && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Button variant="outline" className="bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700/70 dark:hover:bg-amber-900/70" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>
+            <div className="flex w-full gap-2 mb-4">
+              <Button variant="outline" className="flex-1 min-w-0 bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700/70 dark:hover:bg-amber-900/70" onClick={() => onRemove(agency.id)} disabled={auth.restricted}>
                 Hide
               </Button>
-              {onDelete && (
-                <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={() => onDelete(agency.id)} disabled={auth.restricted}>
+              {onDelete && isOwner && (
+                <Button variant="outline" className="flex-1 min-w-0 bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={() => onDelete(agency.id)} disabled={auth.restricted}>
                   Delete
                 </Button>
               )}

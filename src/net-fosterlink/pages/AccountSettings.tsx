@@ -264,7 +264,7 @@ export const AccountSettings = () => {
                 <Card className="p-6 space-y-5">
                     <h2 className="text-lg font-semibold">Settings</h2>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <Label htmlFor="first-name">First name</Label>
                             <Input

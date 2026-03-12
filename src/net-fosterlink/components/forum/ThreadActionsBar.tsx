@@ -26,12 +26,12 @@ export const ThreadActionsBar = ({
     onToggleEdit,
     onSubmitEdit,
 }: ThreadActionsBarProps) => (
-    <div className="flex items-center gap-1.5">
+    <div className="flex w-full flex-wrap items-center gap-2 mb-4">
         {(isAdmin || isAuthor) && (
             <>
                 <Button
                     variant="outline"
-                    className="mb-4 bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700/70 dark:hover:bg-amber-900/70"
+                    className="flex-1 min-w-0 bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700/70 dark:hover:bg-amber-900/70"
                     onClick={onHideOrDelete}
                     disabled={restricted}
                 >
@@ -40,7 +40,7 @@ export const ThreadActionsBar = ({
                 {isAdmin && onPermanentDelete && (
                     <Button
                         variant="outline"
-                        className="mb-4 bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70"
+                        className="flex-1 min-w-0 bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70"
                         onClick={onPermanentDelete}
                         disabled={restricted}
                     >
@@ -53,19 +53,19 @@ export const ThreadActionsBar = ({
             <>
                 <Button
                     variant="outline"
-                    className="mb-4"
+                    className="flex-1 min-w-0"
                     onClick={onToggleEdit}
                     disabled={restricted}
                 >
                     {editing ? "Cancel" : "Edit Thread"}
                 </Button>
                 {editing && (
-                    <Button variant="outline" className="mb-4" onClick={onSubmitEdit} disabled={restricted}>
+                    <Button variant="outline" className="flex-1 min-w-0" onClick={onSubmitEdit} disabled={restricted}>
                         Submit
                     </Button>
                 )}
             </>
         )}
-        <BackgroundLoadSpinner loading={loading} />
+        <BackgroundLoadSpinner loading={loading} className="shrink-0" />
     </div>
 );

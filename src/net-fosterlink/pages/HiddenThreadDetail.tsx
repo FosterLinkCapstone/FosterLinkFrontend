@@ -100,8 +100,8 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
   return (
     <PageLayout auth={auth}>
       <title>[Hidden] {thread.title}</title>
-      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
-        <div className="w-80 space-y-4">
+      <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-80 space-y-4 order-2 lg:order-1">
           <Card className="p-4 border-border">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="h-5 w-5 text-destructive" />
@@ -138,7 +138,7 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
           </Card>
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 order-1 lg:order-2">
           <div className="mb-4">
             <h1 className="text-3xl font-bold mb-2">{thread.title}</h1>
             <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">

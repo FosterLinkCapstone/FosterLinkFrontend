@@ -85,7 +85,7 @@ export const HiddenReplyCard: React.FC<HiddenReplyCardProps> = ({ reply, onReply
         <Card className="mb-4 border-destructive/30 bg-destructive/5 overflow-hidden">
             <button
                 type="button"
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-destructive/10 transition-colors"
+                className="w-full flex flex-wrap items-center gap-3 px-4 py-3 text-left hover:bg-destructive/10 transition-colors"
                 onClick={() => setExpanded(!expanded)}
             >
                 {expanded ? (
@@ -96,7 +96,7 @@ export const HiddenReplyCard: React.FC<HiddenReplyCardProps> = ({ reply, onReply
                 <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" />
                 <span className="text-sm text-destructive font-medium">{hiddenByLabel}</span>
                 <span className="text-muted-foreground mx-1">·</span>
-                <span className="text-sm text-muted-foreground font-semibold">{reply.author.username}</span>
+                <span className="text-sm text-muted-foreground font-semibold min-w-0 truncate">{reply.author.username}</span>
                 <span className="text-muted-foreground mx-1">·</span>
                 <span className="text-xs text-muted-foreground">{formatDate(new Date(reply.createdAt))}</span>
             </button>

@@ -154,7 +154,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             ) : (
                                 <p className="text-foreground mb-4">{displaySummary}</p>
                             )}
-                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                            <div className="flex flex-col items-center gap-2">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -206,7 +206,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             </div>
                         </div>
                         {actionButtons && (
-                            <div className="py-0.5 px-2 border-t border-border bg-background flex w-full gap-2">
+                            <div className="py-0.5 px-2 border-t border-border bg-background flex w-full gap-2 [&>*]:flex-1 [&>*]:min-w-0">
                                 {actionButtons}
                             </div>
                         )}

@@ -15,13 +15,13 @@ export const UnsavedChangesBar = ({ hasErrors, saving, restricted, onReset, onSa
             <span className="text-sm text-muted-foreground font-medium">
                 {hasErrors ? "Fix errors before saving." : "You have unsaved changes!"}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={onReset}
                     disabled={saving}
-                    className="gap-1.5"
+                    className="w-full sm:w-auto gap-1.5"
                 >
                     <RotateCcw className="h-3.5 w-3.5" />
                     Reset
@@ -30,7 +30,7 @@ export const UnsavedChangesBar = ({ hasErrors, saving, restricted, onReset, onSa
                     size="sm"
                     onClick={onSave}
                     disabled={saving || hasErrors || restricted}
-                    className="gap-1.5"
+                    className="w-full sm:w-auto gap-1.5"
                 >
                     <Save className="h-3.5 w-3.5" />
                     {saving ? "Saving..." : "Save"}

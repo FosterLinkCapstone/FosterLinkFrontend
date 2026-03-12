@@ -116,11 +116,13 @@ export const Threads = () => {
     return (
       <PageLayout auth={auth}>
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex gap-3 mb-6">
-            <Skeleton className="h-9 flex-1 rounded-md" />
-            <Skeleton className="h-9 min-w-[120px] w-[120px] rounded-md" />
-            <Skeleton className="h-9 min-w-[120px] w-[120px] rounded-md" />
-            <Skeleton className="h-9 w-[80px] rounded-md" />
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
+            <Skeleton className="h-9 w-full sm:flex-1 rounded-md" />
+            <div className="flex gap-3 w-full sm:w-auto">
+              <Skeleton className="h-9 flex-1 sm:flex-none min-w-[120px] w-[120px] rounded-md" />
+              <Skeleton className="h-9 flex-1 sm:flex-none min-w-[120px] w-[120px] rounded-md" />
+              <Skeleton className="h-9 w-[80px] rounded-md" />
+            </div>
           </div>
           {auth.isLoggedIn() && (
             <div className="max-w-7xl mb-6">
@@ -140,39 +142,41 @@ export const Threads = () => {
     <PageLayout auth={auth}>
       <title>Threads</title>
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
           <Input
             type="text"
             placeholder="Enter search text..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="flex-1"
+            className="w-full sm:flex-1"
           />
 
-          <Select value={searchBy} onValueChange={setSearchBy}>
-            <SelectTrigger className="w-auto min-w-[120px]">
-              <SelectValue placeholder="Search By" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover text-popover-foreground">
-              <SelectItem value="THREAD_TITLE">Thread Title</SelectItem>
-              <SelectItem value="THREAD_CONTENT">Thread Content</SelectItem>
-              <SelectItem value="USERNAME">Username</SelectItem>
-              <SelectItem value="TAGS">Tags</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <Select value={searchBy} onValueChange={setSearchBy}>
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-auto min-w-[120px]">
+                <SelectValue placeholder="Search By" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground">
+                <SelectItem value="THREAD_TITLE">Thread Title</SelectItem>
+                <SelectItem value="THREAD_CONTENT">Thread Content</SelectItem>
+                <SelectItem value="USERNAME">Username</SelectItem>
+                <SelectItem value="TAGS">Tags</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={orderBy} onValueChange={(value: OrderBy) => setOrderBy(value)}>
-            <SelectTrigger className="w-auto min-w-[120px]">
-              <SelectValue placeholder="Order By" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover text-popover-foreground">
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-              <SelectItem value="likes">Most liked</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={orderBy} onValueChange={(value: OrderBy) => setOrderBy(value)}>
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-auto min-w-[120px]">
+                <SelectValue placeholder="Order By" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground">
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="likes">Most liked</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Button variant="outline" className="whitespace-nowrap" onClick={doSearch}>Search</Button>
+            <Button variant="outline" className="whitespace-nowrap" onClick={doSearch}>Search</Button>
+          </div>
         </div>
         {
           auth.isLoggedIn() && <div className="max-w-7xl mb-6">

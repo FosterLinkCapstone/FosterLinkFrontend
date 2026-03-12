@@ -17,7 +17,7 @@ export const NavAdminDropdown = ({ onMouseEnter, onMouseLeave, onTriggerClick }:
             Admin
         </NavigationMenuTrigger>
         <NavigationMenuContent className="bg-popover text-popover-foreground">
-            <ul className="grid gap-2 p-4 md:w-[400px] lg:w-[500px]">
+            <ul className="grid gap-2 p-4 w-[calc(100vw-2rem)] md:w-[400px] lg:w-[500px]">
                 <ListItem href="/admin/users" title="User Management">
                     <div className="flex flex-col items-center">
                         <AdminOnlyBadge />

@@ -50,15 +50,15 @@ export const ThreadHeader = ({
             {
                 editingTitle ? (
                     <div className="flex flex-col gap-1 mb-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Input
                                 value={titleTextInput}
                                 onChange={(e) => setTitleTextInput(e.target.value)}
-                                className="text-2xl font-bold"
+                                className="text-2xl font-bold flex-1 min-w-0"
                                 maxLength={TITLE_MAX_LENGTH}
                                 aria-invalid={titleTextInput.length > 0 && !isTitleValid}
                             />
-                            <Button variant="outline" className="self-stretch px-3 text-xs" onClick={() => {
+                            <Button variant="outline" className="w-full sm:w-auto px-3 text-xs" onClick={() => {
                                 setEditingTitle(false)
                                 if (titleTextInput !== thread.title && isTitleValid) {
                                     titleUpdated(titleTextInput)
@@ -88,7 +88,7 @@ export const ThreadHeader = ({
                 )
                     
             }
-            <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pb-2 text-sm text-muted-foreground">
                 <button
                     type="button"
                     onClick={() => navigate(buildProfileUrl(thread.author))}
@@ -103,7 +103,7 @@ export const ThreadHeader = ({
                     <span className="font-semibold">{thread.author.username}</span>
                 </button>
                 {thread.author.verified && <VerifiedCheck className="h-4 w-4" />}
-                <span>
+                <span className="text-muted-foreground">
                     Posted {formatRelativeDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </span>
             </div>

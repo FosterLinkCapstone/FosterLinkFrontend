@@ -46,7 +46,7 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
 
     return (
         <Card className="p-4">
-            <div className="grid gap-x-4" style={{ gridTemplateColumns: "auto 1fr auto auto" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] gap-x-4 gap-y-2">
                 <Link to={profileUrl} title={`View ${user.username}'s profile`} className="row-span-2 self-start">
                     <Avatar className="h-12 w-12 hover:opacity-80 transition-opacity">
                         <AvatarImage src={user.profilePictureUrl ?? undefined} alt={user.username} />
@@ -78,7 +78,7 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
                     )}
                 </div>
 
-                <div className="flex flex-col gap-1 items-start min-w-[130px] self-start row-span-2">
+                <div className="flex flex-col gap-1 items-start min-w-0 sm:min-w-[130px] self-start row-span-2">
                     {ROLE_META.map((role) => {
                         const active = hasRole(user, role.key);
                         const clickable = role.assignable && !deleted;
@@ -97,7 +97,7 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
                     })}
                 </div>
 
-                <div className="flex flex-col gap-2 items-stretch min-w-[100px] self-start row-span-2">
+                <div className="flex flex-col gap-2 items-stretch min-w-0 sm:min-w-[100px] self-start row-span-2">
                     {isBanned ? (
                         <Button
                             variant="outline"

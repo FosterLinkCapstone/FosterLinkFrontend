@@ -93,7 +93,7 @@ export const FaqCard: React.FC<FaqCardProps> = ({
     };
 
     const actionButtons = canRemove ? (
-        <div className="flex flex-wrap gap-2 flex-1 min-w-0">
+        <>
             {auth.admin ? (
                 <>
                     <Button
@@ -101,7 +101,7 @@ export const FaqCard: React.FC<FaqCardProps> = ({
                             e.stopPropagation();
                             onRemove(faq.id);
                         }}
-                        className="text-sm text-amber-700 hover:text-amber-800 font-medium dark:text-amber-300 dark:hover:text-amber-200 dark:bg-amber-500/20 dark:border-amber-400/50 dark:hover:bg-amber-500/30 rounded-sm"
+                        className="flex-1 min-w-0 text-sm text-amber-700 hover:text-amber-800 font-medium dark:text-amber-300 dark:hover:text-amber-200 dark:bg-amber-500/20 dark:border-amber-400/50 dark:hover:bg-amber-500/30 rounded-sm"
                         variant="outline"
                         disabled={auth.restricted}
                     >
@@ -113,7 +113,7 @@ export const FaqCard: React.FC<FaqCardProps> = ({
                                 e.stopPropagation();
                                 onDelete(faq.id);
                             }}
-                            className="text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-sm"
+                            className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-sm"
                             variant="outline"
                             disabled={auth.restricted}
                         >
@@ -127,14 +127,14 @@ export const FaqCard: React.FC<FaqCardProps> = ({
                         e.stopPropagation();
                         onRemove(faq.id);
                     }}
-                    className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-none first:rounded-l-sm last:rounded-r-sm"
+                    className="flex-1 min-w-0 text-sm text-red-700 hover:text-red-800 font-medium dark:text-red-300 dark:hover:text-red-200 dark:bg-red-500/20 dark:border-red-400/50 dark:hover:bg-red-500/30 rounded-sm"
                     variant="outline"
                     disabled={auth.restricted}
                 >
                     Delete
                 </Button>
             )}
-        </div>
+        </>
     ) : undefined;
 
     return (

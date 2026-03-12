@@ -49,10 +49,8 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
         });
     }
   return (
-    <Card 
-      className="flex overflow-hidden border border-border"
-    >
-      <div className="flex flex-col items-center p-6 border-r gap-6 border-border bg-muted/50 min-w-[180px]">
+    <Card className="overflow-hidden border border-border">
+      <div className="flex flex-col items-center p-6 gap-6 w-full">
         <div className="w-full grid gap-2">
           <Input
             type="text"
@@ -78,11 +76,10 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
         {
             error != "" &&
             <h3 className="text-l font-semibold mb-2 text-destructive">{error}</h3>
-
         }
-        <div className="w-full flex flex-row align-center gap-2 justify-center">
-            <Button type="button" className="w-100 !border-1" onClick={createThread} disabled={createLoading || auth.restricted}>{createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create"}</Button>
-            <Button type="button" className="w-100 !border-1" onClick={onCancel}>Cancel</Button>
+        <div className="w-full flex flex-wrap gap-2">
+            <Button type="button" className="flex-1 min-w-[100px]" onClick={createThread} disabled={createLoading || auth.restricted}>{createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create"}</Button>
+            <Button type="button" className="flex-1 min-w-[100px]" onClick={onCancel}>Cancel</Button>
         </div>
       </div>
     </Card>

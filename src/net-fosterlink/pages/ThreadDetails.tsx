@@ -179,8 +179,8 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
 
     return (
         <PageLayout auth={auth}>
-            <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
-                <div className="w-80 space-y-4">
+            <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+                <div className="w-full lg:w-80 space-y-4 order-2 lg:order-1">
                     <ThreadReplySidebar
                         replyText={replyText}
                         replyFieldErrors={replyFieldErrors}
@@ -201,7 +201,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                     </Card>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 order-1 lg:order-2">
                     <ThreadHeader 
                         thread={thread} 
                         tagsUpdated={tagsUpdated} 

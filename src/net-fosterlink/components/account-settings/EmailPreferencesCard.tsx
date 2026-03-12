@@ -201,7 +201,7 @@ export const EmailPreferencesCard = forwardRef<EmailPreferencesCardHandle, Email
                                             const effectiveDisabled = getEffectiveDisabled(pref);
                                             const switchChecked = !effectiveDisabled;
                                             return (
-                                                <div key={pref.name} className="flex items-center justify-between">
+                                                <div key={pref.name} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 sm:p-0 sm:bg-transparent sm:border-0 sm:rounded-none">
                                                     <Label
                                                         htmlFor={`email-pref-${pref.name}`}
                                                         className={unsubscribedAll ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"}

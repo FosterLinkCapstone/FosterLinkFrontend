@@ -51,7 +51,7 @@ export const EditFaqContentDialog = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-background rounded-3xl border-border">
+            <DialogContent className="max-w-4xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-background rounded-3xl border-border">
                 <DialogHeader className="p-6 pb-4 border-border shrink-0">
                     <DialogTitle className="text-xl font-bold">Edit full content</DialogTitle>
                 </DialogHeader>

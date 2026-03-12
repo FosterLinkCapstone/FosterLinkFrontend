@@ -128,11 +128,11 @@ const RequestCard = ({
                 )}
             </Card>
 
-            <div className="w-full flex flex-row flex-wrap items-center gap-2 mt-1">
+            <div className="w-full flex gap-2 mt-1">
                 <Button
                     variant="outline"
                     onClick={() => onApprove(req)}
-                    className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                    className="flex-1 bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
                     disabled={approving}
                 >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -141,7 +141,7 @@ const RequestCard = ({
                 <Button
                     variant="outline"
                     onClick={() => onDelay(req)}
-                    className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/50 dark:text-amber-50 dark:border-amber-400/70 hover:bg-amber-200 dark:hover:bg-amber-500/70"
+                    className="flex-1 bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/50 dark:text-amber-50 dark:border-amber-400/70 hover:bg-amber-200 dark:hover:bg-amber-500/70"
                 >
                     <Clock className="h-4 w-4 mr-2" />
                     Delay
@@ -260,14 +260,14 @@ export const AccountDeletionRequests = () => {
             />
 
             <div className="max-w-4xl mx-auto px-4 py-6">
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mb-6">
                     <div>
                         <h1 className="text-3xl font-bold">Account Deletion Requests</h1>
                         <p className="text-sm text-muted-foreground mt-1">
                             Requests auto-approve after 30 days if not acted on.
                         </p>
                     </div>
-                    <div className="w-48 flex-shrink-0">
+                    <div className="w-full sm:w-48 flex-shrink-0">
                         <Select
                             value={sortBy}
                             onValueChange={(val: SortBy) => setSortBy(val)}

@@ -81,18 +81,18 @@ const RequestGroup = ({
                     </Alert>
                 )}
 
-                <div className="px-4 py-2.5 flex items-center justify-between text-sm text-muted-foreground border-b border-border bg-muted/30">
+                <div className="px-4 py-2.5 flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 text-sm text-muted-foreground border-b border-border bg-muted/30">
                     <span>Requested by <span className="font-medium text-foreground">@{req.requestedBy.username}</span> on {formatDate(req.createdAt)}</span>
                     <span className={urgent ? "text-red-600 dark:text-red-400 font-medium" : ""}>
                         Auto-approves {formatDate(req.autoApproveBy)}
                     </span>
                 </div>
 
-                <div className="px-4 py-3 flex flex-row flex-wrap items-center gap-2">
+                <div className="px-4 py-3 flex gap-2">
                     <Button
                         variant="outline"
                         onClick={() => onApprove(req)}
-                        className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
+                        className="flex-1 bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"
                         disabled={approving}
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -101,7 +101,7 @@ const RequestGroup = ({
                     <Button
                         variant="outline"
                         onClick={() => onDelay(req)}
-                        className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/50 dark:text-amber-50 dark:border-amber-400/70 hover:bg-amber-200 dark:hover:bg-amber-500/70"
+                        className="flex-1 bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/50 dark:text-amber-50 dark:border-amber-400/70 hover:bg-amber-200 dark:hover:bg-amber-500/70"
                         disabled={approving}
                     >
                         <Clock className="h-4 w-4 mr-2" />
@@ -232,18 +232,16 @@ export const AgencyDeletionRequestsTab = () => {
                 </>
             ) : (
                 <div className="flex flex-col items-center gap-6">
-                    <div className="w-full flex justify-end">
-                        <div className="w-48">
-                            <Select value={sortBy} onValueChange={(val: SortBy) => setSortBy(val)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sort by" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-popover text-popover-foreground">
-                                    <SelectItem value="recency">Newest first</SelectItem>
-                                    <SelectItem value="urgency">Most urgent first</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className="w-full">
+                        <Select value={sortBy} onValueChange={(val: SortBy) => setSortBy(val)}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover text-popover-foreground">
+                                <SelectItem value="recency">Newest first</SelectItem>
+                                <SelectItem value="urgency">Most urgent first</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     {requests.map(req => (
                         <RequestGroup

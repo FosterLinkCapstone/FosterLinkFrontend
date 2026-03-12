@@ -8,7 +8,7 @@ import { PageLayout } from '../components/PageLayout';
 import { FaqDialog } from '../components/faq/FaqDialog';
 import { Button } from '@/components/ui/button';
 import { CreateFaqCard } from '../components/faq/CreateFaqCard';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircleIcon } from 'lucide-react';
 import type { ErrorWrapper } from '../util/ErrorWrapper';
 import { StatusDialog } from '../components/StatusDialog';
@@ -258,7 +258,12 @@ export const FaqHome = () => {
         {
           (auth.faqAuthor || auth.admin) && <Alert variant="default" className='w-full mb-6 bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700'>
             <AlertCircleIcon/>
-            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved responses and {unapprovedFaqs.countDenied} denied responses. {auth.admin && <Link to="/faq/pending" className='text-primary hover:text-primary/90 font-medium'>View pending responses</Link>}</AlertTitle>
+            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved and {unapprovedFaqs.countDenied} denied responses.</AlertTitle>
+            {auth.admin && (
+              <AlertDescription className="text-amber-900 dark:text-amber-100 mt-1 text-center justify-items-center">
+                <Link to="/faq/pending" className='text-primary hover:text-primary/90 font-medium'>View pending responses</Link>
+              </AlertDescription>
+            )}
           </Alert>
         }
         {

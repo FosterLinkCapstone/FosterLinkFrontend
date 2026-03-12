@@ -114,9 +114,9 @@ export const UserThreadsList = ({
               className="p-4 hover:shadow-md cursor-pointer transition-shadow"
               onClick={() => navigate(`/threads/thread/${t.id}`)}
             >
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <h3 className="text-lg text-left font-semibold mb-1">{t.title}</h3>
+              <div className="flex flex-wrap justify-between items-start gap-4 gap-y-1">
+                <div className="min-w-0">
+                  <h3 className="text-lg text-left font-semibold mb-1 truncate">{t.title}</h3>
                   <p className="text-sm text-left text-muted-foreground line-clamp-2">{t.content}</p>
                 </div>
                 <div className="text-right text-xs text-muted-foreground">
