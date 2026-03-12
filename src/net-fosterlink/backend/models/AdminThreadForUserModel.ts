@@ -1,5 +1,10 @@
 import type { UserModel } from "./UserModel";
 
+export interface GetAdminThreadsForUserResponse {
+    threads: AdminThreadForUserModel[];
+    totalPages: number;
+}
+
 export interface AdminThreadForUserModel {
     id: number;
     title: string;

@@ -63,7 +63,7 @@ export const Register = () => {
                 <CardDescription>Or, <Link className="text-primary hover:text-primary/90" to="/login">login</Link></CardDescription>
             </CardHeader>
             <CardContent>
-                <form>
+                <form id="register-form" onSubmit={(e) => { e.preventDefault(); submitRegister(); }}>
                     <div className="flex flex-col gap-6">
                         <div className="grid gap-2">
                             <Label htmlFor="firstname">First Name</Label>
@@ -112,7 +112,7 @@ export const Register = () => {
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitRegister} variant="outline" className="w-full" disabled={loading || (password != confirmPassword)}>
+                <Button type="submit" form="register-form" variant="outline" className="w-full" disabled={loading || (password != confirmPassword)}>
                     {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Register"}
                 </Button>
                 {error != "" && <ExpandableAlert message={error} />}

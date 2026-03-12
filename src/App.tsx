@@ -28,6 +28,7 @@ import { AdminUserFaqAnswers } from './net-fosterlink/pages/AdminUserFaqAnswers'
 import { AdminUserAgencies } from './net-fosterlink/pages/AdminUserAgencies'
 import { AdminUserReplies } from './net-fosterlink/pages/AdminUserReplies'
 import { AdminUserThreads } from './net-fosterlink/pages/AdminUserThreads'
+import { AuditLog } from './net-fosterlink/pages/AuditLog'
 import { TokenAction } from './net-fosterlink/pages/TokenAction'
 import { ForgotPassword } from './net-fosterlink/pages/ForgotPassword'
 import { ResetPassword } from './net-fosterlink/pages/ResetPassword'
@@ -68,6 +69,7 @@ function App() {
               <Route path="/admin/users/:userId/agencies" element={<AdminOnly><AdminUserAgencies/></AdminOnly>}/>
               <Route path="/admin/users/:userId/replies" element={<AdminOnly><AdminUserReplies/></AdminOnly>}/>
               <Route path="/admin/users/:userId/threads" element={<AdminOnly><AdminUserThreads/></AdminOnly>}/>
+              <Route path="/admin/audit-log" element={<AdminOnly><AuditLog/></AdminOnly>}/>
               <Route path="/users/:userId" element={<UserProfile/>}/>
               <Route path="/settings" element={<AccountSettings/>}/>
               <Route path="/banned" element={<Banned/>}/>

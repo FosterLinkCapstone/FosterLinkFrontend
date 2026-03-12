@@ -1,8 +1,25 @@
 export const formatDate = (date: Date | string) =>
   new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export const formatRelativeDate = (date: Date | string): string => {
-  const d = new Date(date);
+/** Parses an API date value (ISO string or epoch ms number) into a Date, or null if missing/invalid.
+ *  ISO datetime strings without timezone info (e.g. "2026-03-12T09:11:27.000") are treated as UTC
+ *  to avoid the browser parsing them as local time. */
+export const parseApiDate = (value: string | number | null | undefined): Date | null => {
+  if (value == null) return null;
+  let d: Date;
+  if (typeof value === "number") {
+    d = new Date(value);
+  } else {
+    // ISO datetime without timezone suffix → append Z to force UTC interpretation
+    const needsZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value) && !/Z|[+-]\d{2}:?\d{2}$/.test(value);
+    d = new Date(needsZ ? value + "Z" : value);
+  }
+  return isNaN(d.getTime()) ? null : d;
+};
+
+export const formatRelativeDate = (date: Date | string | number): string => {
+  const d = typeof date === "number" ? new Date(date) : new Date(date);
+  if (isNaN(d.getTime())) return "Unknown date";
   const now = new Date();
   const days = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
   // Date is in the future (e.g. timezone mismatch): show "Today" instead of "-1 days ago"

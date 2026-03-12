@@ -11,13 +11,17 @@ export const enum RequestType {
 
 export type ApiClient = ReturnType<typeof axios.create>;
 
+/** If provided, overrides the message for a given status using the response body (e.g. to show "banned" only when body.reason === 'banned'). */
+export type GetErrorForStatus = (status: number, responseData: unknown) => string | undefined;
+
 export const doGenericRequest = async <T>(
     api: ApiClient,
     type: RequestType,
     uri: string,
     payload: unknown = {},
     defaultErrors: Map<number, string>,
-    mapSuccess?: (data: any) => T
+    mapSuccess?: (data: any) => T,
+    getErrorForStatus?: GetErrorForStatus
 ): Promise<ErrorWrapper<T>> => {
     try {
         let requestPromise;
@@ -54,6 +58,10 @@ export const doGenericRequest = async <T>(
             }
 
             const status = err.response.status as number;
+            const customMessage = getErrorForStatus?.(status, err.response?.data);
+            if (customMessage !== undefined) {
+                return { data: undefined, isError: true, error: customMessage };
+            }
             if (defaultErrors.has(status)) {
                 return { data: undefined, isError: true, error: defaultErrors.get(status) };
             }

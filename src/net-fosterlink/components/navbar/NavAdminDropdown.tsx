@@ -30,6 +30,12 @@ export const NavAdminDropdown = ({ onMouseEnter, onMouseLeave, onTriggerClick }:
                         <span>Review and approve or delay pending account deletion requests</span>
                     </div>
                 </ListItem>
+                <ListItem href="/admin/audit-log" title="Audit Log">
+                    <div className="flex flex-col items-center">
+                        <AdminOnlyBadge />
+                        <span>View a log of all administrative actions taken on the platform</span>
+                    </div>
+                </ListItem>
             </ul>
         </NavigationMenuContent>
     </NavigationMenuItem>

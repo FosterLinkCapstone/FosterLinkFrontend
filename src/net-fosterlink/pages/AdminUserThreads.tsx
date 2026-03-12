@@ -7,6 +7,7 @@ import { PageLayout } from "../components/PageLayout";
 import { StatusDialog } from "../components/StatusDialog";
 import { AdminThreadCard } from "../components/forum/AdminThreadCard";
 import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
+import { Paginator } from "../components/Paginator";
 import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -18,6 +19,8 @@ export const AdminUserThreads = () => {
     userApiRef.current = userApi(auth);
 
     const [items, setItems] = useState<AdminThreadForUserModel[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export const AdminUserThreads = () => {
         [items, orderBy]
     );
 
-    const fetchThreads = useCallback(async () => {
+    const fetchThreads = useCallback(async (page: number) => {
         const id = userId ? parseInt(userId, 10) : NaN;
         if (!userId || isNaN(id)) {
             setError("Invalid user.");
@@ -37,12 +40,14 @@ export const AdminUserThreads = () => {
         }
         setLoading(true);
         setError(null);
-        const res = await userApiRef.current.getThreadsForUser(id);
+        const res = await userApiRef.current.getThreadsForUser(id, page);
         setLoading(false);
         if (!res.isError && res.data) {
-            setItems(res.data);
-            if (res.data.length > 0 && res.data[0].author?.username) {
-                setUsername(res.data[0].author.username);
+            setItems(res.data.threads);
+            setTotalPages(res.data.totalPages);
+            setCurrentPage(page + 1);
+            if (res.data.threads.length > 0 && res.data.threads[0].author?.username) {
+                setUsername(res.data.threads[0].author.username);
             }
         } else {
             setError(res.error ?? "Failed to load threads.");
@@ -51,7 +56,7 @@ export const AdminUserThreads = () => {
     }, [userId]);
 
     useEffect(() => {
-        fetchThreads();
+        fetchThreads(0);
     }, [fetchThreads]);
 
     return (
@@ -108,6 +113,22 @@ export const AdminUserThreads = () => {
                         {displayedItems.map((item) => (
                             <AdminThreadCard key={item.id} item={item} />
                         ))}
+                        <Paginator<AdminThreadForUserModel[]>
+                            pageCount={totalPages}
+                            currentPage={currentPage}
+                            setCurrentPage={setCurrentPage}
+                            onDataChanged={setItems}
+                            onPageChanged={async (pageNum) => {
+                                const id = userId ? parseInt(userId, 10) : NaN;
+                                if (isNaN(id)) return [];
+                                const res = await userApiRef.current.getThreadsForUser(id, pageNum - 1);
+                                if (res.data) {
+                                    setTotalPages(res.data.totalPages);
+                                    return res.data.threads;
+                                }
+                                return [];
+                            }}
+                        />
                     </div>
                 )}
             </div>

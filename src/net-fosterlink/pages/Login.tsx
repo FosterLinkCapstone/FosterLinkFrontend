@@ -57,7 +57,7 @@ export const Login = () => {
                 <CardDescription>Or, <Link to="/register" className="text-primary hover:text-primary/90">sign up</Link></CardDescription>
             </CardHeader>
             <CardContent>
-                <form>
+                <form id="login-form" onSubmit={(e) => { e.preventDefault(); submitLogin(); }}>
                     <div className="flex flex-col gap-6">
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email</Label>
@@ -84,7 +84,7 @@ export const Login = () => {
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitLogin} className="w-full" disabled={loading}>
+                <Button type="submit" form="login-form" className="w-full" disabled={loading}>
                     {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Login"}
                 </Button>
                 {error !== "" && <ExpandableAlert message={error} />}

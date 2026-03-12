@@ -63,9 +63,11 @@ export const CreateFaqCard = ({
     return (
         <Card className="mb-4 p-4 flex flex-col gap-4 overflow-hidden hover:shadow-md transition-shadow">
             <h3 className="text-xl font-semibold text-center mb-2">Create New FAQ Response</h3>
+            <form onSubmit={(e) => { e.preventDefault(); create(); }}>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button
+                        type="button"
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
@@ -81,6 +83,18 @@ export const CreateFaqCard = ({
                             placeholder="Search or type custom title..." 
                             value={newFaqTitle}
                             onValueChange={setNewFaqTitle}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newFaqTitle) {
+                                    const hasFilteredResults = requests.some(r =>
+                                        r.suggestion.toLowerCase().includes(newFaqTitle.toLowerCase())
+                                    )
+                                    if (!hasFilteredResults) {
+                                        e.preventDefault()
+                                        setAnsweringId(-1)
+                                        setOpen(false)
+                                    }
+                                }
+                            }}
                         />
                         <CommandEmpty>
                             <div className="p-2 text-sm">
@@ -136,15 +150,14 @@ export const CreateFaqCard = ({
               <span className="text-red-500">{serverFieldErrors?.content}</span>
             </div>
             <Button 
-                onClick={() => {
-                    create()
-                }} 
+                type="submit"
                 variant="outline"
                 disabled={createLoading || auth.restricted}
             >
                 {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Create FAQ Response"}
             </Button>
-            <Button onClick={() => handleClose()} variant="outline">Cancel</Button>
+            <Button type="button" onClick={() => handleClose()} variant="outline">Cancel</Button>
+            </form>
         </Card>
     )
 }

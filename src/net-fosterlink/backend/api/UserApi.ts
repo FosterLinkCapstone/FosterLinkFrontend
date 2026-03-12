@@ -1,5 +1,5 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
-import { doGenericRequest, RequestType } from "@/net-fosterlink/util/ApiUtil";
+import { doGenericRequest, type GetErrorForStatus, RequestType } from "@/net-fosterlink/util/ApiUtil";
 import type { AuthContextType } from "../AuthContext";
 import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
@@ -7,10 +7,11 @@ import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
 import type { UserSettingsModel } from "../models/UserSettingsModel";
 import type { AdminUserStatsModel, GetAdminUsersResponse } from "../models/AdminUserModel";
 import type { AdminFaqSuggestionModel } from "../models/AdminFaqSuggestionModel";
-import type { AdminFaqForUserModel } from "../models/AdminFaqForUserModel";
+import type { GetAdminFaqAnswersForUserResponse } from "../models/AdminFaqForUserModel";
 import type { AdminAgencyForUserModel } from "../models/AdminAgencyForUserModel";
 import type { AdminReplyForUserModel } from "../models/AdminReplyForUserModel";
-import type { AdminThreadForUserModel } from "../models/AdminThreadForUserModel";
+import type { GetAdminThreadsForUserResponse } from "../models/AdminThreadForUserModel";
+import type { GetAuditLogModel } from "../models/AuditLogModel";
 
 export interface UpdateUserPayload {
     userId: number;
@@ -49,20 +50,28 @@ export interface UserApiType {
     requestAdminRole: (userId: number) => Promise<ErrorWrapper<void>>,
     requestRevokeAdminRole: (userId: number) => Promise<ErrorWrapper<void>>,
     getFaqSuggestionsForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqSuggestionModel[]>>,
-    getFaqAnswersForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqForUserModel[]>>,
+    getFaqAnswersForUser: (userId: number, page: number) => Promise<ErrorWrapper<GetAdminFaqAnswersForUserResponse>>,
     getAgenciesForUser: (userId: number) => Promise<ErrorWrapper<AdminAgencyForUserModel[]>>,
     getRepliesForUser: (userId: number) => Promise<ErrorWrapper<AdminReplyForUserModel[]>>,
-    getThreadsForUser: (userId: number) => Promise<ErrorWrapper<AdminThreadForUserModel[]>>,
+    getThreadsForUser: (userId: number, page: number) => Promise<ErrorWrapper<GetAdminThreadsForUserResponse>>,
+    getAuditLog: (page: number) => Promise<ErrorWrapper<GetAuditLogModel>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
     const defaultErrorsLogin: Map<number, string> = new Map<number, string>([
         [400, "Invalid login credentials format"],
         [401, "Incorrect password"],
-        [403, "Your account has been banned. If you believe this is a mistake, please contact an administrator."],
+        [403, "Request was rejected. Please refresh the page and try again."],
         [404, "That email was not found"],
         [-1, "Unknown error!"]
     ]);
+
+    const getLoginErrorForStatus: GetErrorForStatus = (status, data: any) => {
+        if (status === 403 && data?.reason === "banned") {
+            return "Your account has been banned. If you believe this is a mistake, please contact an administrator.";
+        }
+        return undefined;
+    };
 
     const defaultErrorsGetInfo: Map<number, string> = new Map<number, string>([
         [401, "You must be logged in to view your info!"],
@@ -107,7 +116,8 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 "/users/login",
                 { email, password, stayLoggedIn: stayLoggedIn ?? false },
                 defaultErrorsLogin,
-                (data: any) => data.token as string
+                (data: any) => data.token as string,
+                getLoginErrorForStatus
             );
         },
         forgotPassword: async (email: string): Promise<ErrorWrapper<void>> => {
@@ -450,16 +460,16 @@ export const userApi = (auth: AuthContextType): UserApiType => {
             );
         },
 
-        getFaqAnswersForUser: async(userId: number): Promise<ErrorWrapper<AdminFaqForUserModel[]>> => {
+        getFaqAnswersForUser: async(userId: number, page: number): Promise<ErrorWrapper<GetAdminFaqAnswersForUserResponse>> => {
             const defaultErrors: Map<number, string> = new Map([
                 [403, "You do not have permission to view this user's FAQ answers."],
                 [404, "User not found."],
                 [-1, "Internal server error"]
             ]);
-            return doGenericRequest<AdminFaqForUserModel[]>(
+            return doGenericRequest<GetAdminFaqAnswersForUserResponse>(
                 auth.api,
                 RequestType.GET,
-                `/admin/users/${userId}/faq-answers`,
+                `/admin/users/${userId}/faq-answers?page=${page}`,
                 {},
                 defaultErrors
             );
@@ -495,16 +505,30 @@ export const userApi = (auth: AuthContextType): UserApiType => {
             );
         },
 
-        getThreadsForUser: async(userId: number): Promise<ErrorWrapper<AdminThreadForUserModel[]>> => {
+        getThreadsForUser: async(userId: number, page: number): Promise<ErrorWrapper<GetAdminThreadsForUserResponse>> => {
             const defaultErrors: Map<number, string> = new Map([
                 [403, "You do not have permission to view this user's threads."],
                 [404, "User not found."],
                 [-1, "Internal server error"]
             ]);
-            return doGenericRequest<AdminThreadForUserModel[]>(
+            return doGenericRequest<GetAdminThreadsForUserResponse>(
                 auth.api,
                 RequestType.GET,
-                `/admin/users/${userId}/threads`,
+                `/admin/users/${userId}/threads?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getAuditLog: async(page: number): Promise<ErrorWrapper<GetAuditLogModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view the audit log."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAuditLogModel>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/audit-log?page=${page}`,
                 {},
                 defaultErrors
             );

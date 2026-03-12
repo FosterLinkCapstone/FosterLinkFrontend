@@ -11,6 +11,7 @@ import { AdminFaqAnswerCard } from "../components/faq/AdminFaqAnswerCard";
 import { FaqDialog } from "../components/faq/FaqDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
+import { Paginator } from "../components/Paginator";
 import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
 import { ArrowLeft } from "lucide-react";
 
@@ -23,6 +24,8 @@ export const AdminUserFaqAnswers = () => {
     faqApiRef.current = faqApi(auth);
 
     const [items, setItems] = useState<AdminFaqForUserModel[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export const AdminUserFaqAnswers = () => {
         [items, orderBy]
     );
 
-    const fetchAnswers = useCallback(async () => {
+    const fetchAnswers = useCallback(async (page: number) => {
         const id = userId ? parseInt(userId, 10) : NaN;
         if (!userId || isNaN(id)) {
             setError("Invalid user.");
@@ -48,12 +51,14 @@ export const AdminUserFaqAnswers = () => {
         }
         setLoading(true);
         setError(null);
-        const res = await userApiRef.current.getFaqAnswersForUser(id);
+        const res = await userApiRef.current.getFaqAnswersForUser(id, page);
         setLoading(false);
         if (!res.isError && res.data) {
-            setItems(res.data);
-            if (res.data.length > 0 && res.data[0].faq?.author?.username) {
-                setUsername(res.data[0].faq.author.username);
+            setItems(res.data.items);
+            setTotalPages(res.data.totalPages);
+            setCurrentPage(page + 1);
+            if (res.data.items.length > 0 && res.data.items[0].faq?.author?.username) {
+                setUsername(res.data.items[0].faq.author.username);
             }
         } else {
             setError(res.error ?? "Failed to load FAQ answers.");
@@ -62,7 +67,7 @@ export const AdminUserFaqAnswers = () => {
     }, [userId]);
 
     useEffect(() => {
-        fetchAnswers();
+        fetchAnswers(0);
     }, [fetchAnswers]);
 
     const handleExpand = (id: number) => setExpandedId(id);
@@ -149,6 +154,22 @@ export const AdminUserFaqAnswers = () => {
                                 contentLoading={contentLoadingId === item.faq.id}
                             />
                         ))}
+                        <Paginator<AdminFaqForUserModel[]>
+                            pageCount={totalPages}
+                            currentPage={currentPage}
+                            setCurrentPage={setCurrentPage}
+                            onDataChanged={setItems}
+                            onPageChanged={async (pageNum) => {
+                                const id = userId ? parseInt(userId, 10) : NaN;
+                                if (isNaN(id)) return [];
+                                const res = await userApiRef.current.getFaqAnswersForUser(id, pageNum - 1);
+                                if (res.data) {
+                                    setTotalPages(res.data.totalPages);
+                                    return res.data.items;
+                                }
+                                return [];
+                            }}
+                        />
                     </div>
                 )}
             </div>

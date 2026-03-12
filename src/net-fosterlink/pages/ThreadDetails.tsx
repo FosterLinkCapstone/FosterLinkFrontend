@@ -6,6 +6,7 @@ import { Heart } from "lucide-react";
 import { ReplyCard } from "../components/forum/ReplyCard";
 import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import type { ThreadModel } from "../backend/models/ThreadModel";
 import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
@@ -22,6 +23,7 @@ import { ThreadContentCard } from "../components/forum/ThreadContentCard";
 import { ThreadActionsBar } from "../components/forum/ThreadActionsBar";
 
 export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
+    const navigate = useNavigate();
     const [replyText, setReplyText] = useState('');
     const [replyFieldErrors, setReplyFieldErrors] = useState<{ [key: string]: string }>({});
     const [replyError, setReplyError] = useState<string>('');
@@ -130,7 +132,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
         const res = await confirm({ message: 'Are you sure you want to delete this thread?' })
         if (res) {
             threadApiRef.setThreadHidden(thread.id, true).then(() => {
-                window.location.href = `/threads`
+                navigate('/threads')
             }).finally(() => setThreadEditLoading(false))
         } else {
             setThreadEditLoading(false)
