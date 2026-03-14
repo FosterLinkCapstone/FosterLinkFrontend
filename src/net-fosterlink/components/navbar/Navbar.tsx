@@ -235,6 +235,15 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                                     </>
                                 )}
 
+                                {/* Legal links */}
+                                <p className={mobileSectionLabel}>Legal</p>
+                                <SheetClose asChild>
+                                    <Link to="/privacy" className={mobileLinkClass}>Privacy Policy</Link>
+                                </SheetClose>
+                                <SheetClose asChild>
+                                    <Link to="/terms" className={mobileLinkClass}>Terms of Service</Link>
+                                </SheetClose>
+
                                 {/* Theme toggle */}
                                 <div className="mt-4 flex items-center gap-2 px-3">
                                     <Button

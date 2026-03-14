@@ -14,7 +14,6 @@ export interface AuthContextType {
     logoutAll: () => void,
     setUserInfo: (user: UserModel) => void,
     getUserInfo: () => UserModel | undefined,
-    getMapsApiKey: () => string,
     faqAuthor: boolean,
     agent: boolean,
     admin: boolean | null,
@@ -53,7 +52,7 @@ function clearToken() {
     localStorage.removeItem(PERSISTENT_FLAG)
 }
 
-export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string, mapsApiKey: string, children: React.ReactNode }) => {
+export const AuthProvider = ({ apiUrl, children }: { apiUrl: string, children: React.ReactNode }) => {
     const navigate = useNavigate()
     const [token, setTokenState] = useState<string | null>(readStoredToken)
     const [admin, setAdmin] = useState<boolean | null>(null)
@@ -225,8 +224,6 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
         return readStoredToken() != null
     }
 
-    const getMapsApiKey = () => mapsApiKey
-
     const logout = () => {
         api.post('/users/logout', {}, { withCredentials: true })
             .then(forceLogout)
@@ -256,7 +253,6 @@ export const AuthProvider = ({ apiUrl, mapsApiKey, children }: { apiUrl: string,
         logoutAll,
         setUserInfo,
         getUserInfo,
-        getMapsApiKey,
         faqAuthor,
         agent,
         admin,

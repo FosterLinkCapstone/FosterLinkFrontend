@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ApprovalStatus, type PendingFaqModel } from "../backend/models/PendingFaqModel";
+import type { PendingFaqModel } from "../backend/models/PendingFaqModel";
 import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
 import type { FaqModel } from "../backend/models/FaqModel";
 
@@ -163,9 +163,8 @@ export const PendingFaqs = () => {
     });
     if (confirmed) {
       faqApiRef.current.approve(faq.id, false).then(res => {
-        if (!res.isError && res.data) {
-          faq.approvalStatus = ApprovalStatus.DENIED;
-          faq.deniedByUsername = auth.getUserInfo()!.username;
+        if (!res.isError) {
+          setFaqs(faqs.filter(f => f.id !== faq.id));
           setApprovedOrDenied("denied");
         } else {
           alert(res.error || "Error denying!");

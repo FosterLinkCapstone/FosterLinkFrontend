@@ -33,6 +33,7 @@ export interface FaqApiType {
     getRequests: () => Promise<ErrorWrapper<FaqRequestModel[]>>
     answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
     createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
+    deleteMyRequests: () => Promise<ErrorWrapper<void>>
     allAuthor: (userId: number, pageNumber?: number) => Promise<ErrorWrapper<GetFaqsResponse>>
     getHiddenFaqs: (type: 'ADMIN' | 'USER', pageNumber: number) => Promise<ErrorWrapper<GetHiddenFaqsResponse>>
     setFaqHidden: (faqId: number, hidden: boolean, markAsUserDeleted?: boolean) => Promise<ErrorWrapper<boolean>>
@@ -196,18 +197,32 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
             )
         },
         createRequest: async(suggested: string): Promise<ErrorWrapper<boolean>> => {
-            const defaultErrorsCreateRequest: Map<number, string> = new Map<number, string>([
-                [400, "Invalid request content!"],
-                [403, "You must be logged in to create FAQ requests!"],
-                [-1, "Internal client error"]
-            ])
+    const defaultErrorsCreateRequest: Map<number, string> = new Map<number, string>([
+        [400, "Invalid request content!"],
+        [403, "You must be logged in to create FAQ requests!"],
+        [-1, "Internal client error"]
+    ])
 
-            return doGenericRequest<boolean>(
+    return doGenericRequest<boolean>(
                 auth.api,
                 RequestType.POST,
                 "/faq/requests/create",
                 { suggested },
                 defaultErrorsCreateRequest
+            )
+        },
+        deleteMyRequests: async (): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in to delete your FAQ suggestions."],
+                [403, "You do not have permission to delete FAQ suggestions."],
+                [-1, "Internal server error"]
+            ])
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.DELETE,
+                "/faq/my-requests",
+                {},
+                defaultErrors
             )
         },
         allAuthor: async(userId: number, pageNumber: number = 0): Promise<ErrorWrapper<GetFaqsResponse>> => {

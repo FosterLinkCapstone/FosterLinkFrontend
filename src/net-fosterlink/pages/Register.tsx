@@ -3,6 +3,7 @@ import { useAuth } from "../backend/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState } from "react"
 import { Alert, AlertTitle } from "@/components/ui/alert"
 import { AlertCircleIcon } from "lucide-react"
@@ -21,6 +22,10 @@ export const Register = () => {
     const [fieldErrors,setFieldErrors] = useState<{[key: string]: string}>({})
     const [password, setPassword] = useState<string>("")
     const [confirmPassword, setConfirmPassword] = useState<string>("")
+    const [confirmAgeRequirement, setConfirmAgeRequirement] = useState<boolean>(false)
+    const [consentTerms, setConsentTerms] = useState<boolean>(false)
+    const [consentPrivacy, setConsentPrivacy] = useState<boolean>(false)
+    const [consentMarketing, setConsentMarketing] = useState<boolean>(false)
     const navigate = useNavigate()
     const [error, setError] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
@@ -36,7 +41,11 @@ export const Register = () => {
             username: username.current,
             email: email,
             phoneNumber: phoneNumber,
-            password: password
+            password: password,
+            confirmAgeRequirement: confirmAgeRequirement,
+            consentTerms: consentTerms,
+            consentPrivacy: consentPrivacy,
+            consentMarketing: consentMarketing
         }).then(res => {
             if (res.error) {
                 setError(res.error)
@@ -65,6 +74,13 @@ export const Register = () => {
             <CardContent>
                 <form id="register-form" onSubmit={(e) => { e.preventDefault(); submitRegister(); }}>
                     <div className="flex flex-col gap-6">
+                        <div className="flex items-start gap-2">
+                            <Checkbox id="confirm-age" checked={confirmAgeRequirement} onCheckedChange={(checked) => setConfirmAgeRequirement(checked === true)} required />
+                            <Label htmlFor="confirm-age" className="leading-snug font-normal">
+                                I confirm I am 13 years of age or older
+                            </Label>
+                        </div>
+                        {fieldErrors.confirmAgeRequirement && <span className="text-red-500 text-sm">{fieldErrors.confirmAgeRequirement}</span>}
                         <div className="grid gap-2">
                             <Label htmlFor="firstname">First Name</Label>
                             <Input id="firstname" type="text" placeholder="First Name" onChange={(event) => firstName.current = event.target.value} required/>
@@ -86,7 +102,7 @@ export const Register = () => {
                             <span className="text-red-500">{fieldErrors.email}</span>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="phoneNumber">Phone Number</Label>
+                            <Label htmlFor="phoneNumber">Phone Number <span className="text-muted-foreground font-normal">(optional)</span></Label>
                             <PhoneNumberInput value={phoneNumber} setValue={setPhoneNumber}/>
                             <span className="text-red-500">{fieldErrors.phoneNumber}</span>
                         </div>
@@ -107,12 +123,30 @@ export const Register = () => {
                             <AlertTitle>Passwords don't match!</AlertTitle>
                         </Alert>
                         }
+                        <div className="flex items-start gap-2">
+                            <Checkbox id="consent-terms" checked={consentTerms} onCheckedChange={(checked) => setConsentTerms(checked === true)} required />
+                            <Label htmlFor="consent-terms" className="leading-snug font-normal">
+                                I agree to the <Link className="text-primary hover:text-primary/90 underline" to="/terms">Terms of Service</Link>
+                            </Label>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <Checkbox id="consent-privacy" checked={consentPrivacy} onCheckedChange={(checked) => setConsentPrivacy(checked === true)} required />
+                            <Label htmlFor="consent-privacy" className="leading-snug font-normal">
+                                I have read the <Link className="text-primary hover:text-primary/90 underline" to="/privacy">Privacy Policy</Link>
+                            </Label>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <Checkbox id="consent-marketing" checked={consentMarketing} onCheckedChange={(checked) => setConsentMarketing(checked === true)} />
+                            <Label htmlFor="consent-marketing" className="leading-snug font-normal">
+                                I would like to receive marketing emails
+                            </Label>
+                        </div>
 
                     </div>
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="submit" form="register-form" variant="outline" className="w-full" disabled={loading || (password != confirmPassword)}>
+                <Button type="submit" form="register-form" variant="outline" className="w-full" disabled={loading || (password != confirmPassword) || !confirmAgeRequirement || !consentTerms || !consentPrivacy}>
                     {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Register"}
                 </Button>
                 {error != "" && <ExpandableAlert message={error} />}

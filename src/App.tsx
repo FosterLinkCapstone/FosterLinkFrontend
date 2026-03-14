@@ -32,6 +32,10 @@ import { AuditLog } from './net-fosterlink/pages/AuditLog'
 import { TokenAction } from './net-fosterlink/pages/TokenAction'
 import { ForgotPassword } from './net-fosterlink/pages/ForgotPassword'
 import { ResetPassword } from './net-fosterlink/pages/ResetPassword'
+import { PrivacyPolicy } from './net-fosterlink/pages/PrivacyPolicy'
+import { TermsOfService } from './net-fosterlink/pages/TermsOfService'
+import { ConsentContextProvider } from './net-fosterlink/components/consent/ConsentContext'
+import { CookieConsentBanner } from './net-fosterlink/components/consent/CookieConsentBanner'
 
 function App() {
 
@@ -45,9 +49,10 @@ function App() {
 
   return (
     <>
+        <ConsentContextProvider>
         <ThemeProvider>
         <BrowserRouter>
-          <AuthProvider apiUrl={import.meta.env.VITE_API_URL} mapsApiKey={import.meta.env.VITE_MAPS_API_KEY}>
+          <AuthProvider apiUrl={import.meta.env.VITE_API_URL}>
             <RestrictGateway>
             <Routes>
               <Route path="/" element={<Home/>}/>
@@ -76,12 +81,16 @@ function App() {
               <Route path="/token-action" element={<TokenAction/>}/>
               <Route path="/forgot-password" element={<ForgotPassword/>}/>
               <Route path="/reset-password" element={<ResetPassword/>}/>
+              <Route path="/privacy" element={<PrivacyPolicy/>}/>
+              <Route path="/terms" element={<TermsOfService/>}/>
               <Route path="*" element={<NotFound/>}/>
             </Routes>
             </RestrictGateway>
           </AuthProvider>
         </BrowserRouter>
+          <CookieConsentBanner />
         </ThemeProvider>
+        </ConsentContextProvider>
         <GlobalStyle/>
     </>
   )

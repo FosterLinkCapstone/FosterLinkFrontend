@@ -24,12 +24,69 @@ export interface UpdateUserPayload {
     profilePictureUrl?: string;
 }
 
+export interface UserDataExport {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    phoneNumber: string;
+    profilePictureUrl: string;
+    idVerified: boolean;
+    verifiedFoster: boolean;
+    verifiedAgencyRep: boolean;
+    administrator: boolean;
+    faqAuthor: boolean;
+    emailVerified: boolean;
+    accountDeleted: boolean;
+    unsubscribeAll: boolean;
+    createdAt: string;
+    updatedAt: string | null;
+    bannedAt: string | null;
+    restrictedAt: string | null;
+    restrictedUntil: string | null;
+    threads: Array<{
+        id: number;
+        title: string;
+        content: string;
+        createdAt: string;
+        updatedAt: string | null;
+        hidden: boolean;
+        userDeleted: boolean;
+    }>;
+    agencies: Array<{
+        id: number;
+        name: string;
+        websiteUrl: string;
+        missionStatement: string;
+        approved: boolean | null;
+        hidden: boolean;
+        createdAt: string;
+        updatedAt: string | null;
+    }>;
+    disabledEmailTypeIds: number[];
+    mailingListIds: number[];
+    accountDeletionRequest: {
+        requestId: number;
+        requestedAt: string;
+        autoApproveBy: string;
+        clearAccount: boolean;
+    } | null;
+    consentRecords: Array<{
+        consentType: string;
+        granted: boolean;
+        timestamp: string;
+        policyVersion: string | null;
+        mechanism: string | null;
+    }>;
+}
+
 export interface UserApiType {
     login: (email: string, password: string, stayLoggedIn?: boolean) => Promise<ErrorWrapper<string>>,
     forgotPassword: (email: string) => Promise<ErrorWrapper<void>>,
     resetPassword: (token: string, userId: string, newPassword: string) => Promise<ErrorWrapper<void>>,
     getInfo: () => Promise<ErrorWrapper<UserInfoResponse>>,
-    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<ErrorWrapper<string>>
+    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string, confirmAgeRequirement: boolean, consentTerms: boolean, consentPrivacy: boolean, consentMarketing: boolean}) => Promise<ErrorWrapper<string>>
     isAdmin: () => Promise<ErrorWrapper<boolean>>
     isFaqAuthor: () => Promise<ErrorWrapper<boolean>>
     getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
@@ -56,6 +113,8 @@ export interface UserApiType {
     getThreadsForUser: (userId: number, page: number) => Promise<ErrorWrapper<GetAdminThreadsForUserResponse>>,
     getAuditLog: (page: number) => Promise<ErrorWrapper<GetAuditLogModel>>,
     clearUserProfile: (userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean) => Promise<ErrorWrapper<AdminUserModel>>,
+    getMyData: () => Promise<ErrorWrapper<UserDataExport>>,
+    exportData: () => Promise<ErrorWrapper<Blob>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
@@ -164,7 +223,7 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 })
             );
         },
-        register: async (info: {firstName: string, lastName: string, username: string, email: string, password: string}): Promise<ErrorWrapper<string>> => {
+        register: async (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string, confirmAgeRequirement: boolean, consentTerms: boolean, consentPrivacy: boolean, consentMarketing: boolean}): Promise<ErrorWrapper<string>> => {
             return doGenericRequest<string>(
                 auth.api,
                 RequestType.POST,
@@ -550,6 +609,34 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 {},
                 defaultErrors
             );
+        },
+
+        getMyData: async(): Promise<ErrorWrapper<UserDataExport>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in to view your data."],
+                [404, "User not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<UserDataExport>(
+                auth.api,
+                RequestType.GET,
+                "/users/my-data",
+                {},
+                defaultErrors
+            );
+        },
+
+        exportData: async(): Promise<ErrorWrapper<Blob>> => {
+            try {
+                const response = await auth.api.get("/users/export-data", { responseType: "blob" });
+                return { isError: false, data: response.data as Blob, error: undefined };
+            } catch (err: any) {
+                const status: number = err?.response?.status ?? -1;
+                if (status === 429) return { isError: true, error: "You can only download your data once every 24 hours.", data: undefined };
+                if (status === 404) return { isError: true, error: "User not found.", data: undefined };
+                return { isError: true, error: "Failed to download data export.", data: undefined };
+            }
         },
     }
 }
