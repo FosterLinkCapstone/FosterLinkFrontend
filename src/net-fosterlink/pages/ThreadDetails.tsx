@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Heart } from "lucide-react";
 import { ReplyCard } from "../components/forum/ReplyCard";
 import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { ThreadModel } from "../backend/models/ThreadModel";
 import { PageLayout } from "../components/PageLayout";
@@ -39,7 +39,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [editingTitle, setEditingTitle] = useState<boolean>(false);
     const [titleEditLoading, setTitleEditLoading] = useState<boolean>(false)
     const auth = useAuth()
-    const threadApiRef = threadApi(auth)
+    const threadApiRef = useMemo(() => threadApi(auth), [auth])
     const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(
         thread.liked,
         thread.likeCount,

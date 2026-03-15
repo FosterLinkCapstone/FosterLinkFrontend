@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { memo, useCallback, useMemo, type ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function formatFaqDate(value: Date | string): string {
@@ -45,7 +45,7 @@ interface BaseFaqCardProps {
     restricted?: boolean;
 }
 
-export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
+export const BaseFaqCard = memo<BaseFaqCardProps>(({
     faq,
     onExpand,
     onCollapse,
@@ -69,10 +69,37 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
     restricted,
 }) => {
     const navigate = useNavigate();
-    const isEditing = canEdit && expanded && editMode;
-    const displayTitle = isEditing && editTitle !== undefined ? editTitle : faq.title;
-    const displaySummary = isEditing && editSummary !== undefined ? editSummary : faq.summary;
-    const showEditButton = canEdit && expanded && !editMode && onEditClick;
+    const isEditing = useMemo(() => !!(canEdit && expanded && editMode), [canEdit, expanded, editMode]);
+    const displayTitle = useMemo(() => isEditing && editTitle !== undefined ? editTitle : faq.title, [isEditing, editTitle, faq.title]);
+    const displaySummary = useMemo(() => isEditing && editSummary !== undefined ? editSummary : faq.summary, [isEditing, editSummary, faq.summary]);
+    const showEditButton = useMemo(() => !!(canEdit && expanded && !editMode && onEditClick), [canEdit, expanded, editMode, onEditClick]);
+
+    const handleAuthorClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(buildProfileUrl(faq.author));
+    }, [navigate, faq.author]);
+    const handleToggleExpand = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (expanded) { onCollapse(); } else { onExpand(); }
+    }, [expanded, onCollapse, onExpand]);
+    const handleShowDetail = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        onShowDetail();
+    }, [onShowDetail]);
+    const handleEditClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        onEditClick!();
+    }, [onEditClick]);
+    const handleEditContentClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        onEditContentClick!();
+    }, [onEditContentClick]);
+    const handleResetClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        onReset!();
+    }, [onReset]);
+    const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onEditTitleChange!(e.target.value), [onEditTitleChange]);
+    const handleSummaryChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => onEditSummaryChange!(e.target.value), [onEditSummaryChange]);
 
     return (
         <div className="flex flex-col w-full gap-1">
@@ -88,7 +115,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             {isEditing && onEditTitleChange ? (
                                 <Input
                                     value={editTitle ?? faq.title}
-                                    onChange={(e) => onEditTitleChange(e.target.value)}
+                                    onChange={handleTitleChange}
                                     onClick={(e) => e.stopPropagation()}
                                     className="text-xl font-semibold text-center mb-2"
                                     placeholder="Title"
@@ -98,10 +125,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             )}
                             <div className="flex items-center justify-center gap-2 flex-wrap text-sm text-muted-foreground">
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(buildProfileUrl(faq.author));
-                                    }}
+                                    onClick={handleAuthorClick}
                                     className="flex flex-row gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring"
                                 >
                                     <span>By</span>
@@ -121,14 +145,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             </div>
                         </div>
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (expanded) {
-                                    onCollapse();
-                                } else {
-                                    onExpand();
-                                }
-                            }}
+                            onClick={handleToggleExpand}
                             className="p-2 hover:bg-accent rounded-full transition-colors ml-4"
                         >
                             {expanded ? (
@@ -146,7 +163,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             {isEditing && onEditSummaryChange ? (
                                 <textarea
                                     value={editSummary ?? faq.summary}
-                                    onChange={(e) => onEditSummaryChange(e.target.value)}
+                                    onChange={handleSummaryChange}
                                     onClick={(e) => e.stopPropagation()}
                                     className="w-full min-h-[80px] text-foreground mb-4 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
                                     placeholder="Summary"
@@ -156,10 +173,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                             )}
                             <div className="flex flex-col items-center gap-2">
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onShowDetail();
-                                    }}
+                                    onClick={handleShowDetail}
                                     className="text-sm text-primary hover:text-primary/90 font-medium"
                                     disabled={contentLoading}
                                 >
@@ -167,10 +181,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                                 </button>
                                 {showEditButton && (
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onEditClick!();
-                                        }}
+                                        onClick={handleEditClick}
                                         className="text-sm text-primary hover:text-primary/90 font-medium inline-flex items-center gap-1"
                                     >
                                         <Pencil className="h-3.5 w-3.5" />
@@ -179,10 +190,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                                 )}
                                 {isEditing && onEditContentClick && (
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onEditContentClick();
-                                        }}
+                                        onClick={handleEditContentClick}
                                         className="text-sm text-primary hover:text-primary/90 font-medium inline-flex items-center gap-1"
                                     >
                                         <Pencil className="h-3.5 w-3.5" />
@@ -191,10 +199,7 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
                                 )}
                                 {isEditing && onReset && (
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onReset();
-                                        }}
+                                        onClick={handleResetClick}
                                         className="text-sm text-muted-foreground hover:text-foreground font-medium"
                                     >
                                         Cancel editing
@@ -224,4 +229,4 @@ export const BaseFaqCard: React.FC<BaseFaqCardProps> = ({
             )}
         </div>
     );
-};
+});

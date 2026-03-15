@@ -7,7 +7,7 @@ import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { formatRelativeDate } from "@/net-fosterlink/util/DateUtil";
 import { ExternalLink, Mail, MapPin, Pencil, Phone } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { memo, useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { Input } from "@/components/ui/input";
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi";
@@ -41,7 +41,7 @@ function getSnapshot(agency: AgencyModel): SavedSnapshot {
   };
 }
 
-export const AgencyCard = ({ agency, onRemove, onDelete, onRequestDeletion, onSentToPending, highlighted, showRemove = false, deletionRequested = false } : { agency: AgencyModel, onRemove: (agencyId: number) => void, onDelete?: (agencyId: number) => void, onRequestDeletion?: (agencyId: number) => void, onSentToPending?: (agencyId: number) => void, highlighted?: boolean, showRemove?: boolean, deletionRequested? : boolean }) => {
+export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion, onSentToPending, highlighted, showRemove = false, deletionRequested = false } : { agency: AgencyModel, onRemove: (agencyId: number) => void, onDelete?: (agencyId: number) => void, onRequestDeletion?: (agencyId: number) => void, onSentToPending?: (agencyId: number) => void, highlighted?: boolean, showRemove?: boolean, deletionRequested? : boolean }) => {
   const savedRef = useRef<SavedSnapshot>(getSnapshot(agency));
   const [draftName, setDraftName] = useState(agency.agencyName);
   const [draftMission, setDraftMission] = useState(agency.agencyMissionStatement ?? "");
@@ -367,4 +367,4 @@ export const AgencyCard = ({ agency, onRemove, onDelete, onRequestDeletion, onSe
       )}
     </Card>
   );
-};
+});

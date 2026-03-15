@@ -147,18 +147,17 @@ export const AccountSettings = () => {
 
         let profileError: string | null = null;
 
-        if (profileChanged) {
-            const res = await userApi(auth).updateUser(payload as any);
-            if (!res.isError) {
+        const [profileRes] = await Promise.all([
+            profileChanged ? userApi(auth).updateUser(payload as any) : Promise.resolve(null),
+            emailPrefsChanged ? emailPrefsRef.current?.save() : Promise.resolve(),
+        ]);
+
+        if (profileChanged && profileRes) {
+            if (!profileRes.isError) {
                 savedRef.current = { ...form };
             } else {
-                profileError = res.error ?? "Failed to save settings.";
+                profileError = profileRes.error ?? "Failed to save settings.";
             }
-        }
-
-        if (emailPrefsChanged) {
-            // save() reports errors via onSaveError callback which sets saveStatus directly
-            await emailPrefsRef.current?.save();
         }
 
         setSaving(false);

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@radix-ui/react-tooltip"
 import { CircleX } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export interface TagInputFieldProps {
@@ -20,10 +20,10 @@ export const TagInputField = ({ inputTags, onTagsChange, loading, className, act
     const [showErrorTooltip, setShowErrorTooltip] = useState<boolean>(false)
     const [errorTooltipText, setErrorTooltipText] = useState<string>('')
 
-    const removeTag = (tagToRemove: string) => {
+    const removeTag = useCallback((tagToRemove: string) => {
         if (loading) return; // avoid race condition
         onTagsChange(inputTags.filter(tag => tag !== tagToRemove));
-    }
+    }, [loading, onTagsChange, inputTags])
     const onTagTextChange = (value: string) => {
         if (loading) return; // avoid race condition
       if (showErrorTooltip) {

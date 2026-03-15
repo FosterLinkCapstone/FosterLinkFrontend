@@ -8,7 +8,7 @@ import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import { VerifiedCheck } from "../badges/VerifiedCheck";
 import type { AuthContextType } from "@/net-fosterlink/backend/AuthContext";
-import { useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { threadApi } from "@/net-fosterlink/backend/api/ThreadApi";
 import { formatRelativeDate } from "@/net-fosterlink/util/DateUtil";
 import { useLikeToggle } from "@/net-fosterlink/hooks/useLikeToggle";
@@ -19,25 +19,27 @@ interface ThreadPreviewProps {
     basePath?: string
 }
 
-export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, basePath = "/threads/thread/" }) => {
+export const ThreadPreviewWide = memo<ThreadPreviewProps>(({ thread, auth, basePath = "/threads/thread/" }) => {
   const apiCall = useCallback(() => threadApi(auth).likeThread(thread.id), [auth, thread.id]);
   const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(thread.liked, thread.likeCount, apiCall);
   const navigate = useNavigate()
 
-  const goToThread = () => {
+  const goToThread = useCallback(() => {
     navigate(`${basePath}${thread.id}`)
-  }
+  }, [navigate, basePath, thread.id])
 
-  const goToProfile = (e: React.MouseEvent) => {
+  const goToProfile = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     navigate(buildProfileUrl(thread.author))
-  }
+  }, [navigate, thread.author])
 
-  const likeThread = (e: React.MouseEvent) => {
+  const likeThread = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!auth.isLoggedIn()) return;
     toggleLike();
-  }
+  }, [auth, toggleLike])
+
+  const visibleTags = useMemo(() => thread.tags ? thread.tags.slice(0, 3) : [], [thread.tags])
 
   return (
     <Card 
@@ -93,7 +95,7 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
               Posted {formatRelativeDate(thread.createdAt)} at {new Date(thread.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <div className="flex flex-row gap-2 items-center">
-            {thread.tags && thread.tags.slice(0, 3).map((tag, index) => (
+            {visibleTags.map((tag, index) => (
               <Badge 
                 key={index} 
                 variant="secondary"
@@ -130,4 +132,4 @@ export const ThreadPreviewWide: React.FC<ThreadPreviewProps> = ({ thread, auth, 
       </div>
     </Card>
   );
-};
+});

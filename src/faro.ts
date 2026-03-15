@@ -38,8 +38,7 @@ export function initFaro(): void {
    *   /admin/users, /admin/audit-log, /settings, /banned, /token-action,
    *   /forgot-password, /reset-password, /privacy, /terms
    *
-   * Console capture: fully disabled (all levels: log, info, warn, error, debug, trace)
-   * via consoleInstrumentation.
+   * Console capture: fully disabled via captureConsole: false.
    */
   function sanitizeUrl(url: string): string {
     return url
@@ -57,9 +56,7 @@ export function initFaro(): void {
     },
     instrumentations: [
       ...getWebInstrumentations({
-        consoleInstrumentation: {
-          disabledLevels: ["log", "info", "warn", "error", "debug", "trace"],
-        },
+        captureConsole: false,
       }),
       new TracingInstrumentation(),
     ],

@@ -4,7 +4,7 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "../../backend/AuthContext";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { threadApi } from "../../backend/api/ThreadApi";
 import { confirm } from "../ConfirmDialog";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
@@ -22,10 +22,12 @@ interface ReplyCardProps {
     onReplyHide?: (replyId: number, hiddenBy: string) => void;
 }
 
-export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpdate, onReplyDelete, onReplyRestore, onReplyHide }) => {
+export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, onReplyDelete, onReplyRestore, onReplyHide }) => {
     const auth = useAuth()
-    const threadApiRef = threadApi(auth)
-    const apiCall = useCallback(() => threadApiRef.likeReply(reply.id), [reply.id]);
+    const threadApiRef = useRef(threadApi(auth))
+    threadApiRef.current = threadApi(auth)
+
+    const apiCall = useCallback(() => threadApiRef.current.likeReply(reply.id), [reply.id]);
     const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(reply.liked, reply.likeCount, apiCall);
     const [editing, setEditing] = useState<boolean>(false)
     const [editedContent, setEditedContent] = useState<string>(reply.content)
@@ -33,25 +35,20 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
     const [loading, setLoading] = useState<boolean>(false)
 
     const isReplyAuthor = auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id;
-    if (reply.postMetadata?.hidden && (auth.admin || isReplyAuthor)) {
-        return (
-            <HiddenReplyCard
-                reply={reply}
-                onReplyDelete={onReplyDelete}
-                onReplyRestore={onReplyRestore}
-            />
-        )
-    }
 
-    const likeReply = () => {
+    const likeReply = useCallback(() => {
         if (!auth.isLoggedIn()) return;
         toggleLike();
-    }
+    }, [auth, toggleLike])
 
-    const submitEdit = () => {
+    const handleEditedContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setEditedContent(e.target.value)
+    }, [])
+
+    const submitEdit = useCallback(() => {
         setFieldErrors({})
         setLoading(true)
-        threadApiRef.editReplyContent(reply.id, editedContent).then(res => {
+        threadApiRef.current.editReplyContent(reply.id, editedContent).then(res => {
             setLoading(false)
             if (!res.isError && res.data) {
                 reply.content = editedContent
@@ -63,13 +60,13 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                 setFieldErrors(next)
             }
         })
-    }
+    }, [reply.id, editedContent, onReplyUpdate])
 
-    const deleteReply = async () => {
+    const deleteReply = useCallback(async () => {
         setLoading(true)
         const res = await confirm({ message: 'Are you sure you want to delete this reply?' })
         if (res) {
-            threadApiRef.deleteReply(reply.id).then(result => {
+            threadApiRef.current.deleteReply(reply.id).then(result => {
                 setLoading(false)
                 if (!result.isError && result.data && onReplyDelete) {
                     onReplyDelete(reply.id)
@@ -78,15 +75,15 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
         } else {
             setLoading(false)
         }
-    }
+    }, [reply.id, onReplyDelete])
 
-    const hideReply = async () => {
+    const hideReply = useCallback(async () => {
         setLoading(true)
         const res = await confirm({
             message: 'Are you sure you want to hide this reply? It will only be visible to administrators.',
         })
         if (res) {
-            threadApiRef.hideReply(reply.id, true).then(result => {
+            threadApiRef.current.hideReply(reply.id, true).then(result => {
                 setLoading(false)
                 if (!result.isError && onReplyHide) {
                     onReplyHide(reply.id, auth.getUserInfo()!.username)
@@ -95,19 +92,40 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
         } else {
             setLoading(false)
         }
-    }
+    }, [reply.id, auth, onReplyHide])
 
-    const deleteReplyAsUser = async () => {
+    const deleteReplyAsUser = useCallback(async () => {
         const res = await confirm({
             message: 'Are you sure you want to delete this reply?',
         })
         if (!res) return
         setLoading(true)
-        threadApiRef.deleteReply(reply.id, true).then((result) => {
+        threadApiRef.current.deleteReply(reply.id, true).then((result) => {
             if (!result.isError && onReplyDelete) {
                 onReplyDelete(reply.id)
             }
         }).finally(() => setLoading(false))
+    }, [reply.id, onReplyDelete])
+
+    const handleReply = useCallback(() => onReply(reply.author.username), [onReply, reply.author.username])
+
+    const handleToggleEdit = useCallback(() => {
+        if (editing) {
+            setEditedContent(reply.content)
+            setEditing(false)
+        } else {
+            setEditing(true)
+        }
+    }, [editing, reply.content])
+
+    if (reply.postMetadata?.hidden && (auth.admin || isReplyAuthor)) {
+        return (
+            <HiddenReplyCard
+                reply={reply}
+                onReplyDelete={onReplyDelete}
+                onReplyRestore={onReplyRestore}
+            />
+        )
     }
 
     const replyContent = (
@@ -116,7 +134,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                 <div className="grid gap-2 mb-3">
                     <Textarea
                         value={editedContent}
-                        onChange={(e) => setEditedContent(e.target.value)}
+                        onChange={handleEditedContentChange}
                         className="w-full min-h-[100px]"
                     />
                     <span className="text-red-500">{fieldErrors["content"]}</span>
@@ -148,7 +166,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                         )}
                     </button>
                     {auth.isLoggedIn() && (
-                        <Button variant="ghost" size="sm" onClick={() => onReply(reply.author.username)} disabled={auth.restricted}>
+                        <Button variant="ghost" size="sm" onClick={handleReply} disabled={auth.restricted}>
                             Reply
                         </Button>
                     )}
@@ -180,14 +198,7 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                                if (editing) {
-                                    setEditedContent(reply.content)
-                                    setEditing(false)
-                                } else {
-                                    setEditing(true)
-                                }
-                            }}
+                            onClick={handleToggleEdit}
                             disabled={auth.restricted}
                         >
                             {editing ? 'Cancel' : 'Edit'}
@@ -212,4 +223,4 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({ reply, onReply, onReplyUpd
             />
         </Card>
     );
-};
+});

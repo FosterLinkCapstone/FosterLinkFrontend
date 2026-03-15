@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import type { HiddenFaqModel } from "@/net-fosterlink/backend/models/HiddenFaqModel";
@@ -15,7 +16,7 @@ interface HiddenFaqCardProps {
     onDelete: (faq: HiddenFaqModel) => void;
 }
 
-export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
+export const HiddenFaqCard = memo<HiddenFaqCardProps>(({
     faq,
     onExpand,
     onCollapse,
@@ -77,4 +78,4 @@ export const HiddenFaqCard: React.FC<HiddenFaqCardProps> = ({
             actionButtons={actionButtons}
         />
     );
-};
+});
