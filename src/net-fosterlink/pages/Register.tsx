@@ -12,6 +12,9 @@ import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate } from "react-router"
 import { PhoneNumberInput } from "../components/PhoneNumberInput"
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { PrivacyPolicyContent } from "./PrivacyPolicy"
+import { TermsOfServiceContent } from "./TermsOfService"
 
 export const Register = () => {
     const username = useRef<string>("")
@@ -26,6 +29,8 @@ export const Register = () => {
     const [consentTerms, setConsentTerms] = useState<boolean>(false)
     const [consentPrivacy, setConsentPrivacy] = useState<boolean>(false)
     const [consentMarketing, setConsentMarketing] = useState<boolean>(false)
+    const [termsDialogOpen, setTermsDialogOpen] = useState(false)
+    const [privacyDialogOpen, setPrivacyDialogOpen] = useState(false)
     const navigate = useNavigate()
     const [error, setError] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
@@ -126,13 +131,13 @@ export const Register = () => {
                         <div className="flex items-start gap-2">
                             <Checkbox id="consent-terms" checked={consentTerms} onCheckedChange={(checked) => setConsentTerms(checked === true)} required />
                             <Label htmlFor="consent-terms" className="leading-snug font-normal">
-                                I agree to the <Link className="text-primary hover:text-primary/90 underline" to="/terms">Terms of Service</Link>
+                                I agree to the <button type="button" className="text-primary hover:text-primary/90 underline bg-transparent border-none p-0 cursor-pointer font-inherit" onClick={() => setTermsDialogOpen(true)}>Terms of Service</button>
                             </Label>
                         </div>
                         <div className="flex items-start gap-2">
                             <Checkbox id="consent-privacy" checked={consentPrivacy} onCheckedChange={(checked) => setConsentPrivacy(checked === true)} required />
                             <Label htmlFor="consent-privacy" className="leading-snug font-normal">
-                                I have read the <Link className="text-primary hover:text-primary/90 underline" to="/privacy">Privacy Policy</Link>
+                                I have read the <button type="button" className="text-primary hover:text-primary/90 underline bg-transparent border-none p-0 cursor-pointer font-inherit" onClick={() => setPrivacyDialogOpen(true)}>Privacy Policy</button>
                             </Label>
                         </div>
                         <div className="flex items-start gap-2">
@@ -153,6 +158,28 @@ export const Register = () => {
                 
             </CardFooter>
         </Card>
+
+        <Dialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen}>
+            <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Terms of Service</DialogTitle>
+                </DialogHeader>
+                <div className="overflow-y-auto pr-2 -mr-2">
+                    <TermsOfServiceContent />
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={privacyDialogOpen} onOpenChange={setPrivacyDialogOpen}>
+            <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Privacy Policy</DialogTitle>
+                </DialogHeader>
+                <div className="overflow-y-auto pr-2 -mr-2">
+                    <PrivacyPolicyContent />
+                </div>
+            </DialogContent>
+        </Dialog>
         </div>
     )
 

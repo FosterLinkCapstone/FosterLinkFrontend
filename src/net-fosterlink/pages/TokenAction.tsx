@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../backend/AuthContext";
@@ -34,16 +33,21 @@ const MESSAGES: Record<TokenAction, { success: string; error: string }> = {
     },
 };
 
+// GAP-02: tokens are delivered via URL fragment (#action=...&token=...&userId=...) so they
+// are never transmitted to the server in request logs or CDN logs.
+function parseHashParams(): { action: string | null; token: string | null; userId: string | null } {
+    const hash = window.location.hash.slice(1) // strip leading '#'
+    const params = new URLSearchParams(hash)
+    return { action: params.get('action'), token: params.get('token'), userId: params.get('userId') }
+}
+
 export const TokenAction = () => {
     const { api } = useAuth();
-    const [searchParams] = useSearchParams();
     const [state, setState] = useState<ActionState>("loading");
     const [message, setMessage] = useState("");
     const hasFired = useRef(false);
 
-    const action = searchParams.get("action");
-    const token = searchParams.get("token");
-    const userId = searchParams.get("userId");
+    const { action, token, userId } = parseHashParams();
 
     useEffect(() => {
         if (hasFired.current) return;

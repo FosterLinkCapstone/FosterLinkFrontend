@@ -10,6 +10,8 @@ import { ExternalLink, Mail, MapPin, Pencil, Phone } from "lucide-react";
 import { memo, useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi";
 import type { UpdateAgencyLocationPayload } from "@/net-fosterlink/backend/api/AgencyApi";
 import { EditAgencyLocationDialog } from "./EditAgencyLocationDialog";
@@ -20,6 +22,7 @@ type SavedSnapshot = {
   name: string;
   mission: string;
   website: string;
+  showContactInfo: boolean;
   addrLine1: string;
   addrLine2: string;
   city: string;
@@ -33,6 +36,7 @@ function getSnapshot(agency: AgencyModel): SavedSnapshot {
     name: agency.agencyName,
     mission: agency.agencyMissionStatement ?? "",
     website: agency.agencyWebsiteLink ?? "",
+    showContactInfo: agency.showContactInfo ?? false,
     addrLine1: loc.addrLine1,
     addrLine2: loc.addrLine2 ?? "",
     city: loc.city,
@@ -46,6 +50,7 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
   const [draftName, setDraftName] = useState(agency.agencyName);
   const [draftMission, setDraftMission] = useState(agency.agencyMissionStatement ?? "");
   const [draftWebsite, setDraftWebsite] = useState(agency.agencyWebsiteLink ?? "");
+  const [draftShowContactInfo, setDraftShowContactInfo] = useState(agency.showContactInfo ?? false);
   const [draftLocation, setDraftLocation] = useState<UpdateAgencyLocationPayload | null>(null);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,6 +61,7 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
     setDraftName(agency.agencyName);
     setDraftMission(agency.agencyMissionStatement ?? "");
     setDraftWebsite(agency.agencyWebsiteLink ?? "");
+    setDraftShowContactInfo(agency.showContactInfo ?? false);
     setDraftLocation(null);
   }, [agency.id]);
 
@@ -85,6 +91,7 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
   const hasChanges = useMemo(() => {
     const s = savedRef.current;
     if (draftName !== s.name || draftMission !== s.mission || draftWebsite !== s.website) return true;
+    if (draftShowContactInfo !== s.showContactInfo) return true;
     if (draftLocation) {
       return (
         draftLocation.addrLine1 !== s.addrLine1 ||
@@ -95,13 +102,14 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
       );
     }
     return false;
-  }, [draftName, draftMission, draftWebsite, draftLocation]);
+  }, [draftName, draftMission, draftWebsite, draftShowContactInfo, draftLocation]);
 
   const handleReset = () => {
     const s = savedRef.current;
     setDraftName(s.name);
     setDraftMission(s.mission);
     setDraftWebsite(s.website);
+    setDraftShowContactInfo(s.showContactInfo);
     setDraftLocation(null);
   };
 
@@ -111,17 +119,11 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
   };
 
   const handleSave = async () => {
-    const ok = await confirm({
-      message:
-        "Saving your changes will send this agency back to pending approval. An administrator will need to approve it again before it appears on the public list. Do you want to continue?",
-    });
-    if (!ok) return;
-    setSaving(true);
-    const api = agencyApi(auth);
     const s = savedRef.current;
     const nameChanged = draftName !== s.name;
     const missionChanged = draftMission !== s.mission;
     const websiteChanged = draftWebsite !== s.website;
+    const showContactInfoChanged = draftShowContactInfo !== s.showContactInfo;
     const locationChanged = draftLocation
       ? draftLocation.addrLine1 !== s.addrLine1 ||
         (draftLocation.addrLine2 ?? "") !== s.addrLine2 ||
@@ -130,13 +132,26 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
         draftLocation.zipCode !== s.zipCode
       : false;
 
+    const coreFieldChanged = nameChanged || missionChanged || websiteChanged || locationChanged;
+    if (coreFieldChanged) {
+      const ok = await confirm({
+        message:
+          "Saving your changes will send this agency back to pending approval. An administrator will need to approve it again before it appears on the public list. Do you want to continue?",
+      });
+      if (!ok) return;
+    }
+
+    setSaving(true);
+    const api = agencyApi(auth);
+
     try {
-      if (nameChanged || missionChanged || websiteChanged) {
+      if (nameChanged || missionChanged || websiteChanged || showContactInfoChanged) {
         const res = await api.updateAgency(
           agency.id,
           nameChanged ? draftName : null,
           missionChanged ? draftMission : null,
-          websiteChanged ? draftWebsite : null
+          websiteChanged ? draftWebsite : null,
+          showContactInfoChanged ? draftShowContactInfo : null
         );
         if (res.isError) {
           setSaving(false);
@@ -153,13 +168,16 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
       agency.agencyName = draftName;
       agency.agencyMissionStatement = draftMission;
       agency.agencyWebsiteLink = draftWebsite;
+      agency.showContactInfo = draftShowContactInfo;
       if (draftLocation) {
         agency.location = { ...agency.location, ...displayLocation };
       }
       savedRef.current = getSnapshot(agency);
       setDraftLocation(null);
       setEditMode(false);
-      onSentToPending?.(agency.id);
+      if (coreFieldChanged) {
+        onSentToPending?.(agency.id);
+      }
     } finally {
       setSaving(false);
     }
@@ -249,18 +267,42 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
             </div>
           ) : (
             <div className="flex items-center justify-center gap-1">
-              {agency.agencyWebsiteLink ? (
-                <a
-                  href={agency.agencyWebsiteLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm"
-                >
-                  Visit Website <ExternalLink size={14} />
-                </a>
-              ) : (
-                <span className="text-muted-foreground text-sm">No website</span>
-              )}
+              {(() => {
+                const getSafeUrl = (url: string | null | undefined): string | null => {
+                  if (!url) return null;
+                  return (url.startsWith("https://") || url.startsWith("http://")) ? url : null;
+                };
+                const safeUrl = getSafeUrl(agency.agencyWebsiteLink);
+                return safeUrl ? (
+                  <a
+                    href={safeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm"
+                  >
+                    Visit Website <ExternalLink size={14} />
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground text-sm">No website</span>
+                );
+              })()}
+            </div>
+          )}
+          {isOwner && editMode && (
+            <div className="flex items-center gap-3 mt-4 rounded-lg border border-border bg-muted/40 p-3">
+              <Switch
+                id={`showContactInfo-${agency.id}`}
+                checked={draftShowContactInfo}
+                onCheckedChange={setDraftShowContactInfo}
+              />
+              <div className="flex flex-col gap-0.5">
+                <Label htmlFor={`showContactInfo-${agency.id}`} className="cursor-pointer font-medium text-sm">
+                  Show my contact info publicly
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Your phone number and email will be visible on this agency's public listing.
+                </p>
+              </div>
             </div>
           )}
           {isOwner && editMode && (
@@ -290,14 +332,29 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
                 <h3 className="font-semibold text-lg hover:text-primary focus:outline-none cursor-pointer focus:ring-1 focus:ring-ring" onClick={() => navigate(buildProfileUrl(agency.agent))}>
                   {agency.agent.fullName}
                 </h3>
-                <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
-                  <Phone size={14} className="flex-shrink-0 mt-0.5" />
-                  <span>{agency.agentInfo.phoneNumber}</span>
-                </div>
-                <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1 break-all">
-                  <Mail size={14} className="flex-shrink-0 mt-0.5" />
-                  <span>{agency.agentInfo.email}</span>
-                </div>
+                {(() => {
+                  const phone = agency.agentInfo?.phoneNumber ?? (agency.showContactInfo ? agency.agentPhoneNumber : null);
+                  const email = agency.agentInfo?.email ?? (agency.showContactInfo ? agency.agentEmail : null);
+                  if (phone || email) {
+                    return (
+                      <>
+                        {phone && (
+                          <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
+                            <Phone size={14} className="flex-shrink-0 mt-0.5" />
+                            <span>{phone}</span>
+                          </div>
+                        )}
+                        {email && (
+                          <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1 break-all">
+                            <Mail size={14} className="flex-shrink-0 mt-0.5" />
+                            <span>{email}</span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  }
+                  return <div className="text-sm text-muted-foreground mt-1">@{agency.agent.username}</div>;
+                })()}
               </div>
             </div>
           </div>

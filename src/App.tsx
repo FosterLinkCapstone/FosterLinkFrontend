@@ -34,6 +34,7 @@ import { ForgotPassword } from './net-fosterlink/pages/ForgotPassword'
 import { ResetPassword } from './net-fosterlink/pages/ResetPassword'
 import { PrivacyPolicy } from './net-fosterlink/pages/PrivacyPolicy'
 import { TermsOfService } from './net-fosterlink/pages/TermsOfService'
+import { SwaggerProxy } from './net-fosterlink/pages/SwaggerProxy'
 import { ConsentContextProvider } from './net-fosterlink/components/consent/ConsentContext'
 import { CookieConsentBanner } from './net-fosterlink/components/consent/CookieConsentBanner'
 
@@ -83,6 +84,7 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword/>}/>
               <Route path="/privacy" element={<PrivacyPolicy/>}/>
               <Route path="/terms" element={<TermsOfService/>}/>
+              <Route path="/dev/swagger" element={<AdminOnly><SwaggerProxy/></AdminOnly>}/>
               <Route path="*" element={<NotFound/>}/>
             </Routes>
             </RestrictGateway>
