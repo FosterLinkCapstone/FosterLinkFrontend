@@ -145,7 +145,7 @@ export const AdminUsers = () => {
         if (!res.isError && res.data) {
             return res.data;
         }
-        return { users: [], totalPages: 1 };
+        return { items: [], totalPages: 1 };
     }, [submittedSearchBy, submittedQuery]);
 
     const handleRoleToggle = async (user: AdminUserModel, key: RoleKey, current: boolean) => {

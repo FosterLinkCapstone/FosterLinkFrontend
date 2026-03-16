@@ -137,7 +137,7 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5 pt-1.5 border-t border-border">
                     {stats.map((s) => (
                         <span key={s.label} className="text-xs text-muted-foreground">
-                            {"href" in s ? (
+                            {s.href ? (
                                 s.value > 0 ? (
                                     <Link to={s.href} className="inline group">
                                         <span className="font-medium text-foreground group-hover:text-primary">{s.value}</span>{" "}

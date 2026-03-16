@@ -44,8 +44,8 @@ export const AdminUserAgencies = () => {
         setLoading(false);
         if (!res.isError && res.data) {
             setItems(res.data);
-            if (res.data.length > 0 && res.data[0].agency?.agent?.username) {
-                setUsername(res.data[0].agency.agent.username);
+            if (res.data.length > 0 && res.data[0].entity.agent?.username) {
+                setUsername(res.data[0].entity.agent.username);
             }
         } else {
             setError(res.error ?? "Failed to load agencies.");

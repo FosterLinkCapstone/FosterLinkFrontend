@@ -124,8 +124,8 @@ export const AccountSettings = () => {
         const saved = savedRef.current;
         const payload: Record<string, string | number> = { userId };
         (Object.keys(form) as (keyof FormState)[]).forEach(k => {
-            if (form[k] !== saved[k] && form[k].trim() !== "") {
-                payload[k] = form[k];
+            if (form[k] !== saved[k] && (form[k] as string).trim() !== "") {
+                payload[k] = (form[k] as string).trim();
             }
         });
 

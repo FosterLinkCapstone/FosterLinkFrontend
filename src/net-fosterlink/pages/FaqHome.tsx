@@ -360,7 +360,7 @@ export const FaqHome = () => {
             if (!res.isError && res.data) {
               return res.data;
             }
-            return { faqs: [], totalPages: 1 };
+            return { items: [], totalPages: 1 };
           }}
         />
         

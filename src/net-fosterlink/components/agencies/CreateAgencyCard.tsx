@@ -30,10 +30,10 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
 
   const [createLoading, setCreateLoading] = useState<boolean>(false);
 
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateAgencyModel | 'location.city' | 'location.addrLine1' | 'location.state' | 'location.zipCode', string>>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<string, string>> = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Agency name is required';
@@ -87,7 +87,10 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
   const updateField = (field: keyof CreateAgencyModel, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors(prev => {
+        const { [field]: _, ...rest } = prev;
+        return rest;
+      });
     }
   };
 
@@ -98,7 +101,10 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
     }));
     const key = `location.${field}`;
     if (errors[key]) {
-      setErrors(prev => ({ ...prev, [key]: undefined }));
+      setErrors(prev => {
+        const { [key]: _, ...rest } = prev;
+        return rest;
+      });
     }
   };
 

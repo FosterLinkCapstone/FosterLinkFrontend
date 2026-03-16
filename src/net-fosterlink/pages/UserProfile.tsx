@@ -251,7 +251,7 @@ export const UserProfile = () => {
       return res.data;
     }
     setError(prev => prev ? `${prev} | ${res.error}` : res.error || "Unable to load user posts.");
-    return { threads: [], totalPages: 1 };
+    return { items: [], totalPages: 1 };
   };
 
   const handleFaqPageChange = async (pageNumber: number): Promise<GetFaqsResponse> => {
@@ -259,7 +259,7 @@ export const UserProfile = () => {
     if (!res.isError && res.data) {
       return res.data;
     }
-    return { faqs: [], totalPages: 1 };
+    return { items: [], totalPages: 1 };
   };
 
   const isLoadingWithInitialRender = loading && canDoInitialRender;
@@ -326,7 +326,7 @@ export const UserProfile = () => {
           onCurrentPageChange={setThreadsCurrentPage}
           onPageChanged={handlePageChange}
           onDataChanged={(data) => {
-            setThreads(data.threads);
+            setThreads(data.items);
             setThreadsTotalPages(data.totalPages);
           }}
         />
