@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Ban, ShieldAlert } from "lucide-react";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
+import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import type { AdminUserModel } from "@/net-fosterlink/backend/models/AdminUserModel";
 import { ROLE_META, formatRestrictionInfo, hasRole, type RoleKey } from "./AdminRoleConstants";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { RestrictPopover } from "./RestrictPopover";
 import { ClearProfilePopover } from "./ClearProfilePopover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,13 +24,13 @@ interface UserCardProps {
     onClear: (userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean) => void;
 }
 
-export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict, onClear }: UserCardProps) => {
+export const UserCard = memo(({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict, onClear }: UserCardProps) => {
     const [openZeroTooltipLabel, setOpenZeroTooltipLabel] = useState<string | null>(null);
     const isBanned = user.bannedAt !== null;
     const isRestricted = user.restrictedAt !== null;
     const fullName = `${user.firstName} ${user.lastName}`;
 
-    const profileUrl = `/users/${user.id}?username=${encodeURIComponent(user.username)}&fullName=${encodeURIComponent(fullName)}${user.profilePictureUrl ? `&profilePicUrl=${encodeURIComponent(user.profilePictureUrl)}` : ""}`;
+    const profileUrl = buildProfileUrl(user);
 
     const faqSuggestionsUrl = `/admin/users/${user.id}/faq-suggestions`;
     const faqAnswersUrl = `/admin/users/${user.id}/faq-answers`;
@@ -175,4 +176,4 @@ export const UserCard = ({ user, deleted, onRoleToggle, onBan, onUnban, onRestri
             </div>
         </Card>
     );
-};
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router";
@@ -25,7 +26,7 @@ function statusClass(reply: AdminReplyForUserModel): string {
     return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200 border-green-300 dark:border-green-700";
 }
 
-export const AdminReplyCard: React.FC<AdminReplyCardProps> = ({ reply }) => {
+export const AdminReplyCard = memo<AdminReplyCardProps>(({ reply }) => {
     const threadUrl = `/threads/thread/${reply.threadId}`;
     const authorLabel = reply.threadAuthorUsername ? `@${reply.threadAuthorUsername}` : "thread";
 
@@ -66,4 +67,4 @@ export const AdminReplyCard: React.FC<AdminReplyCardProps> = ({ reply }) => {
             </Card>
         </div>
     );
-};
+});

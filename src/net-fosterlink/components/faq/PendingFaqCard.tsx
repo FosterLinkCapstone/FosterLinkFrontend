@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { ApprovalStatus, type PendingFaqModel } from "@/net-fosterlink/backend/models/PendingFaqModel";
@@ -16,7 +17,7 @@ interface PendingFaqCardProps {
     onDelete: (faq: PendingFaqModel) => void;
 }
 
-export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({
+export const PendingFaqCard = memo<PendingFaqCardProps>(({
     faq,
     onExpand,
     onCollapse,
@@ -91,4 +92,4 @@ export const PendingFaqCard: React.FC<PendingFaqCardProps> = ({
             actionButtons={actionButtons}
         />
     );
-};
+});

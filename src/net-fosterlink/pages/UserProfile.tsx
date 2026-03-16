@@ -99,7 +99,8 @@ export const UserProfile = () => {
     Promise.all([
       userApi(auth).getProfileMetadata(numericUserId),
       threadApiRef.searchByUser(numericUserId, 0),
-    ]).then(([profileRes, threadRes]) => {
+      faqApi(auth).allAuthor(numericUserId, 0),
+    ]).then(([profileRes, threadRes, faqRes]) => {
       if (profileRes.isError) {
         navigate("/not-found", { replace: true });
         return;
@@ -117,22 +118,22 @@ export const UserProfile = () => {
       } else {
         setError(prev => appendError(prev, threadRes.error || "Unable to load user posts."));
       }
-    }).finally(() => setLoading(false));
 
-    faqApi(auth).allAuthor(numericUserId, 0).then(res => {
-      if (!res.isError && res.data) {
-        setFaqResponses(res.data.items);
-        setFaqsTotalPages(res.data.totalPages);
+      if (!faqRes.isError && faqRes.data) {
+        setFaqResponses(faqRes.data.items);
+        setFaqsTotalPages(faqRes.data.totalPages);
         setFaqsCurrentPage(1);
       } else {
         setFaqResponses([]);
         setFaqsTotalPages(1);
       }
-    });
-  }, [numericUserId, auth, threadApiRef]);
+    }).finally(() => setLoading(false));
+  }, [numericUserId, threadApiRef]);
 
-  const currentUserId = auth.getUserInfo()?.id;
-  const isOwnProfile = !!currentUserId && !!numericUserId && currentUserId === numericUserId;
+  const isOwnProfile = useMemo(() => {
+    const currentUserId = auth.getUserInfo()?.id;
+    return !!currentUserId && !!numericUserId && currentUserId === numericUserId;
+  }, [auth, numericUserId]);
 
   useEffect(() => {
     if (!isOwnProfile || !auth.isLoggedIn()) {
@@ -326,7 +327,7 @@ export const UserProfile = () => {
           onCurrentPageChange={setThreadsCurrentPage}
           onPageChanged={handlePageChange}
           onDataChanged={(data) => {
-            setThreads(data.threads);
+            setThreads(data.items);
             setThreadsTotalPages(data.totalPages);
           }}
         />

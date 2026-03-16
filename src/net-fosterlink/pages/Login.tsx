@@ -38,8 +38,10 @@ export const Login = () => {
                         setFieldErrors(fieldErrors)
                     }
                 } else {
-                    auth.setToken(res.data!, { stayLoggedIn })
-                    navigate(searchParams.has("currentPage") ? searchParams.get("currentPage")! : "/")
+                    auth.setToken(res.data!, stayLoggedIn)
+                    const dest = searchParams.get("currentPage") ?? "/";
+                    const safeDest = (dest.startsWith("/") && !dest.startsWith("//")) ? dest : "/";
+                    navigate(safeDest)
                 }
             }).finally(() => { setLoading(false) })
         } else {

@@ -5,17 +5,23 @@ import { Input } from "@/components/ui/input"
 import { useRef, useState } from "react"
 import { ExpandableAlert } from "../components/ExpandableAlert"
 import { userApi } from "../backend/api/UserApi"
-import { Link, useSearchParams } from "react-router"
+import { Link } from "react-router"
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
 import { useAuth } from "../backend/AuthContext"
 import { CheckCircle2, XCircle } from "lucide-react"
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
 
+// GAP-02: tokens are delivered via URL fragment (#token=...&userId=...) so they are
+// never transmitted to the server in request logs or CDN logs.
+function parseHashParams(): { token: string | null; userId: string | null } {
+    const hash = window.location.hash.slice(1) // strip leading '#'
+    const params = new URLSearchParams(hash)
+    return { token: params.get('token'), userId: params.get('userId') }
+}
+
 export const ResetPassword = () => {
-    const [searchParams] = useSearchParams()
-    const token = searchParams.get("token")
-    const userId = searchParams.get("userId")
+    const { token, userId } = parseHashParams()
 
     const newPassword = useRef<string>("")
     const confirmPassword = useRef<string>("")

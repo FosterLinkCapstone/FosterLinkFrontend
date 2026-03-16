@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useAuth } from "../backend/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { userApi } from "../backend/api/UserApi";
+import { faqApi } from "../backend/api/FaqApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PhoneNumberInput } from "../components/PhoneNumberInput";
-import { Pencil, Lock, Trash2, AlertCircleIcon, LogOut } from "lucide-react";
+import { Pencil, Lock, Trash2, AlertCircleIcon, LogOut, FileText } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import { ProfilePictureDialog } from "../components/account-settings/ProfilePictureDialog";
 import { ChangePasswordDialog } from "../components/account-settings/ChangePasswordDialog";
@@ -19,6 +20,7 @@ import { StatusDialog } from "../components/StatusDialog";
 import { UnsavedChangesBar } from "../components/account-settings/UnsavedChangesBar";
 import { emptyForm, validateAccountSettings, type FormState } from "../util/AccountSettingsValidation";
 import { EmailPreferencesCard, type EmailPreferencesCardHandle } from "../components/account-settings/EmailPreferencesCard";
+import { MyDataDialog } from "../components/account-settings/MyDataDialog";
 
 export const AccountSettings = () => {
     const auth = useAuth();
@@ -35,7 +37,9 @@ export const AccountSettings = () => {
     const [showProfilePicDialog, setShowProfilePicDialog] = useState(false);
     const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showMyDataDialog, setShowMyDataDialog] = useState(false);
     const [logoutAllLoading, setLogoutAllLoading] = useState(false);
+    const [deletingFaqSuggestions, setDeletingFaqSuggestions] = useState(false);
 
     const [saveStatus, setSaveStatus] = useState<{ msg: string; success: boolean } | null>(null);
     const [saving, setSaving] = useState(false);
@@ -123,9 +127,16 @@ export const AccountSettings = () => {
 
         const saved = savedRef.current;
         const payload: Record<string, string | number> = { userId };
+        const optionalFields: (keyof FormState)[] = ["phoneNumber", "profilePictureUrl"];
+        const str = (v: string | number | boolean | null | undefined): string => (v == null ? "" : String(v));
         (Object.keys(form) as (keyof FormState)[]).forEach(k => {
-            if (form[k] !== saved[k] && form[k].trim() !== "") {
-                payload[k] = form[k];
+            const key = k as keyof FormState;
+            const val = form[key];
+            if (typeof val === "boolean") return;
+            const changed = val !== saved[key];
+            const hasValue = str(val).trim() !== "";
+            if (changed && (hasValue || optionalFields.includes(key))) {
+                payload[k] = typeof val === "number" ? val : str(val);
             }
         });
 
@@ -136,18 +147,17 @@ export const AccountSettings = () => {
 
         let profileError: string | null = null;
 
-        if (profileChanged) {
-            const res = await userApi(auth).updateUser(payload as any);
-            if (!res.isError) {
+        const [profileRes] = await Promise.all([
+            profileChanged ? userApi(auth).updateUser(payload as any) : Promise.resolve(null),
+            emailPrefsChanged ? emailPrefsRef.current?.save() : Promise.resolve(),
+        ]);
+
+        if (profileChanged && profileRes) {
+            if (!profileRes.isError) {
                 savedRef.current = { ...form };
             } else {
-                profileError = res.error ?? "Failed to save settings.";
+                profileError = profileRes.error ?? "Failed to save settings.";
             }
-        }
-
-        if (emailPrefsChanged) {
-            // save() reports errors via onSaveError callback which sets saveStatus directly
-            await emailPrefsRef.current?.save();
         }
 
         setSaving(false);
@@ -173,6 +183,17 @@ export const AccountSettings = () => {
             }
         } else if (emailPrefsChanged) {
             setSaveStatus({ msg: "Your settings have been saved.", success: true });
+        }
+    };
+
+    const handleDeleteFaqSuggestions = async () => {
+        setDeletingFaqSuggestions(true);
+        const res = await faqApi(auth).deleteMyRequests();
+        setDeletingFaqSuggestions(false);
+        if (res.isError) {
+            setSaveStatus({ msg: res.error ?? "Failed to delete FAQ suggestions. Please try again.", success: false });
+        } else {
+            setSaveStatus({ msg: "Your FAQ suggestions have been deleted.", success: true });
         }
     };
 
@@ -219,6 +240,10 @@ export const AccountSettings = () => {
             <DeleteAccountDialog
                 open={showDeleteDialog}
                 onOpenChange={setShowDeleteDialog}
+            />
+            <MyDataDialog
+                open={showMyDataDialog}
+                onOpenChange={setShowMyDataDialog}
             />
             <StatusDialog
                 open={!!saveStatus}
@@ -425,6 +450,39 @@ export const AccountSettings = () => {
                     onSaveError={(msg) => setSaveStatus({ msg, success: false })}
                     onSaveSuccess={() => {}}
                 />
+
+                {/* Privacy & Data */}
+                <Card className="p-6 space-y-3">
+                    <h2 className="text-lg font-semibold">Privacy &amp; Data</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Under GDPR you have the right to access and download all personal data FosterLink holds about you.
+                    </p>
+                    <Button
+                        variant="outline"
+                        className="w-full justify-center gap-2"
+                        onClick={() => setShowMyDataDialog(true)}
+                        type="button"
+                    >
+                        <FileText className="h-4 w-4" />
+                        View my data
+                    </Button>
+                </Card>
+
+                {/* FAQ Suggestions */}
+                <Card className="p-6 space-y-3">
+                    <h2 className="text-lg font-semibold">FAQ Suggestions</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Your FAQ topic suggestions are stored for 90 days and then automatically deleted.
+                    </p>
+                    <Button
+                        variant="destructive"
+                        onClick={handleDeleteFaqSuggestions}
+                        disabled={deletingFaqSuggestions}
+                        type="button"
+                    >
+                        {deletingFaqSuggestions ? "Deleting..." : "Delete all my suggestions"}
+                    </Button>
+                </Card>
             </div>
 
             {hasChanges && (

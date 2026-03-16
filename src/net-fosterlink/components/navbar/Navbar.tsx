@@ -174,6 +174,9 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                                 {auth.admin && (
                                     <>
                                         <p className={mobileSectionLabel}>DevTools</p>
+                                        <SheetClose asChild>
+                                            <Link to="/dev/swagger" className={mobileLinkClass}>Swagger API Docs</Link>
+                                        </SheetClose>
                                         {import.meta.env.VITE_BRANCH === "staging" ? (
                                             <>
                                                 <SheetClose asChild>
@@ -200,7 +203,7 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                                             </>
                                         ) : (
                                             <span className={`${mobileLinkClass} text-muted-foreground cursor-default`}>
-                                                Only available in staging / production
+                                                Other DevTools only in staging / production
                                             </span>
                                         )}
                                     </>
@@ -227,13 +230,22 @@ export const Navbar = ({ userInfo }: { userInfo: UserModel | undefined }) => {
                                 ) : (
                                     <>
                                         <SheetClose asChild>
-                                            <Link to={`/login?currentPage=${window.location.pathname}`} className={mobileLinkClass}>Login</Link>
+                                            <Link to={`/login?currentPage=${encodeURIComponent(window.location.pathname)}`} className={mobileLinkClass}>Login</Link>
                                         </SheetClose>
                                         <SheetClose asChild>
                                             <Link to="/register" className={mobileLinkClass}>Register</Link>
                                         </SheetClose>
                                     </>
                                 )}
+
+                                {/* Legal links */}
+                                <p className={mobileSectionLabel}>Legal</p>
+                                <SheetClose asChild>
+                                    <Link to="/privacy" className={mobileLinkClass}>Privacy Policy</Link>
+                                </SheetClose>
+                                <SheetClose asChild>
+                                    <Link to="/terms" className={mobileLinkClass}>Terms of Service</Link>
+                                </SheetClose>
 
                                 {/* Theme toggle */}
                                 <div className="mt-4 flex items-center gap-2 px-3">

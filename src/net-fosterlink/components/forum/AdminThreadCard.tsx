@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { AdminThreadForUserModel } from "@/net-fosterlink/backend/models/AdminThreadForUserModel";
 import type { ThreadModel } from "@/net-fosterlink/backend/models/ThreadModel";
@@ -38,7 +39,7 @@ function toThreadPreview(item: AdminThreadForUserModel): ThreadModel {
     };
 }
 
-export const AdminThreadCard: React.FC<AdminThreadCardProps> = ({ item }) => {
+export const AdminThreadCard = memo<AdminThreadCardProps>(({ item }) => {
     const auth = useAuth();
     const thread = toThreadPreview(item);
     const basePath = item.hidden ? "/threads/hidden/thread/" : "/threads/thread/";
@@ -57,4 +58,4 @@ export const AdminThreadCard: React.FC<AdminThreadCardProps> = ({ item }) => {
             <ThreadPreviewWide thread={thread} auth={auth} basePath={basePath} />
         </div>
     );
-};
+});

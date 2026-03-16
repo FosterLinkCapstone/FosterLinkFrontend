@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { AdminFaqForUserModel } from "@/net-fosterlink/backend/models/AdminFaqForUserModel";
 import { BaseFaqCard } from "./BaseFaqCard";
@@ -18,7 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
     HIDDEN: "bg-muted text-muted-foreground border-border",
 };
 
-export const AdminFaqAnswerCard: React.FC<AdminFaqAnswerCardProps> = ({
+export const AdminFaqAnswerCard = memo<AdminFaqAnswerCardProps>(({
     item,
     onExpand,
     onCollapse,
@@ -50,4 +51,4 @@ export const AdminFaqAnswerCard: React.FC<AdminFaqAnswerCardProps> = ({
             statusBanner={statusBanner}
         />
     );
-};
+});

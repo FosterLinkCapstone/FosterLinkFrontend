@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import type { AgencyModel } from "@/net-fosterlink/backend/models/AgencyModel"
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi"
 import { useAuth } from "@/net-fosterlink/backend/AuthContext"
@@ -50,7 +50,7 @@ export const HiddenAgenciesTab = () => {
         }).finally(() => setLoading(false))
     }, [])
 
-    const handleRestore = async (id: number) => {
+    const handleRestore = useCallback(async (id: number) => {
         const confirmed = await confirm({
             message: "Are you sure you want to restore this agency? It will become visible to all users.",
         })
@@ -65,9 +65,9 @@ export const HiddenAgenciesTab = () => {
                 }
             }).finally(() => setActionLoading(false))
         }
-    }
+    }, [])
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = useCallback(async (id: number) => {
         const confirmed = await confirm({
             message: "Are you sure you want to permanently delete this agency? It will not be recoverable.",
         })
@@ -82,7 +82,7 @@ export const HiddenAgenciesTab = () => {
                 }
             }).finally(() => setActionLoading(false))
         }
-    }
+    }, [])
 
     return (
         <>
