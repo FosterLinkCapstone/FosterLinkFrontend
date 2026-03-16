@@ -5,7 +5,7 @@ import { BaseFaqCard } from "./BaseFaqCard";
 import { EditFaqContentDialog } from "./EditFaqContentDialog";
 import { faqApi } from "@/net-fosterlink/backend/api/FaqApi";
 import { confirm } from "@/net-fosterlink/components/ConfirmDialog";
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 
 interface FaqCardProps {
     faq: FaqModel;
@@ -26,7 +26,7 @@ interface FaqCardProps {
     onSentToPending?: (faqId: number) => void;
 }
 
-export const FaqCard: React.FC<FaqCardProps> = ({
+export const FaqCard = memo<FaqCardProps>(({
     faq,
     onExpand,
     onCollapse,
@@ -171,4 +171,4 @@ export const FaqCard: React.FC<FaqCardProps> = ({
             />
         </>
     );
-};
+});

@@ -18,6 +18,12 @@ export const NavDevToolsDropdown = ({ onMouseEnter, onMouseLeave, onTriggerClick
         </NavigationMenuTrigger>
         <NavigationMenuContent className="bg-popover text-popover-foreground">
             <ul className="grid gap-2 p-4 w-[calc(100vw-2rem)] md:w-[400px] lg:w-[500px]">
+                <ListItem href="/dev/swagger" title="Swagger API Docs">
+                    <div className="flex flex-col items-center">
+                        <AdminOnlyBadge />
+                        <span>Backend API documentation (proxy)</span>
+                    </div>
+                </ListItem>
                 {import.meta.env.VITE_BRANCH === "staging" ? (
                     <>
                         <ListItem href="#" title="Grafana Backend">
@@ -97,12 +103,14 @@ export const NavDevToolsDropdown = ({ onMouseEnter, onMouseLeave, onTriggerClick
                         </ListItem>
                     </>
                 ) : (
-                    <ListItem href="#" title="Not Available">
-                        <div className="flex flex-col items-center">
-                            <AdminOnlyBadge />
-                            <span>DevTools are only available in staging and production environments</span>
-                        </div>
-                    </ListItem>
+                    <>
+                        <ListItem href="#" title="Not Available">
+                            <div className="flex flex-col items-center">
+                                <AdminOnlyBadge />
+                                <span>Other DevTools are only available in staging and production environments</span>
+                            </div>
+                        </ListItem>
+                    </>
                 )}
             </ul>
         </NavigationMenuContent>

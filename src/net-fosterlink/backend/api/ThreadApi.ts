@@ -134,7 +134,7 @@ export const threadApi = (auth: AuthContextType): ThreadApiType => {
             return doGenericRequest<ReplyModel | undefined>(
                 auth.api,
                 RequestType.POST,
-                "/threads/replies",
+                "/threads/replies/create",
                 { content, threadId },
                 errors
             );

@@ -35,6 +35,9 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverField
                             if (suggestionText !== '') setSuggestionNoContentError(false)
                         }} id="suggestion" name="suggestion" placeholder="Enter here. Your suggestion will be used as the title to the response." />
                         <span className="text-red-500">{serverFieldErrors?.suggested ?? serverFieldErrors?.suggestion}</span>
+                        <p className="text-xs text-muted-foreground">
+                            Your suggestion will be stored for 90 days and then automatically deleted. You can delete your suggestions at any time from Account Settings.
+                        </p>
                     </div>
                 </div>
                 {

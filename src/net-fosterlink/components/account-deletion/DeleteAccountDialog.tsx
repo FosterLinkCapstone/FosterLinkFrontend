@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router"
 import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { accountDeletionApi } from "@/net-fosterlink/backend/api/AccountDeletionApi"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -202,8 +203,15 @@ export const DeleteAccountDialog = ({ open, onOpenChange, onSuccess }: DeleteAcc
                                 htmlFor="agreed"
                                 className="text-sm leading-snug cursor-pointer"
                             >
-                                I have read and fully understand the terms associated with deleting
-                                this account
+                                I have read and fully understand the{" "}
+                                <Link
+                                    to="/terms"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline text-foreground hover:text-primary transition-colors"
+                                >
+                                    terms associated with deleting this account
+                                </Link>
                             </label>
                         </div>
                     </div>

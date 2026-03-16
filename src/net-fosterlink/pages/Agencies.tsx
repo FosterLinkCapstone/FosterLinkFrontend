@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Paginator } from "../components/Paginator"
 import type { AgencyModel } from "../backend/models/AgencyModel"
 import { agencyApi, type AgencySearchBy } from "../backend/api/AgencyApi"
@@ -46,25 +46,45 @@ export const Agencies = () => {
         return Number.isNaN(id) ? null : id
     }, [searchParams])
 
-    const agencyApiRef = useMemo(() => agencyApi(auth), [auth])
+    const agencyApiRefRef = useRef(agencyApi(auth))
+    useEffect(() => { agencyApiRefRef.current = agencyApi(auth) }, [auth])
 
     const fetchAgencies = useCallback((pageNumber: number, searchTerm: string, searchByCategory: AgencySearchBy | undefined) => {
         const params = searchTerm.trim()
             ? { search: searchTerm.trim(), searchBy: searchByCategory ?? "agency" }
             : undefined
-        return agencyApiRef.getAll(pageNumber, params)
-    }, [agencyApiRef])
+        return agencyApiRefRef.current.getAll(pageNumber, params)
+    }, [])
 
     useEffect(() => {
         setCurrentPage(1)
-        fetchAgencies(0, appliedSearch, appliedSearchBy ?? "agency").then(res => {
-            if (!res.isError && res.data) {
-                setAgencies(res.data.items)
-                setTotalPages(res.data.totalPages)
-                setCurrentPage(1)
+        if (auth.admin) {
+            Promise.all([
+                fetchAgencies(0, appliedSearch, appliedSearchBy ?? "agency"),
+                agencyApiRefRef.current.countPending(),
+            ]).then(([agencyRes, pendingRes]) => {
+                if (!agencyRes.isError && agencyRes.data) {
+                    setAgencies(agencyRes.data.items)
+                    setTotalPages(agencyRes.data.totalPages)
+                    setCurrentPage(1)
+                }
+                if (!pendingRes.isError && pendingRes.data !== undefined) {
+                    setPendingCount(pendingRes.data)
+                }
+            })
+            if (searchParams.has("creating")) {
+                setCreatingAgency(searchParams.get("creating") === "true")
             }
-        })
-    }, [appliedSearch, appliedSearchBy, fetchAgencies])
+        } else {
+            fetchAgencies(0, appliedSearch, appliedSearchBy ?? "agency").then(res => {
+                if (!res.isError && res.data) {
+                    setAgencies(res.data.items)
+                    setTotalPages(res.data.totalPages)
+                    setCurrentPage(1)
+                }
+            })
+        }
+    }, [appliedSearch, appliedSearchBy, fetchAgencies, auth.admin])
 
     const handleSearchClick = () => {
         setAppliedSearch(searchInput.trim())
@@ -81,21 +101,9 @@ export const Agencies = () => {
             setCreatingAgency(searchParams.get("creating") === "true")
         }
     }, [auth.agent])
-    useEffect(() => {
-        if (auth.admin) {
-            if (searchParams.has("creating")) {
-                setCreatingAgency(searchParams.get("creating") === "true")
-            }
-            agencyApiRef.countPending().then(res => {
-                if (!res.isError && res.data !== undefined) {
-                    setPendingCount(res.data)
-                }
-            })
-        }
-    }, [auth.admin])
 
-    const handleCreateAgency = async (agency: CreateAgencyModel) => {
-        agencyApiRef.create(agency).then(res => {
+    const handleCreateAgency = useCallback(async (agency: CreateAgencyModel) => {
+        agencyApiRefRef.current.create(agency).then(res => {
             if (res.isError) {
                 setCreateError(res)
             } else {
@@ -103,29 +111,30 @@ export const Agencies = () => {
                 setActionResult({ success: true, title: "Successfully created agency!", subtext: "Awaiting review from an administrator." })
             }
         })
-    }
-    const onRemove = async (agencyId: number) => {
+    }, [])
+
+    const onRemove = useCallback(async (agencyId: number) => {
         const confirmed = await confirm({
             message: "Remove this agency from the public list? It will be moved to the hidden list and can be restored or permanently deleted later.",
         })
         if (!confirmed) return
         setHideLoading(true)
-        agencyApiRef.hideAgency(agencyId, true).then(res => {
+        agencyApiRefRef.current.hideAgency(agencyId, true).then(res => {
             if (!res.isError) {
-                setAgencies(agencies?.filter(a => a.id !== agencyId) ?? [])
+                setAgencies(prev => prev?.filter(a => a.id !== agencyId) ?? [])
                 setActionResult({ success: true, title: "Successfully removed agency!", subtext: "" })
             } else {
                 setActionResult({ success: false, title: "Could not remove agency!", subtext: res.error ?? "" })
             }
         }).finally(() => setHideLoading(false))
-    }
+    }, [])
 
-    const onDelete = async (agencyId: number) => {
+    const onDelete = useCallback(async (agencyId: number) => {
         const confirmed = await confirm({
             message: "Are you sure you want to delete this agency? It will be sent for review, and will auto-delete after 30 days if not approved. Contact admin@fosterlink.net for expedited approval.",
         })
         if (!confirmed) return
-        agencyApiRef.requestDeletion(agencyId).then(res => {
+        agencyApiRefRef.current.requestDeletion(agencyId).then(res => {
             if (!res.isError) {
                 const user = auth.getUserInfo()
                 setAgencies(prev => prev?.map(a => a.id === agencyId && user
@@ -136,10 +145,10 @@ export const Agencies = () => {
                 setActionResult({ success: false, title: "Could not submit deletion request", subtext: res.error ?? "" })
             }
         })
-    }
+    }, [auth])
 
-    const onRequestDeletion = (agencyId: number) => {
-        agencyApiRef.requestDeletion(agencyId).then(res => {
+    const onRequestDeletion = useCallback((agencyId: number) => {
+        agencyApiRefRef.current.requestDeletion(agencyId).then(res => {
             if (!res.isError) {
                 const user = auth.getUserInfo()
                 setAgencies(prev => prev?.map(a => a.id === agencyId && user
@@ -150,16 +159,16 @@ export const Agencies = () => {
                 setActionResult({ success: false, title: "Could not submit deletion request!", subtext: res.error ?? "" })
             }
         })
-    }
+    }, [auth])
 
-    const onSentToPending = (agencyId: number) => {
+    const onSentToPending = useCallback((agencyId: number) => {
         setAgencies(prev => prev?.filter(a => a.id !== agencyId) ?? [])
         setPendingCount(prev => prev + 1)
         setActionResult({ success: true, title: "Changes saved", subtext: "This agency has been sent back to pending approval and is no longer on the public list. An administrator will need to approve it again." })
-    }
+    }, [])
 
     const onCancelDeletionRequest = (agencyId: number) => {
-        agencyApiRef.cancelDeletionRequest(agencyId).then(res => {
+        agencyApiRefRef.current.cancelDeletionRequest(agencyId).then(res => {
             if (!res.isError) {
                 setAgencies(prev => prev?.map(a => a.id === agencyId
                     ? { ...a, deletionRequestedAt: undefined, deletionRequestedByUsername: undefined, deletionRequestId: undefined }
@@ -176,7 +185,7 @@ export const Agencies = () => {
             message: `Are you sure you want to accept this deletion request? The agency "${agency.agencyName}" will be permanently deleted and cannot be recovered.`,
         })
         if (!ok) return
-        const res = await agencyApiRef.approveDeletionRequest(agency.deletionRequestId)
+        const res = await agencyApiRefRef.current.approveDeletionRequest(agency.deletionRequestId)
         if (!res.isError) {
             setAgencies(prev => prev?.filter(a => a.id !== agency.id) ?? [])
             setActionResult({ success: true, title: "Deletion request accepted — agency deleted", subtext: "" })

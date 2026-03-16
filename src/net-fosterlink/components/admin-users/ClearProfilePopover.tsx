@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Eraser } from "lucide-react";
@@ -17,6 +17,10 @@ export const ClearProfilePopover = ({ user, onClear, disabled }: ClearProfilePop
     const [clearProfilePicture, setClearProfilePicture] = useState(false);
 
     const noneSelected = !clearFullName && !clearUsername && !clearProfilePicture;
+
+    const handleClearFullNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setClearFullName(e.target.checked), []);
+    const handleClearUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setClearUsername(e.target.checked), []);
+    const handleClearProfilePictureChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setClearProfilePicture(e.target.checked), []);
 
     const handleSubmit = () => {
         onClear(user.id, clearFullName, clearUsername, clearProfilePicture);
@@ -54,7 +58,7 @@ export const ClearProfilePopover = ({ user, onClear, disabled }: ClearProfilePop
                         <input
                             type="checkbox"
                             checked={clearFullName}
-                            onChange={(e) => setClearFullName(e.target.checked)}
+                            onChange={handleClearFullNameChange}
                             className="rounded"
                         />
                         Full name (anonymize)
@@ -64,7 +68,7 @@ export const ClearProfilePopover = ({ user, onClear, disabled }: ClearProfilePop
                         <input
                             type="checkbox"
                             checked={clearUsername}
-                            onChange={(e) => setClearUsername(e.target.checked)}
+                            onChange={handleClearUsernameChange}
                             className="rounded"
                         />
                         Username (anonymize)
@@ -74,7 +78,7 @@ export const ClearProfilePopover = ({ user, onClear, disabled }: ClearProfilePop
                         <input
                             type="checkbox"
                             checked={clearProfilePicture}
-                            onChange={(e) => setClearProfilePicture(e.target.checked)}
+                            onChange={handleClearProfilePictureChange}
                             className="rounded"
                         />
                         Profile picture (default)

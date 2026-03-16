@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { AdminAgencyForUserModel } from "@/net-fosterlink/backend/models/AdminAgencyForUserModel";
 import { AgencyCard } from "./AgencyCard";
@@ -13,7 +14,7 @@ interface AdminAgencyCardProps {
     item: AdminAgencyForUserModel;
 }
 
-export const AdminAgencyCard: React.FC<AdminAgencyCardProps> = ({ item }) => {
+export const AdminAgencyCard = memo<AdminAgencyCardProps>(({ item }) => {
     const statusClass = STATUS_COLORS[item.entityStatus] ?? "bg-muted text-muted-foreground border-border";
 
     const statusBanner = (
@@ -34,4 +35,4 @@ export const AdminAgencyCard: React.FC<AdminAgencyCardProps> = ({ item }) => {
             />
         </div>
     );
-};
+});

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import type { AgencyModel } from "@/net-fosterlink/backend/models/AgencyModel"
 import { agencyApi } from "@/net-fosterlink/backend/api/AgencyApi"
 import { useAuth } from "@/net-fosterlink/backend/AuthContext"
@@ -44,13 +44,13 @@ export const PendingAgenciesTab = () => {
         })
     }, [])
 
-    const onApprove = (id: number, approve: boolean) => {
+    const onApprove = useCallback((id: number, approve: boolean) => {
         agencyApiRef.current.approve(id, approve).then(res => {
             if (!res.isError) {
                 if (approve) {
-                    setAgencies(agencies?.filter(a => a.id !== id) ?? [])
+                    setAgencies(prev => prev?.filter(a => a.id !== id) ?? [])
                 } else {
-                    setAgencies(agencies?.map(a => {
+                    setAgencies(prev => prev?.map(a => {
                         if (a.id === id) {
                             a.approved = 3
                             a.approvedByUsername = auth.getUserInfo()!.username
@@ -63,9 +63,9 @@ export const PendingAgenciesTab = () => {
                 setIsError(true)
             }
         })
-    }
+    }, [auth])
 
-    const onFullDelete = async (id: number) => {
+    const onFullDelete = useCallback(async (id: number) => {
         const confirmed = await confirm({
             message: "Permanently delete this agency? This cannot be undone.",
         })
@@ -79,7 +79,7 @@ export const PendingAgenciesTab = () => {
                 }
             })
         }
-    }
+    }, [])
 
     if (agencies == null) {
         return (

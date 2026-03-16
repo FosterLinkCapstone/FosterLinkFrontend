@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 interface ThreadHeaderProps {
     thread: ThreadModel;
@@ -45,6 +45,18 @@ export const ThreadHeader = ({
     const isTitleValid = titleTextInput.length >= TITLE_MIN_LENGTH && titleTextInput.length <= TITLE_MAX_LENGTH;
     const canSaveTitle = titleTextInput === thread.title || isTitleValid;
 
+    const handleTitleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitleTextInput(e.target.value), []);
+    const handleDoneTitle = useCallback(() => {
+        setEditingTitle(false);
+        if (titleTextInput !== thread.title && isTitleValid) {
+            titleUpdated(titleTextInput);
+        }
+    }, [titleTextInput, thread.title, isTitleValid, titleUpdated, setEditingTitle]);
+    const handleStartEditTitle = useCallback(() => setEditingTitle(true), [setEditingTitle]);
+    const handleTagsChange = useCallback((newTags: string[]) => tagsUpdated(newTags), [tagsUpdated]);
+    const handleDoneTags = useCallback(() => setEditingTags(false), [setEditingTags]);
+    const handleStartEditTags = useCallback(() => setEditingTags(true), [setEditingTags]);
+
     return (
         <div className="mb-4">
             {
@@ -53,17 +65,12 @@ export const ThreadHeader = ({
                         <div className="flex flex-wrap items-center gap-2">
                             <Input
                                 value={titleTextInput}
-                                onChange={(e) => setTitleTextInput(e.target.value)}
+                                onChange={handleTitleInputChange}
                                 className="text-2xl font-bold flex-1 min-w-0"
                                 maxLength={TITLE_MAX_LENGTH}
                                 aria-invalid={titleTextInput.length > 0 && !isTitleValid}
                             />
-                            <Button variant="outline" className="w-full sm:w-auto px-3 text-xs" onClick={() => {
-                                setEditingTitle(false)
-                                if (titleTextInput !== thread.title && isTitleValid) {
-                                    titleUpdated(titleTextInput)
-                                }
-                            }} disabled={titleEditLoading || !canSaveTitle}>Done</Button>
+                            <Button variant="outline" className="w-full sm:w-auto px-3 text-xs" onClick={handleDoneTitle} disabled={titleEditLoading || !canSaveTitle}>Done</Button>
                             <BackgroundLoadSpinner loading={titleEditLoading} />
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -81,7 +88,7 @@ export const ThreadHeader = ({
                         </div>
                         {(thread.author.id === auth.getUserInfo()?.id && !auth.restricted) && (
                             <div className="flex justify-center">
-                                <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={() => setEditingTitle(true)} disabled={titleEditLoading}>Edit title</Button>
+                                <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={handleStartEditTitle} disabled={titleEditLoading}>Edit title</Button>
                             </div>
                         )}
                     </div>
@@ -110,13 +117,13 @@ export const ThreadHeader = ({
             {editingTags ? (
                 <TagInputField
                     inputTags={thread.tags ?? []}
-                    onTagsChange={(newTags) => tagsUpdated(newTags)}
+                    onTagsChange={handleTagsChange}
                     loading={tagEditLoading}
                     className="max-w-xl mt-1"
                     actions={
                         <div className="flex items-center gap-1.5">
                             <BackgroundLoadSpinner loading={tagEditLoading} />
-                            <Button variant="outline" size="sm" className="h-6 px-2 text-xs" onClick={() => setEditingTags(false)} disabled={tagEditLoading}>Done</Button>
+                            <Button variant="outline" size="sm" className="h-6 px-2 text-xs" onClick={handleDoneTags} disabled={tagEditLoading}>Done</Button>
                         </div>
                     }
                 />
@@ -126,7 +133,7 @@ export const ThreadHeader = ({
                         <Badge key={index} variant="secondary" className="text-xs">{tag}</Badge>
                     ))}
                     {thread.author.id === auth.getUserInfo()?.id && (
-                        <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={() => setEditingTags(true)}>Edit tags</Button>
+                        <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs text-muted-foreground" onClick={handleStartEditTags}>Edit tags</Button>
                     )}
                 </div>
             )}

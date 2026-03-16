@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FaqModel } from '../backend/models/FaqModel';
 import { FaqCard } from '../components/faq/FaqCard';
 import { useAuth } from '../backend/AuthContext';
@@ -63,14 +63,14 @@ export const FaqHome = () => {
   const [contentLoadingId, setContentLoadingId] = useState<number | null>(null)
 
   const auth = useAuth()
-  const faqApiRef = faqApi(auth);
-    
-  const fetchFaqs = (pageNumber: number, searchTerm: string, searchByCategory: FaqSearchBy | undefined) => {
+  const faqApiRef = useMemo(() => faqApi(auth), [auth]);
+
+  const fetchFaqs = useCallback((pageNumber: number, searchTerm: string, searchByCategory: FaqSearchBy | undefined) => {
     return faqApiRef.getAll(pageNumber, {
       search: searchTerm.trim() || undefined,
       searchBy: searchTerm.trim() ? searchByCategory : undefined
     })
-  }
+  }, [faqApiRef])
 
   const displayedFaqs = useMemo(() => sortByCreatedAt(faqs, orderBy), [faqs, orderBy])
 
@@ -88,39 +88,40 @@ export const FaqHome = () => {
 
   useEffect(() => {
     setLoading(true)
-    fetchFaqs(0, appliedSearch, appliedSearchBy).then(res => {
-      if (!res.isError && res.data) {
-        setFaqs(res.data.items)
-        setTotalPages(res.data.totalPages)
+    Promise.all([
+      fetchFaqs(0, appliedSearch, appliedSearchBy),
+      (auth.admin || auth.faqAuthor) ? faqApiRef.checkApprovalStatus() : Promise.resolve(null),
+    ]).then(([faqRes, approvalRes]) => {
+      if (!faqRes.isError && faqRes.data) {
+        setFaqs(faqRes.data.items)
+        setTotalPages(faqRes.data.totalPages)
         setCurrentPage(1)
         const opened = searchParams.get("openId")
         if (opened != null) {
-          const faq = res.data.items.find(f => f.id == +opened)
+          const faq = faqRes.data.items.find(f => f.id == +opened)
           if (faq) handleShowDetail(faq)
         }
       }
-    }).finally(() => { setLoading(false) })
-  }, [appliedSearch, appliedSearchBy])
-    useEffect(() => {
-      if (auth.admin || auth.faqAuthor) {
-        faqApiRef.checkApprovalStatus().then(res => {
-          setUnapprovedFaqs(res)
-        })
-        if (searchParams.has("creating")) {
-          if (searchParams.get("creating") === "true") handleCreateFaq()
-        }
+      if (approvalRes) {
+        setUnapprovedFaqs(approvalRes)
       }
-    }, [auth.admin, auth.faqAuthor])
+    }).finally(() => { setLoading(false) })
+    if (auth.admin || auth.faqAuthor) {
+      if (searchParams.has("creating")) {
+        if (searchParams.get("creating") === "true") handleCreateFaq()
+      }
+    }
+  }, [appliedSearch, appliedSearchBy, fetchFaqs, auth.admin, auth.faqAuthor, faqApiRef])
 
   const handleExpand = (id: number) => {
     setExpandedId(id);
   };
 
-  const handleCollapse = () => {
+  const handleCollapse = useCallback(() => {
     setExpandedId(null);
-  };
+  }, []);
 
-  const onRemove = async (id: number) => {
+  const onRemove = useCallback(async (id: number) => {
     const message = auth.admin
       ? "Are you sure you want to hide this FAQ response? It can be restored from the Hidden FAQs page."
       : "Are you sure you want to delete this FAQ response?";
@@ -129,24 +130,29 @@ export const FaqHome = () => {
       setHideLoading(true);
       faqApiRef.setFaqHidden(id, true).then(res => {
         if (!res.isError) {
-          setFaqs(faqs.filter(f => f.id !== id));
+          setFaqs(prev => prev.filter(f => f.id !== id));
           setFaqRemoved(true);
         }
       }).finally(() => setHideLoading(false));
     }
-  };
+  }, [auth.admin, faqApiRef]);
 
-  const onDelete = async (id: number) => {
+  const onDelete = useCallback(async (id: number) => {
     const confirmed = await confirm({ message: "Are you sure you want to delete this FAQ response?" });
     if (!confirmed) return;
     setHideLoading(true);
     faqApiRef.setFaqHidden(id, true, true).then(res => {
       if (!res.isError) {
-        setFaqs(faqs.filter(f => f.id !== id));
+        setFaqs(prev => prev.filter(f => f.id !== id));
         setFaqRemoved(true);
       }
     }).finally(() => setHideLoading(false));
-  };
+  }, [faqApiRef]);
+
+  const handleSentToPending = useCallback((faqId: number) => {
+    setFaqs(prev => prev.filter(f => f.id !== faqId));
+    setSentToPending(true);
+  }, []);
 
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
@@ -340,10 +346,7 @@ export const FaqHome = () => {
                 onRemove={onRemove}
                 onDelete={auth.admin && faq.author.id === auth.getUserInfo()?.id ? onDelete : undefined}
                 contentForFaq={detailFaq?.id === faq.id ? faqContent.current : null}
-                onSentToPending={(faqId) => {
-                  setFaqs(faqs.filter(f => f.id !== faqId))
-                  setSentToPending(true)
-                }}
+                onSentToPending={handleSentToPending}
             />
         ))}
 

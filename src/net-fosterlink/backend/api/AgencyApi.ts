@@ -31,7 +31,7 @@ export interface AgencyApiType {
     getDeletionRequests: (pageNumber: number, sortBy?: string) => Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>>
     approveDeletionRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
     delayDeletionRequest: (requestId: number, reason: string) => Promise<ErrorWrapper<boolean>>
-    updateAgency: (id: number, name: string|null, missionStatement: string|null, websiteUrl: string|null) => Promise<ErrorWrapper<void>>
+    updateAgency: (id: number, name: string|null, missionStatement: string|null, websiteUrl: string|null, showContactInfo?: boolean | null) => Promise<ErrorWrapper<void>>
     updateAgencyLocation: (agencyId: number, location: UpdateAgencyLocationPayload) => Promise<ErrorWrapper<void>>
 }
 
@@ -232,12 +232,12 @@ export const agencyApi = (auth: AuthContextType): AgencyApiType => {
                 ])
             );
         },
-        updateAgency: async (agencyId: number, name: string|null, missionStatement: string|null, websiteUrl: string|null): Promise<ErrorWrapper<void>> => {
+        updateAgency: async (agencyId: number, name: string|null, missionStatement: string|null, websiteUrl: string|null, showContactInfo?: boolean | null): Promise<ErrorWrapper<void>> => {
                 return doGenericRequest<void>(
                     auth.api,
                     RequestType.PUT,
                     `/agencies/update`,
-                    { agencyId, name, missionStatement, websiteUrl },
+                    { agencyId, name, missionStatement, websiteUrl, showContactInfo: showContactInfo ?? null },
                     new Map<number, string>([
                         [400, "Invalid agency data! Please check your inputs."],
                         [403, "You must be the owner of this agency to update it."],

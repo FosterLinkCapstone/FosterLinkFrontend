@@ -46,7 +46,7 @@ export const NavAccountDropdown = ({ auth, userInfo, onMouseEnter, onMouseLeave,
                     </>
                 ) : (
                     <>
-                        <ListItem href={`/login?currentPage=${window.location.pathname}`} title="Login">
+                        <ListItem href={`/login?currentPage=${encodeURIComponent(window.location.pathname)}`} title="Login">
                             Sign in to your account
                         </ListItem>
                         <ListItem href="/register" title="Register">

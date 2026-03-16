@@ -5,6 +5,7 @@ import { DummyFaq } from '../components/dummy/DummyFaq';
 import { DummyAgency } from '../components/dummy/DummyAgency';
 import { Navbar } from '../components/navbar/Navbar';
 import { useAuth } from '../backend/AuthContext';
+import { Link } from 'react-router';
 
 export const Home = () => {
   const [currentModule, setCurrentModule] = useState(0);
@@ -180,6 +181,11 @@ export const Home = () => {
           <p className="text-muted-foreground">
             We want your feedback! Report bugs or leave a comment about your experience here: <a target="_blank" href="https://forms.office.com/r/ehsghCatqK" className="text-primary hover:text-primary/90 underline">feedback form</a>
           </p>
+          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+            <Link to="/privacy" className="hover:text-foreground underline transition-colors">Privacy Policy</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms" className="hover:text-foreground underline transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
     </div>

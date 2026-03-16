@@ -4,6 +4,8 @@ import { useAuth } from "../backend/AuthContext"
 import { userApi } from "../backend/api/UserApi"
 import type { AuditLogEntryModel } from "../backend/models/AuditLogModel"
 import { Card } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircleIcon } from "lucide-react"
 import { Paginator } from "../components/Paginator"
 
 const formatDateTime = (date: Date | string) => {
@@ -51,6 +53,14 @@ export const AuditLog = () => {
 
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold text-center mb-6">Audit Log</h1>
+
+                <Alert className="mb-6 bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700 text-center">
+                    <AlertCircleIcon className="h-4 w-4" />
+                    <AlertTitle className="text-center">Auto clearance</AlertTitle>
+                    <AlertDescription className="text-amber-900 dark:text-amber-100 text-center justify-items-center">
+                        Audit log entries are automatically removed after 730 days (2 years).
+                    </AlertDescription>
+                </Alert>
 
                 {loading ? (
                     <div className="flex justify-center py-12">

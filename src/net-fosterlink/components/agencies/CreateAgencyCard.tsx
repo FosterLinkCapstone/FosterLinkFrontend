@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { CreateAgencyModel } from "@/net-fosterlink/backend/models/api/CreateAgencyModel";
 import type { LocationInput } from "@/net-fosterlink/backend/models/api/LocationInput";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
@@ -24,6 +25,7 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
     missionStatement: '',
     websiteUrl: '',
     location: { ...defaultLocation },
+    showContactInfo: false,
   });
 
   const auth = useAuth()
@@ -216,6 +218,22 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
             className={errors['location.zipCode'] ? 'border-red-500' : ''}
           />
           {(errors['location.zipCode'] || serverFieldErrors?.['location.zipCode']) && <span className="text-red-500">{errors['location.zipCode'] ?? serverFieldErrors?.['location.zipCode']}</span>}
+        </div>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
+        <Switch
+          id="showContactInfo"
+          checked={formData.showContactInfo}
+          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showContactInfo: checked }))}
+        />
+        <div className="flex flex-col gap-0.5">
+          <Label htmlFor="showContactInfo" className="cursor-pointer font-medium">
+            Show my contact info publicly
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Your phone number and email will be visible on this agency's public listing.
+          </p>
         </div>
       </div>
 
