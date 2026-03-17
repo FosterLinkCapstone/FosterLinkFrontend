@@ -16,7 +16,7 @@ export const NavDevToolsDropdown = ({ onMouseEnter, onMouseLeave, onTriggerClick
         >
             DevTools
         </NavigationMenuTrigger>
-        <NavigationMenuContent className="bg-popover text-popover-foreground">
+        <NavigationMenuContent className="bg-popover text-popover-foreground !left-auto right-0">
             <ul className="grid gap-2 p-4 w-[calc(100vw-2rem)] md:w-[400px] lg:w-[500px]">
                 <ListItem href="/dev/swagger" title="Swagger API Docs">
                     <div className="flex flex-col items-center">
