@@ -21,7 +21,7 @@ export const NavDevToolsDropdown = ({ onMouseEnter, onMouseLeave, onTriggerClick
                 <ListItem href="/dev/swagger" title="Swagger API Docs">
                     <div className="flex flex-col items-center">
                         <AdminOnlyBadge />
-                        <span>Backend API documentation (proxy)</span>
+                        <span>Backend API documentation</span>
                     </div>
                 </ListItem>
                 {import.meta.env.VITE_BRANCH === "staging" ? (

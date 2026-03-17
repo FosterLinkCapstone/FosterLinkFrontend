@@ -86,7 +86,8 @@ export const AgencyCard = memo(({ agency, onRemove, onDelete, onRequestDeletion,
   const fullAddress = `${displayLocation.addrLine1}${displayLocation.addrLine2 ? ", " + displayLocation.addrLine2 : ""}, ${displayLocation.city}, ${displayLocation.state} ${displayLocation.zipCode}`;
   const encodedAddress = encodeURIComponent(fullAddress);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-  const staticMapUrl = `${import.meta.env.VITE_API_URL}maps/static?address=${encodedAddress}&zoom=15&size=300x200`;
+  const baseUrl = import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+  const staticMapUrl = `${baseUrl}/maps/static?address=${encodedAddress}&zoom=15&size=300x200`;
 
   const hasChanges = useMemo(() => {
     const s = savedRef.current;

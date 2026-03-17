@@ -3,34 +3,42 @@ import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 
 export const DummyAgency = ({ref} : {ref: React.RefObject<HTMLDivElement | null>}) => {
   return (
-    <Card ref={ref} className="w-full h-fit max-w-4xl mx-auto">
+    <Card ref={ref} className="w-full h-fit max-w-7xl border-border">
       <div className="flex flex-col md:flex-row">
         <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-border">
-          <h2 className="text-2xl font-bold mb-4 text-center">Caring Hearts Foster Agency</h2>
-          
+          <div className="flex items-center justify-center gap-1 mb-1">
+            <h2 className="text-2xl font-bold text-center">Caring Hearts Foster Agency</h2>
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center mb-4">
+            Created Nov 28, 2024 at 2:30 PM
+          </p>
+
           <div className="bg-muted rounded-lg p-4 mb-4">
-            <p className="text-foreground leading-relaxed">
+            <p className="text-foreground leading-relaxed text-sm">
               Our mission is to provide loving, stable homes for children in need while supporting foster families through every step of their journey. We believe every child deserves a safe and nurturing environment.
             </p>
           </div>
 
-          <a 
-            href="#"
-            className="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm"
-          >
-            Visit Website <ExternalLink size={14} />
-          </a>
+          <div className="flex items-center justify-center gap-1">
+            <a
+              href="#"
+              className="text-primary hover:text-primary/90 inline-flex items-center gap-1 text-sm"
+            >
+              Visit Website <ExternalLink size={14} />
+            </a>
+          </div>
         </div>
 
         <div className="w-full md:w-80 flex flex-col">
           <div className="p-6 border-b border-border">
-            <div className="flex items-start gap-4 mb-4">   
+            <div className="flex items-start gap-4 mb-4">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                 <div className="text-muted-foreground text-2xl">
                   EJ
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 text-start">
                 <h3 className="font-semibold text-lg">
                   Emily Johnson
                 </h3>
@@ -47,14 +55,16 @@ export const DummyAgency = ({ref} : {ref: React.RefObject<HTMLDivElement | null>
           </div>
 
           <div className="p-6">
-            <div className="relative rounded-lg overflow-hidden border border-border mb-3 bg-muted h-40 flex items-center justify-center">
-              <MapPin size={48} className="text-muted-foreground" />
-            </div>
-            <div className="flex items-center justify-center gap-2 text-sm text-foreground">
-              <MapPin size={16} className="mt-0.5 flex-shrink-0" />
-              <div>
-                <div>123 Main Street</div>
-                <div>Phoenix, AZ 85001</div>
+            <div className="block group">
+              <div className="relative rounded-lg overflow-hidden border border-border mb-3 bg-muted h-40 flex items-center justify-center">
+                <MapPin size={48} className="text-muted-foreground" />
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm text-foreground">
+                <MapPin size={16} className="mt-0.5 flex-shrink-0" />
+                <div>
+                  <div>123 Main Street</div>
+                  <div>Phoenix, AZ 85001</div>
+                </div>
               </div>
             </div>
           </div>
