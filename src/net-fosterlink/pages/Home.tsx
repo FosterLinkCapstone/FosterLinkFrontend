@@ -3,8 +3,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DummyThread } from '../components/dummy/DummyThread';
 import { DummyFaq } from '../components/dummy/DummyFaq';
 import { DummyAgency } from '../components/dummy/DummyAgency';
-import { Navbar } from '../components/Navbar';
+import { Navbar } from '../components/navbar/Navbar';
 import { useAuth } from '../backend/AuthContext';
+import { Link } from 'react-router';
 
 export const Home = () => {
   const [currentModule, setCurrentModule] = useState(0);
@@ -78,17 +79,18 @@ export const Home = () => {
 
   return (
     <div className="min-h-screen bg-background bg-gradient-to-b from-blue-50/80 to-background dark:from-transparent dark:to-transparent">
+        <title>FosterLink</title>
         <Navbar userInfo={auth.getUserInfo()}/>
 
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 pb-10 text-center">
-          <h1 className="text-6xl font-bold mb-6">FosterLink</h1>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-6">FosterLink</h1>
           <p className="text-xl leading-relaxed">
             Welcome to FosterLink! Our goal is to connect experienced foster parents with prospective foster parents, and to provide a unified resource hub for all things related to foster care. We believe that providing a one-stop-shop for foster information will promote increased awareness of what is needed to provide the highest quality care for children in need.
           </p>
         </div>
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Multi-Modal Approach</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Multi-Modal Approach</h2>
           <p className="text-xl leading-relaxed">
             Our solution takes a multi-modal approach. This website is comprised of 3 modules: a forum, a FAQ, and a hub for agencies.
           </p>
@@ -110,7 +112,7 @@ export const Home = () => {
                     key={index} 
                     className="w-full flex-shrink-0 px-1"
                   >
-                    <h2 className="text-3xl font-bold mb-6 text-foreground">{module.title}</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-foreground">{module.title}</h2>
                     <p className="text-muted-foreground mb-8 leading-relaxed">{module.paragraph}</p>
                     <div className='transition-all duration-500 ease-in-out' style={{ height: `${currentHeight() + 20}px` }}>
                       {module.card}
@@ -179,6 +181,11 @@ export const Home = () => {
           <p className="text-muted-foreground">
             We want your feedback! Report bugs or leave a comment about your experience here: <a target="_blank" href="https://forms.office.com/r/ehsghCatqK" className="text-primary hover:text-primary/90 underline">feedback form</a>
           </p>
+          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+            <Link to="/privacy" className="hover:text-foreground underline transition-colors">Privacy Policy</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms" className="hover:text-foreground underline transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
     </div>

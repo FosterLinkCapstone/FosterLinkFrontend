@@ -8,7 +8,7 @@ import { ThreadPreviewMicro } from "../components/forum/ThreadPreviewMicro";
 import { useEffect, useState } from "react";
 import type { ThreadModel } from "../backend/models/ThreadModel";
 import type { HiddenThreadModel } from "../backend/models/HiddenThreadModel";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ReplyModel } from "../backend/models/ReplyModel";
@@ -16,7 +16,7 @@ import { getInitials } from "../util/StringUtil";
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 import { confirm } from "../components/ConfirmDialog";
 import { useNavigate } from "react-router";
-import { VerifiedCheck } from "../components/VerifiedCheck";
+import { VerifiedCheck } from "../components/badges/VerifiedCheck";
 import { buildProfileUrl } from "../util/UserUtil";
 
 export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) => {
@@ -98,13 +98,10 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
-        <div className="w-80 space-y-4">
+    <PageLayout auth={auth}>
+      <title>[Hidden] {thread.title}</title>
+      <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-80 space-y-4 order-2 lg:order-1">
           <Card className="p-4 border-border">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="h-5 w-5 text-destructive" />
@@ -116,10 +113,13 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
                 : `This thread was hidden by its author.`}
             </p>
             <div className="flex gap-2">
-              <Button className="flex-1" onClick={restoreThread}>
-                Restore
-              </Button>
-              <Button variant="destructive" className="flex-1" onClick={permanentlyDeleteThread}>
+              {/* Restore only for thread author on user-deleted, or for admin on admin-deleted; admins cannot restore user-deleted threads */}
+              {(thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()?.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin) ? (
+                <Button className="flex-1" onClick={restoreThread} disabled={auth.restricted}>
+                  Restore
+                </Button>
+              ) : null}
+              <Button variant="destructive" className="flex-1" onClick={permanentlyDeleteThread} disabled={auth.restricted}>
                 Delete
               </Button>
             </div>
@@ -138,7 +138,7 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
           </Card>
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 order-1 lg:order-2">
           <div className="mb-4">
             <h1 className="text-3xl font-bold mb-2">{thread.title}</h1>
             <div className="flex items-center gap-2 pb-2 text-sm text-muted-foreground">
@@ -176,8 +176,11 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
           </Card>
 
           <div className="flex items-center gap-1.5 mb-4">
-            <Button variant="outline" onClick={restoreThread}>Restore</Button>
-            <Button variant="outline" className="bg-red-200 text-red-400" onClick={permanentlyDeleteThread}>Delete</Button>
+            {/* Restore only for thread author on user-deleted, or for admin on admin-deleted; admins cannot restore user-deleted threads */}
+            {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()?.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin)) && (
+              <Button variant="outline" onClick={restoreThread}>Restore</Button>
+            )}
+            <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={permanentlyDeleteThread}>Delete</Button>
             <BackgroundLoadSpinner loading={loading} />
           </div>
 
@@ -210,6 +213,6 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

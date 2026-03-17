@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FaqModel } from '../backend/models/FaqModel';
 import { FaqCard } from '../components/faq/FaqCard';
 import { useAuth } from '../backend/AuthContext';
 import { faqApi } from '../backend/api/FaqApi';
 import { Link, useSearchParams } from 'react-router';
-import { Navbar } from '../components/Navbar';
+import { PageLayout } from '../components/PageLayout';
 import { FaqDialog } from '../components/faq/FaqDialog';
 import { Button } from '@/components/ui/button';
 import { CreateFaqCard } from '../components/faq/CreateFaqCard';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircleIcon } from 'lucide-react';
 import type { ErrorWrapper } from '../util/ErrorWrapper';
 import { StatusDialog } from '../components/StatusDialog';
@@ -16,8 +16,15 @@ import { confirm } from '../components/ConfirmDialog';
 import type { ApprovalCheckModel } from '../backend/models/ApprovalCheckModel';
 import { CreateFaqRequestCard } from '../components/faq/CreateFaqRequestCard';
 import type { FaqRequestModel } from '../backend/models/FaqRequestModel';
+import type { GetFaqsResponse } from '../backend/models/api/GetFaqsResponse';
 import { FaqCardSkeleton } from '../components/faq/FaqCardSkeleton';
 import { Paginator } from '../components/Paginator';
+import { BackgroundLoadSpinner } from '../components/BackgroundLoadSpinner';
+import type { FaqSearchBy } from '../backend/api/FaqApi';
+import { sortByCreatedAt, type CreatedAtOrderBy } from '../util/SortUtil';
+import { OrderByCreatedAtSelect } from '../components/OrderByCreatedAtSelect';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const FaqHome = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -37,75 +44,125 @@ export const FaqHome = () => {
   const [faqs, setFaqs] = useState<FaqModel[]>([])
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number>(1)
+  const [searchInput, setSearchInput] = useState<string>('')
+  const [searchBy, setSearchBy] = useState<FaqSearchBy>('title')
+  const [appliedSearch, setAppliedSearch] = useState<string>('')
+  const [appliedSearchBy, setAppliedSearchBy] = useState<FaqSearchBy | undefined>(undefined)
+  const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>('newest')
+
   const [createError, setCreateError] = useState<ErrorWrapper<undefined> | undefined>(undefined)
   const [createSuccessDialogOpen, setCreateSuccessDialogOpen] = useState<boolean>(false)
   const [createFailureDialogOpen, setCreateFailureDialogOpen] = useState<boolean>(false)
   const [faqRemoved, setFaqRemoved] = useState<boolean>(false)
+  const [sentToPending, setSentToPending] = useState<boolean>(false)
 
   const [loading, setLoading] = useState<boolean>(true)
+  const [hideLoading, setHideLoading] = useState<boolean>(false)
 
   const [unapprovedFaqs, setUnapprovedFaqs] = useState<ApprovalCheckModel>({countDenied: 0, countPending: 0})
-  
+  const [contentLoadingId, setContentLoadingId] = useState<number | null>(null)
+
   const auth = useAuth()
-  const faqApiRef = faqApi(auth);
-    
+  const faqApiRef = useMemo(() => faqApi(auth), [auth]);
+
+  const fetchFaqs = useCallback((pageNumber: number, searchTerm: string, searchByCategory: FaqSearchBy | undefined) => {
+    return faqApiRef.getAll(pageNumber, {
+      search: searchTerm.trim() || undefined,
+      searchBy: searchTerm.trim() ? searchByCategory : undefined
+    })
+  }, [faqApiRef])
+
+  const displayedFaqs = useMemo(() => sortByCreatedAt(faqs, orderBy), [faqs, orderBy])
+
+  const handleSearchClick = () => {
+    const trimmed = searchInput.trim()
+    const newSearch = trimmed || ''
+    const newSearchBy = trimmed ? searchBy : undefined
+    // Only update and trigger fetch when the applied search actually changed
+    if (newSearch !== appliedSearch || newSearchBy !== appliedSearchBy) {
+      setAppliedSearch(newSearch)
+      setAppliedSearchBy(newSearchBy)
+      setCurrentPage(1)
+    }
+  }
+
   useEffect(() => {
     setLoading(true)
-        faqApiRef.getAll(0).then(res => {
-            if (!res.isError && res.data) {
-                setFaqs(res.data.faqs)
-                setTotalPages(res.data.totalPages)
-                setCurrentPage(1)
-                const opened = searchParams.get("openId")
-                if (opened != null) {
-                    const faq = res.data.faqs.find(f => f.id == +opened)
-                    if (faq) handleShowDetail(faq)
-                }
-            }
-        }).finally(() => { setLoading(false) })
-    }, [])
-    useEffect(() => {
-      if (auth.admin || auth.faqAuthor) {
-        faqApiRef.checkApprovalStatus().then(res => {
-          setUnapprovedFaqs(res)
-        })
-        if (searchParams.has("creating")) {
-          if (searchParams.get("creating") === "true") handleCreateFaq()
+    Promise.all([
+      fetchFaqs(0, appliedSearch, appliedSearchBy),
+      (auth.admin || auth.faqAuthor) ? faqApiRef.checkApprovalStatus() : Promise.resolve(null),
+    ]).then(([faqRes, approvalRes]) => {
+      if (!faqRes.isError && faqRes.data) {
+        setFaqs(faqRes.data.items)
+        setTotalPages(faqRes.data.totalPages)
+        setCurrentPage(1)
+        const opened = searchParams.get("openId")
+        if (opened != null) {
+          const faq = faqRes.data.items.find(f => f.id == +opened)
+          if (faq) handleShowDetail(faq)
         }
       }
-    }, [auth.admin, auth.faqAuthor])
+      if (approvalRes) {
+        setUnapprovedFaqs(approvalRes)
+      }
+    }).finally(() => { setLoading(false) })
+    if (auth.admin || auth.faqAuthor) {
+      if (searchParams.has("creating")) {
+        if (searchParams.get("creating") === "true") handleCreateFaq()
+      }
+    }
+  }, [appliedSearch, appliedSearchBy, fetchFaqs, auth.admin, auth.faqAuthor, faqApiRef])
 
   const handleExpand = (id: number) => {
     setExpandedId(id);
   };
 
-  const handleCollapse = () => {
+  const handleCollapse = useCallback(() => {
     setExpandedId(null);
-  };
+  }, []);
 
-  const onRemove = async (id: number) => {
+  const onRemove = useCallback(async (id: number) => {
     const message = auth.admin
       ? "Are you sure you want to hide this FAQ response? It can be restored from the Hidden FAQs page."
-      : "Are you sure you want to delete this FAQ response? It can be restored from the Hidden FAQs page.";
+      : "Are you sure you want to delete this FAQ response?";
     const confirmed = await confirm({ message });
     if (confirmed) {
+      setHideLoading(true);
       faqApiRef.setFaqHidden(id, true).then(res => {
         if (!res.isError) {
-          setFaqs(faqs.filter(f => f.id !== id));
+          setFaqs(prev => prev.filter(f => f.id !== id));
           setFaqRemoved(true);
         }
-      });
+      }).finally(() => setHideLoading(false));
     }
-  };
+  }, [auth.admin, faqApiRef]);
+
+  const onDelete = useCallback(async (id: number) => {
+    const confirmed = await confirm({ message: "Are you sure you want to delete this FAQ response?" });
+    if (!confirmed) return;
+    setHideLoading(true);
+    faqApiRef.setFaqHidden(id, true, true).then(res => {
+      if (!res.isError) {
+        setFaqs(prev => prev.filter(f => f.id !== id));
+        setFaqRemoved(true);
+      }
+    }).finally(() => setHideLoading(false));
+  }, [faqApiRef]);
+
+  const handleSentToPending = useCallback((faqId: number) => {
+    setFaqs(prev => prev.filter(f => f.id !== faqId));
+    setSentToPending(true);
+  }, []);
 
   const handleShowDetail = (faq: FaqModel) => {
     if (faqContent.current == '') {
+        setContentLoadingId(faq.id);
         faqApiRef.getContent(faq.id).then(res => {
           if (!res.isError && res.data) {
             faqContent.current = res.data
             setDetailFaq(faq);
           }
-        })
+        }).finally(() => setContentLoadingId(null))
     } else setDetailFaq(faq)
   };
 
@@ -146,7 +203,7 @@ export const FaqHome = () => {
     if (suggestion !== "") {
       setSuggestionFieldErrors({})
       faqApiRef.createRequest(suggestion).then(res => {
-        if (!res.isError && res.data) {
+        if (!res.isError) {
           setCreatingSuggestion(false)
           setSuggestionCreationError('')
         } else {
@@ -178,10 +235,13 @@ export const FaqHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
+      <BackgroundLoadSpinner loading={hideLoading} />
+      <title>Frequently Asked Questions</title>
       <StatusDialog open={createSuccessDialogOpen} isSuccess={true} onOpenChange={setCreateSuccessDialogOpen} title='FAQ Response Created!' subtext='Now pending approval...'/>
       <StatusDialog open={createFailureDialogOpen} isSuccess={false} onOpenChange={setCreateFailureDialogOpen} title={createError?.error ?? "Unknown error"} subtext='Please try again later'/>
       <StatusDialog open={faqRemoved} isSuccess={true} onOpenChange={setFaqRemoved} title={auth.admin ? "FAQ response successfully hidden" : "FAQ response deleted"} subtext={auth.admin ? 'It can be restored from the Hidden FAQs page' : ""}/>
+      <StatusDialog open={sentToPending} isSuccess={true} onOpenChange={setSentToPending} title="Changes saved" subtext="This FAQ has been sent back to pending approval and is no longer on the public list. An administrator will need to approve it again."/>
       <StatusDialog open={getRequestsError != ''} onOpenChange={() => setRequestsError('')} isSuccess={false} title="Error loading requests" subtext={getRequestsError}/>
       {
         (suggestionCreationError !== null) && ((suggestionCreationError !== '') ? 
@@ -199,21 +259,47 @@ export const FaqHome = () => {
         onSubmit={submitNewRequest}
         serverFieldErrors={Object.keys(suggestionFieldErrors).length > 0 ? suggestionFieldErrors : undefined}
       />
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
         {
           (auth.faqAuthor || auth.admin) && <Alert variant="default" className='w-full mb-6 bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700'>
             <AlertCircleIcon/>
-            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved responses and {unapprovedFaqs.countDenied} denied responses. {auth.admin && <Link to="/faq/pending" className='text-primary hover:text-primary/90 font-medium'>View pending responses</Link>}</AlertTitle>
+            <AlertTitle>You have {unapprovedFaqs.countPending} unapproved and {unapprovedFaqs.countDenied} denied responses.</AlertTitle>
+            {auth.admin && (
+              <AlertDescription className="text-amber-900 dark:text-amber-100 mt-1 text-center justify-items-center">
+                <Link to="/faq/pending" className='text-primary hover:text-primary/90 font-medium'>View pending responses</Link>
+              </AlertDescription>
+            )}
           </Alert>
         }
         {
-          (auth.faqAuthor || auth.admin) && <Button className="w-full mb-6" variant='outline' onClick={handleCreateFaq}>Create</Button>
+          (auth.faqAuthor || auth.admin) && <Button className="w-full mb-6" variant='outline' onClick={handleCreateFaq} disabled={auth.restricted}>Create</Button>
         }
+
+        <div className="flex flex-col sm:flex-row gap-3 flex-wrap mb-6">
+          <Select value={searchBy} onValueChange={(v) => setSearchBy(v as FaqSearchBy)}>
+            <SelectTrigger className="w-full sm:w-[130px] shrink-0">
+              <SelectValue placeholder="Search in" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">FAQ title</SelectItem>
+              <SelectItem value="summary">FAQ summary</SelectItem>
+              <SelectItem value="authorFullName">Author name</SelectItem>
+              <SelectItem value="authorUsername">Author username</SelectItem>
+            </SelectContent>
+          </Select>
+          <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} className="shrink-0" />
+          <Input
+            type="search"
+            placeholder="Search..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
+            className="flex-1 min-w-0"
+          />
+          <Button type="button" variant="secondary" onClick={handleSearchClick} className="shrink-0">Search</Button>
+        </div>
+
         {
           creating && <CreateFaqCard
             handleSubmitResponse={handleSubmitFaqResponse}
@@ -228,7 +314,7 @@ export const FaqHome = () => {
           />
         }
         {
-          (auth.isLoggedIn()) && <Button className='w-full mb-6' variant="outline" onClick={() => setCreatingSuggestion(true)}>Suggest a new FAQ response</Button>
+          (auth.isLoggedIn()) && <Button className='w-full mb-6' variant="outline" onClick={() => setCreatingSuggestion(true)} disabled={auth.restricted}>Suggest a new FAQ response</Button>
         }
 
         { createError && 
@@ -246,7 +332,7 @@ export const FaqHome = () => {
           </div>
         }
 
-        {!loading && faqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : faqs.map((faq) => (
+        {!loading && displayedFaqs.length == 0 ? <h2 className="text-2xl font-bold my-2 text-center">No content!</h2> : displayedFaqs.map((faq) => (
             <FaqCard
                 key={faq.id}
                 faq={faq}
@@ -254,28 +340,35 @@ export const FaqHome = () => {
                 onCollapse={handleCollapse}
                 onShowDetail={() => handleShowDetail(faq)}
                 expanded={expandedId === faq.id}
-                canEdit={auth.admin || (!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id)}
+                contentLoading={contentLoadingId === faq.id}
+                canEdit={!!auth.faqAuthor && faq.author.id === auth.getUserInfo()?.id}
+                canRemove={auth.admin || faq.author.id === auth.getUserInfo()?.id}
                 onRemove={onRemove}
+                onDelete={auth.admin && faq.author.id === auth.getUserInfo()?.id ? onDelete : undefined}
+                contentForFaq={detailFaq?.id === faq.id ? faqContent.current : null}
+                onSentToPending={handleSentToPending}
             />
         ))}
 
-        <Paginator<FaqModel[]>
+        <Paginator<GetFaqsResponse>
           pageCount={totalPages}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          onDataChanged={setFaqs}
+          onDataChanged={(data) => {
+            setFaqs(data.items);
+            setTotalPages(data.totalPages);
+          }}
           onPageChanged={async (pageNum) => {
-            const res = await faqApiRef.getAll(pageNum - 1);
-            if (res.data) {
-              setTotalPages(res.data.totalPages);
-              return res.data.faqs;
+            const res = await fetchFaqs(pageNum - 1, appliedSearch, appliedSearchBy);
+            if (!res.isError && res.data) {
+              return res.data;
             }
-            return [];
+            return { items: [], totalPages: 1 };
           }}
         />
         
       </div>
       <FaqDialog detailFaq={detailFaq} content={faqContent.current} handleOpenChange={handleCloseDetail}/>  
-    </div>
+    </PageLayout>
   );
 };

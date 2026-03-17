@@ -4,31 +4,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { CreateAgencyModel } from "@/net-fosterlink/backend/models/api/CreateAgencyModel";
+import type { LocationInput } from "@/net-fosterlink/backend/models/api/LocationInput";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { useAuth } from "@/net-fosterlink/backend/AuthContext";
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner";
+
+const defaultLocation: LocationInput = {
+  addrLine1: '',
+  addrLine2: '',
+  city: '',
+  state: '',
+  zipCode: 0,
+};
 
 export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors }: { handleSubmit: (agency: CreateAgencyModel) => Promise<void>, handleClose: () => void, serverFieldErrors?: { [key: string]: string } }) => {
   const [formData, setFormData] = useState<CreateAgencyModel>({
     name: '',
     missionStatement: '',
     websiteUrl: '',
-    locationCity: '',
-    locationState: '',
-    locationZipCode: 0,
-    locationAddrLine1: '',
-    locationAddrLine2: ''
+    location: { ...defaultLocation },
+    showContactInfo: false,
   });
 
   const auth = useAuth()
 
   const [createLoading, setCreateLoading] = useState<boolean>(false);
 
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateAgencyModel, string>>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof CreateAgencyModel, string>> = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Agency name is required';
@@ -50,22 +57,20 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
       }
     }
 
-    if (!formData.locationCity.trim()) {
-      newErrors.locationCity = 'City is required';
+    const loc = formData.location;
+    if (!loc.city.trim()) {
+      newErrors['location.city'] = 'City is required';
     }
-
-    if (!formData.locationState.trim()) {
-      newErrors.locationState = 'State is required';
+    if (!loc.state.trim()) {
+      newErrors['location.state'] = 'State is required';
     }
-
-    if (!formData.locationAddrLine1.trim()) {
-      newErrors.locationAddrLine1 = 'Address line 1 is required';
+    if (!loc.addrLine1.trim()) {
+      newErrors['location.addrLine1'] = 'Address line 1 is required';
     }
-
-    if (!formData.locationZipCode || formData.locationZipCode === 0) {
-      newErrors.locationZipCode = 'Zip code is required';
-    } else if (formData.locationZipCode < 501 || formData.locationZipCode > 99950) {
-      newErrors.locationZipCode = 'Zip code must be between 501 and 99950';
+    if (!loc.zipCode || loc.zipCode === 0) {
+      newErrors['location.zipCode'] = 'Zip code is required';
+    } else if (loc.zipCode < 501 || loc.zipCode > 99950) {
+      newErrors['location.zipCode'] = 'Zip code must be between 501 and 99950';
     }
 
     setErrors(newErrors);
@@ -84,7 +89,24 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
   const updateField = (field: keyof CreateAgencyModel, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors(prev => {
+        const { [field]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const updateLocationField = (field: keyof LocationInput, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      location: { ...prev.location, [field]: value },
+    }));
+    const key = `location.${field}`;
+    if (errors[key]) {
+      setErrors(prev => {
+        const { [key]: _, ...rest } = prev;
+        return rest;
+      });
     }
   };
 
@@ -140,11 +162,11 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
           id="addr1"
           type="text"
           placeholder="Street address"
-          value={formData.locationAddrLine1}
-          onChange={(e) => updateField('locationAddrLine1', e.target.value)}
-          className={errors.locationAddrLine1 ? 'border-red-500' : ''}
+          value={formData.location.addrLine1}
+          onChange={(e) => updateLocationField('addrLine1', e.target.value)}
+          className={errors['location.addrLine1'] ? 'border-red-500' : ''}
         />
-        {(errors.locationAddrLine1 || serverFieldErrors?.locationAddrLine1) && <span className="text-red-500">{errors.locationAddrLine1 ?? serverFieldErrors?.locationAddrLine1}</span>}
+        {(errors['location.addrLine1'] || serverFieldErrors?.['location.addrLine1']) && <span className="text-red-500">{errors['location.addrLine1'] ?? serverFieldErrors?.['location.addrLine1']}</span>}
       </div>
 
       <div className="space-y-2">
@@ -153,23 +175,23 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
           id="addr2"
           type="text"
           placeholder="Apt, suite, unit, etc."
-          value={formData.locationAddrLine2}
-          onChange={(e) => updateField('locationAddrLine2', e.target.value)}
+          value={formData.location.addrLine2 ?? ''}
+          onChange={(e) => updateLocationField('addrLine2', e.target.value)}
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="city">City *</Label>
           <Input
             id="city"
             type="text"
             placeholder="City"
-            value={formData.locationCity}
-            onChange={(e) => updateField('locationCity', e.target.value)}
-            className={errors.locationCity ? 'border-red-500' : ''}
+            value={formData.location.city}
+            onChange={(e) => updateLocationField('city', e.target.value)}
+            className={errors['location.city'] ? 'border-red-500' : ''}
           />
-          {(errors.locationCity || serverFieldErrors?.locationCity) && <span className="text-red-500">{errors.locationCity ?? serverFieldErrors?.locationCity}</span>}
+          {(errors['location.city'] || serverFieldErrors?.['location.city']) && <span className="text-red-500">{errors['location.city'] ?? serverFieldErrors?.['location.city']}</span>}
         </div>
 
         <div className="space-y-2">
@@ -178,11 +200,11 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
             id="state"
             type="text"
             placeholder="State"
-            value={formData.locationState}
-            onChange={(e) => updateField('locationState', e.target.value)}
-            className={errors.locationState ? 'border-red-500' : ''}
+            value={formData.location.state}
+            onChange={(e) => updateLocationField('state', e.target.value)}
+            className={errors['location.state'] ? 'border-red-500' : ''}
           />
-          {(errors.locationState || serverFieldErrors?.locationState) && <span className="text-red-500">{errors.locationState ?? serverFieldErrors?.locationState}</span>}
+          {(errors['location.state'] || serverFieldErrors?.['location.state']) && <span className="text-red-500">{errors['location.state'] ?? serverFieldErrors?.['location.state']}</span>}
         </div>
 
         <div className="space-y-2">
@@ -191,16 +213,32 @@ export const CreateAgencyCard = ({ handleSubmit, handleClose, serverFieldErrors 
             id="zip"
             type="number"
             placeholder="12345"
-            value={formData.locationZipCode || ''}
-            onChange={(e) => updateField('locationZipCode', parseInt(e.target.value) || 0)}
-            className={errors.locationZipCode ? 'border-red-500' : ''}
+            value={formData.location.zipCode || ''}
+            onChange={(e) => updateLocationField('zipCode', parseInt(e.target.value) || 0)}
+            className={errors['location.zipCode'] ? 'border-red-500' : ''}
           />
-          {(errors.locationZipCode || serverFieldErrors?.locationZipCode) && <span className="text-red-500">{errors.locationZipCode ?? serverFieldErrors?.locationZipCode}</span>}
+          {(errors['location.zipCode'] || serverFieldErrors?.['location.zipCode']) && <span className="text-red-500">{errors['location.zipCode'] ?? serverFieldErrors?.['location.zipCode']}</span>}
+        </div>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
+        <Switch
+          id="showContactInfo"
+          checked={formData.showContactInfo}
+          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showContactInfo: checked }))}
+        />
+        <div className="flex flex-col gap-0.5">
+          <Label htmlFor="showContactInfo" className="cursor-pointer font-medium">
+            Show my contact info publicly
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Your phone number and email will be visible on this agency's public listing.
+          </p>
         </div>
       </div>
 
       <div className="flex gap-4 pt-2">
-        <Button variant="outline" onClick={handleFormSubmit} className="flex-1" disabled={createLoading}>
+        <Button variant="outline" onClick={handleFormSubmit} className="flex-1" disabled={createLoading || auth.restricted}>
           {createLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}
         </Button>
         <Button onClick={handleClose} variant="outline" className="flex-1">

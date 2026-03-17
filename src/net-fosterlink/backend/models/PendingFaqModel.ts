@@ -5,7 +5,7 @@ export interface PendingFaqModel {
     title: string,
     summary: string,
     createdAt: Date,
-    updatedAt: Date,
+    updatedAt: Date | null,
     author: UserModel,
     approvalStatus: ApprovalStatus,
     deniedByUsername: string | null

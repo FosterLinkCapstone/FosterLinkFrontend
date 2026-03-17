@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Home } from 'lucide-react';
-import { Navbar } from '../components/Navbar';
+import { Navbar } from '../components/navbar/Navbar';
 import { useAuth } from '../backend/AuthContext';
 
 export const NotFound = () => {
@@ -9,6 +9,7 @@ export const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <title>FosterLink</title>
       <Navbar userInfo={auth.getUserInfo()} />
       
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">

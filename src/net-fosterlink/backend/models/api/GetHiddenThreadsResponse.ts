@@ -1,6 +1,4 @@
 import type { HiddenThreadModel } from "../HiddenThreadModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetHiddenThreadsResponse {
-    threads: HiddenThreadModel[];
-    totalPages: number;
-}
+export type GetHiddenThreadsResponse = PaginatedResponse<HiddenThreadModel>;

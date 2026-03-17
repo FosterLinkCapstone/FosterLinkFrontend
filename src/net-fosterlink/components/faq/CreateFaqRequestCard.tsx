@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertCircleIcon } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/net-fosterlink/backend/AuthContext"
 import { BackgroundLoadSpinner } from "../BackgroundLoadSpinner"
 
 export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverFieldErrors }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmit: (suggestion: string) => Promise<void>, serverFieldErrors?: { [key: string]: string } }) => {
+    const auth = useAuth()
     const [suggestionText, setSuggestionText] = useState<string>('')
     const [noContentError, setSuggestionNoContentError] = useState<boolean>(false)
     const [submitLoading, setSubmitLoading] = useState<boolean>(false)
@@ -33,6 +35,9 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverField
                             if (suggestionText !== '') setSuggestionNoContentError(false)
                         }} id="suggestion" name="suggestion" placeholder="Enter here. Your suggestion will be used as the title to the response." />
                         <span className="text-red-500">{serverFieldErrors?.suggested ?? serverFieldErrors?.suggestion}</span>
+                        <p className="text-xs text-muted-foreground">
+                            Your suggestion will be stored for 90 days and then automatically deleted. You can delete your suggestions at any time from Account Settings.
+                        </p>
                     </div>
                 </div>
                 {
@@ -52,7 +57,7 @@ export const CreateFaqRequestCard = ({ open, onOpenChange, onSubmit, serverField
                         } else {
                             setSuggestionNoContentError(true)
                         }
-                    }} disabled={submitLoading}>{submitLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}</Button>
+                    }} disabled={submitLoading || auth.restricted}>{submitLoading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Submit"}</Button>
                 </DialogFooter>
 
             </DialogContent>

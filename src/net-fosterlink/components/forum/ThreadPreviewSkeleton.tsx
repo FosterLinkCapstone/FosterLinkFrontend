@@ -2,15 +2,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ThreadPreviewSkeleton = () => (
-  <Card className="flex overflow-hidden border border-border">
-    <div className="flex flex-col items-center mx-6 py-2 rounded-md bg-muted min-w-[180px]">
+  <Card className="flex flex-col sm:flex-row overflow-hidden border border-border">
+    <div className="flex flex-col items-center mx-6 py-2 rounded-md bg-muted min-w-0 sm:min-w-[180px]">
       <Skeleton className="h-16 w-16 rounded-full mb-3" />
       <Skeleton className="h-4 w-24 mb-1" />
       <Skeleton className="h-3 w-20 mb-3" />
       <Skeleton className="h-3 w-14" />
     </div>
 
-    <div className="flex-1 px-6 flex flex-col">
+    <div className="flex-1 px-4 sm:px-6 flex flex-col">
       <Skeleton className="h-6 w-3/4 max-w-md mb-2" />
       <Skeleton className="h-4 w-full mb-1" />
       <Skeleton className="h-4 w-full mb-4" />

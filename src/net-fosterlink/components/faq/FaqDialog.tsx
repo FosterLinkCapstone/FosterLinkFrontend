@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { FaqModel } from "@/net-fosterlink/backend/models/FaqModel"
 import { getInitials } from "@/net-fosterlink/util/StringUtil"
 import { Check, Share2 } from "lucide-react"
@@ -25,12 +25,12 @@ export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: F
     
     return (
     <Dialog open={!!detailFaq} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 bg-background rounded-3xl border-border">
+        <DialogContent className="max-w-4xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden p-0 bg-background rounded-3xl border-border">
           {detailFaq && (
             <div className="flex flex-col h-full">
               <DialogHeader className="p-6 pb-4 border-border">
                 <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-3">{detailFaq.title}</h2>
+                  <DialogTitle className="text-2xl font-bold mb-3">{detailFaq.title}</DialogTitle>
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <button onClick={() => navigate(buildProfileUrl(detailFaq.author))} className="flex flex-row gap-2 hover:text-primary focus:outline-none focus:ring-1 focus:ring-ring">
                 <span>By</span>

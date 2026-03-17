@@ -1,19 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ApprovalStatus, type PendingFaqModel } from "../backend/models/PendingFaqModel";
+import type { PendingFaqModel } from "../backend/models/PendingFaqModel";
 import type { HiddenFaqModel } from "../backend/models/HiddenFaqModel";
 import type { FaqModel } from "../backend/models/FaqModel";
+
 import { useAuth } from "../backend/AuthContext";
 import { faqApi } from "../backend/api/FaqApi";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { FaqDialog } from "../components/faq/FaqDialog";
 import { PendingFaqCard } from "../components/faq/PendingFaqCard";
-import { HiddenFaqCard } from "../components/faq/HiddenFaqCard";
+import { HiddenFaqList } from "../components/faq/HiddenFaqList";
 import { StatusDialog } from "../components/StatusDialog";
 import { FaqCardSkeleton } from "../components/faq/FaqCardSkeleton";
 import { Paginator } from "../components/Paginator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { AlertCircleIcon } from "lucide-react";
+import { formatRelativeDate } from "../util/DateUtil";
 import { confirm } from "../components/ConfirmDialog";
+import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
+import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
 
 const TAB_PENDING = "pending";
 const TAB_HIDDEN_USER = "hidden-user";
@@ -43,6 +49,8 @@ export const PendingFaqs = () => {
   const [hiddenLoading, setHiddenLoading] = useState<boolean>(false);
   const [hiddenError, setHiddenError] = useState<string | null>(null);
   const [hiddenChangeSuccess, setHiddenChangeSuccess] = useState<"restore" | "delete" | null>(null);
+  const [pendingOrderBy, setPendingOrderBy] = useState<CreatedAtOrderBy>("newest");
+  const [hiddenOrderBy, setHiddenOrderBy] = useState<CreatedAtOrderBy>("newest");
 
   const tabFromUrl = searchParams.get(TAB_PARAM) ?? TAB_PENDING;
   const activeTab: ActiveTab = isValidTab(tabFromUrl) ? tabFromUrl : TAB_PENDING;
@@ -55,12 +63,12 @@ export const PendingFaqs = () => {
     setLoading(true);
     faqApiRef.current.getPending(0).then(res => {
       if (!res.isError && res.data) {
-        setFaqs(res.data.faqs);
+        setFaqs(res.data.items);
         setTotalPages(res.data.totalPages);
         setCurrentPage(1);
         const opened = searchParams.get("openId");
         if (opened != null) {
-          const faq = res.data.faqs.find(f => f.id == +opened);
+          const faq = res.data.items.find(f => f.id == +opened);
           if (faq) handleShowDetail(faq);
         }
       }
@@ -73,7 +81,7 @@ export const PendingFaqs = () => {
       setHiddenLoading(true);
       faqApiRef.current.getHiddenFaqs(type, 0).then(res => {
         if (!res.isError && res.data) {
-          setHiddenFaqs(res.data.faqs);
+          setHiddenFaqs(res.data.items);
           setHiddenTotalPages(res.data.totalPages);
           setHiddenCurrentPage(1);
           setHiddenError(null);
@@ -101,7 +109,7 @@ export const PendingFaqs = () => {
       title: faq.title,
       summary: faq.summary,
       createdAt: faq.createdAt,
-      updatedAt: faq.updatedAt,
+      updatedAt: faq.updatedAt ?? undefined,
       author: faq.author,
       approvedByUsername: faq.deniedByUsername ?? '',
     };
@@ -119,7 +127,7 @@ export const PendingFaqs = () => {
       title: faq.title,
       summary: faq.summary,
       createdAt: faq.createdAt,
-      updatedAt: faq.updatedAt,
+      updatedAt: faq.updatedAt ?? undefined,
       author: faq.author,
       approvedByUsername: '',
     };
@@ -139,7 +147,7 @@ export const PendingFaqs = () => {
     });
     if (confirmed) {
       faqApiRef.current.approve(faq.id, true).then(res => {
-        if (!res.isError && res.data) {
+        if (!res.isError) {
           setFaqs(faqs.filter(f => f.id !== faq.id));
           setApprovedOrDenied("approved");
         } else {
@@ -155,9 +163,8 @@ export const PendingFaqs = () => {
     });
     if (confirmed) {
       faqApiRef.current.approve(faq.id, false).then(res => {
-        if (!res.isError && res.data) {
-          faq.approvalStatus = ApprovalStatus.DENIED;
-          faq.deniedByUsername = auth.getUserInfo()!.username;
+        if (!res.isError) {
+          setFaqs(faqs.filter(f => f.id !== faq.id));
           setApprovedOrDenied("denied");
         } else {
           alert(res.error || "Error denying!");
@@ -216,8 +223,19 @@ export const PendingFaqs = () => {
 
   const hiddenType = activeTab === TAB_HIDDEN_ADMIN ? "ADMIN" : "USER";
 
+  const sortedPendingFaqs = useMemo(
+    () => sortByCreatedAt(faqs, pendingOrderBy),
+    [faqs, pendingOrderBy]
+  );
+
+  const sortedHiddenFaqs = useMemo(
+    () => sortByCreatedAt(hiddenFaqs, hiddenOrderBy),
+    [hiddenFaqs, hiddenOrderBy]
+  );
+
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
+      <title>Pending FAQs</title>
       <StatusDialog open={approvedOrDenied != ''}
         onOpenChange={() => setApprovedOrDenied('')}
         title={`Successfully ${approvedOrDenied} FAQ response`}
@@ -239,10 +257,6 @@ export const PendingFaqs = () => {
         isSuccess={false}
       />
 
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()} />
-      </div>
-
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-1 text-center">Frequently Asked Questions (admin)</h1>
         <Link to="/faq" className="text-primary hover:text-primary/90">Go back</Link>
@@ -263,6 +277,11 @@ export const PendingFaqs = () => {
           </TabsList>
 
           <TabsContent value={TAB_PENDING} className="mt-4">
+            {!loading && faqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={pendingOrderBy} onValueChange={setPendingOrderBy} />
+              </div>
+            )}
             {loading && (
               <div className="space-y-4">
                 {[...Array(4)].map((_, i) => <FaqCardSkeleton key={i} />)}
@@ -271,18 +290,25 @@ export const PendingFaqs = () => {
             {!loading && faqs.length === 0 && (
               <h2 className="text-2xl font-bold my-2 text-center">No content!</h2>
             )}
-            {faqs.map((faq) => (
-              <PendingFaqCard
-                key={faq.id}
-                faq={faq}
-                onExpand={() => handleExpand(faq.id)}
-                onCollapse={handleCollapse}
-                onShowDetail={() => handleShowDetail(faq)}
-                expanded={expandedId === faq.id}
-                onApprove={handleApprove}
-                onDeny={handleDeny}
-                onDelete={handleDeletePending}
-              />
+            {sortedPendingFaqs.map((faq) => (
+              <div key={faq.id} className="flex flex-col w-full gap-1">
+                {faq.updatedAt != null && (
+                  <Alert className="bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-400/70">
+                    <AlertCircleIcon />
+                    <AlertTitle>This FAQ was modified — last updated {formatRelativeDate(faq.updatedAt)} at {new Date(faq.updatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</AlertTitle>
+                  </Alert>
+                )}
+                <PendingFaqCard
+                  faq={faq}
+                  onExpand={() => handleExpand(faq.id)}
+                  onCollapse={handleCollapse}
+                  onShowDetail={() => handleShowDetail(faq)}
+                  expanded={expandedId === faq.id}
+                  onApprove={handleApprove}
+                  onDeny={handleDeny}
+                  onDelete={handleDeletePending}
+                />
+              </div>
             ))}
             <Paginator<PendingFaqModel[]>
               pageCount={totalPages}
@@ -293,7 +319,7 @@ export const PendingFaqs = () => {
                 const res = await faqApiRef.current.getPending(pageNum - 1);
                 if (res.data) {
                   setTotalPages(res.data.totalPages);
-                  return res.data.faqs;
+                  return res.data.items;
                 }
                 return [];
               }}
@@ -301,8 +327,13 @@ export const PendingFaqs = () => {
           </TabsContent>
 
           <TabsContent value={TAB_HIDDEN_USER} className="mt-4">
+            {!hiddenLoading && hiddenFaqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={hiddenOrderBy} onValueChange={setHiddenOrderBy} />
+              </div>
+            )}
             <HiddenFaqList
-              faqs={hiddenFaqs}
+              faqs={sortedHiddenFaqs}
               loading={hiddenLoading}
               error={hiddenError}
               expandedId={expandedHiddenId}
@@ -321,7 +352,7 @@ export const PendingFaqs = () => {
                 const res = await faqApiRef.current.getHiddenFaqs(hiddenType, pageNum - 1);
                 if (res.data) {
                   setHiddenTotalPages(res.data.totalPages);
-                  return res.data.faqs;
+                  return res.data.items;
                 }
                 return [];
               }}
@@ -329,8 +360,13 @@ export const PendingFaqs = () => {
           </TabsContent>
 
           <TabsContent value={TAB_HIDDEN_ADMIN} className="mt-4">
+            {!hiddenLoading && hiddenFaqs.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={hiddenOrderBy} onValueChange={setHiddenOrderBy} />
+              </div>
+            )}
             <HiddenFaqList
-              faqs={hiddenFaqs}
+              faqs={sortedHiddenFaqs}
               loading={hiddenLoading}
               error={hiddenError}
               expandedId={expandedHiddenId}
@@ -349,7 +385,7 @@ export const PendingFaqs = () => {
                 const res = await faqApiRef.current.getHiddenFaqs(hiddenType, pageNum - 1);
                 if (res.data) {
                   setHiddenTotalPages(res.data.totalPages);
-                  return res.data.faqs;
+                  return res.data.items;
                 }
                 return [];
               }}
@@ -363,60 +399,6 @@ export const PendingFaqs = () => {
         content={faqContent.current}
         handleOpenChange={handleCloseDetail}
       />
-    </div>
+    </PageLayout>
   );
 };
-
-function HiddenFaqList({
-  faqs,
-  loading,
-  error,
-  expandedId,
-  onExpand,
-  onCollapse,
-  onShowDetail,
-  onRestore,
-  onDelete,
-}: {
-  faqs: HiddenFaqModel[];
-  loading: boolean;
-  error: string | null;
-  expandedId: number | null;
-  onExpand: (id: number) => void;
-  onCollapse: () => void;
-  onShowDetail: (faq: HiddenFaqModel) => void;
-  onRestore: (faq: HiddenFaqModel) => void;
-  onDelete: (faq: HiddenFaqModel) => void;
-}) {
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => <FaqCardSkeleton key={i} />)}
-      </div>
-    );
-  }
-  if (faqs.length === 0) {
-    return (
-      <>
-        <p className="text-center text-muted-foreground py-12">No hidden FAQs found.</p>
-        {error && <p className="text-center text-destructive">{error}</p>}
-      </>
-    );
-  }
-  return (
-    <div className="space-y-4">
-      {faqs.map((faq) => (
-        <HiddenFaqCard
-          key={faq.id}
-          faq={faq}
-          onExpand={() => onExpand(faq.id)}
-          onCollapse={onCollapse}
-          onShowDetail={() => onShowDetail(faq)}
-          expanded={expandedId === faq.id}
-          onRestore={onRestore}
-          onDelete={onDelete}
-        />
-      ))}
-    </div>
-  );
-}

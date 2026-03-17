@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const MAX_VISIBLE_PAGES = 5;
 
@@ -69,7 +70,8 @@ export function Paginator<T>({
         disabled={currentPage <= 1 || loading}
         aria-label="Previous page"
       >
-        Previous
+        <ChevronLeft className="h-4 w-4 sm:hidden" />
+        <span className="hidden sm:inline">Previous</span>
       </Button>
 
       <div className="flex items-center gap-1">
@@ -128,11 +130,12 @@ export function Paginator<T>({
         disabled={currentPage >= pageCount || loading}
         aria-label="Next page"
       >
-        Next
+        <span className="hidden sm:inline">Next</span>
+        <ChevronRight className="h-4 w-4 sm:hidden" />
       </Button>
 
       <span className="text-muted-foreground text-sm ml-1">
-        Page {currentPage} of {pageCount}
+        Page {currentPage} of {pageCount ?? "?"}
       </span>
     </nav>
   );

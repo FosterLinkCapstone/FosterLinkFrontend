@@ -1,17 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import type { HiddenThreadModel } from "../backend/models/HiddenThreadModel";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 import { Paginator } from "../components/Paginator";
+import { sortByCreatedAt, type CreatedAtOrderBy } from "../util/SortUtil";
+import { OrderByCreatedAtSelect } from "../components/OrderByCreatedAtSelect";
 import { threadApi } from "../backend/api/ThreadApi";
 import { ThreadPreviewWide } from "../components/forum/ThreadPreviewWide";
 import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
+import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 
 const TAB_USER = "user";
 const TAB_ADMIN = "admin";
@@ -35,17 +38,21 @@ export const HiddenThreads = () => {
   const hiddenByFilter = tabToFilter(activeTab);
 
   const [threads, setThreads] = useState<HiddenThreadModel[]>([]);
+  const [orderBy, setOrderBy] = useState<CreatedAtOrderBy>("newest");
   const [error, setError] = useState<string | null>(null);
   const [changeSuccess, setChangeSuccess] = useState<"restore" | "delete" | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
+
+  const sortedThreads = useMemo(() => sortByCreatedAt(threads, orderBy), [threads, orderBy]);
 
   useEffect(() => {
     setLoading(true);
     threadApiRef.current.getHiddenThreads(hiddenByFilter, 0).then((res) => {
       if (!res.isError && res.data) {
-        setThreads(res.data.threads);
+        setThreads(res.data.items);
         setTotalPages(res.data.totalPages);
         setCurrentPage(1);
         setError(null);
@@ -76,6 +83,7 @@ export const HiddenThreads = () => {
         "Are you sure you want to restore this thread? It will become visible to all users.",
     });
     if (confirmed) {
+      setActionLoading(true);
       threadApiRef.current.setThreadHidden(threadId, false).then((res) => {
         if (!res.isError) {
           setThreads((prev) => prev.filter((t) => t.id !== threadId));
@@ -83,7 +91,7 @@ export const HiddenThreads = () => {
         } else {
           setError(res.error ?? "Failed to restore thread");
         }
-      });
+      }).finally(() => setActionLoading(false));
     }
   };
 
@@ -92,6 +100,7 @@ export const HiddenThreads = () => {
       message: "Are you sure you want to delete this thread? It will not be recoverable.",
     });
     if (confirmed) {
+      setActionLoading(true);
       threadApiRef.current.deleteHiddenThread(threadId).then((res) => {
         if (!res.isError) {
           setThreads((prev) => prev.filter((t) => t.id !== threadId));
@@ -99,7 +108,7 @@ export const HiddenThreads = () => {
         } else {
           setError(res.error ?? "Failed to delete thread");
         }
-      });
+      }).finally(() => setActionLoading(false));
     }
   };
 
@@ -108,7 +117,9 @@ export const HiddenThreads = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout auth={auth}>
+      <BackgroundLoadSpinner loading={actionLoading} />
+      <title>Hidden Threads</title>
       <StatusDialog
         open={error != null && threads.length > 0}
         onOpenChange={() => setError(null)}
@@ -124,10 +135,6 @@ export const HiddenThreads = () => {
         isSuccess={true}
       />
 
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()} />
-      </div>
-
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6">Hidden Threads</h1>
 
@@ -141,13 +148,18 @@ export const HiddenThreads = () => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value={activeTab} className="mt-4">
+            {!loading && threads.length > 0 && (
+              <div className="mb-4">
+                <OrderByCreatedAtSelect value={orderBy} onValueChange={setOrderBy} />
+              </div>
+            )}
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
               </div>
             ) : (
               <ThreadList
-                threads={threads}
+                threads={sortedThreads}
                 error={error}
                 auth={auth}
                 getHiddenByName={getHiddenByName}
@@ -168,7 +180,7 @@ export const HiddenThreads = () => {
           onDataChanged={(_data) => {}}
         />
       </div>
-    </div>
+    </PageLayout>
   );
 };
 
@@ -208,13 +220,16 @@ function ThreadList({
             <ThreadPreviewWide thread={thread} auth={auth} basePath="/threads/hidden/thread/" />
 
             <div className="w-full flex flex-col mt-1 gap-2">
-              <Button
-                variant="outline"
-                className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70"
-                onClick={() => onRestore(thread.id)}
-              >
-                Restore
-              </Button>
+              {/* Restore only for thread author on user-deleted, or for admin on admin-deleted; admins cannot restore user-deleted threads */}
+              {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()?.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin)) && (
+                <Button
+                  variant="outline"
+                  className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70"
+                  onClick={() => onRestore(thread.id)}
+                >
+                  Restore
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="bg-red-100 text-red-800 border-red-300 dark:bg-red-500/50 dark:text-red-50 dark:border-red-400/70 hover:bg-red-200 dark:hover:bg-red-500/70"

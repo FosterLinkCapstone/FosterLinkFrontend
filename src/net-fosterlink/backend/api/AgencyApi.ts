@@ -1,113 +1,265 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
-import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError";
+import { doGenericRequest, RequestType } from "@/net-fosterlink/util/ApiUtil";
 import type { AuthContextType } from "../AuthContext";
 import type { AgencyModel } from "../models/AgencyModel";
 import type { CreateAgencyModel } from "../models/api/CreateAgencyModel";
 import type { GetAgenciesResponse } from "../models/api/GetAgenciesResponse";
+import type { GetAgencyDeletionRequestsResponse } from "../models/api/GetAgencyDeletionRequestsResponse";
+import type { LocationInput } from "../models/api/LocationInput";
+
+/** Search by: agency (name, mission), agent (full name, username, email, phone), location (city, state, zip). */
+export type AgencySearchBy = "agency" | "agent" | "location";
+
+export interface AgencyGetAllParams {
+    search?: string;
+    searchBy?: AgencySearchBy;
+}
+
+export type UpdateAgencyLocationPayload = LocationInput;
 
 export interface AgencyApiType {
-    getAll: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
+    getAll: (pageNumber: number, params?: AgencyGetAllParams) => Promise<ErrorWrapper<GetAgenciesResponse>>
     getPending: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
     approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     countPending: () => Promise<ErrorWrapper<number>>
     create: (createModel: CreateAgencyModel) => Promise<ErrorWrapper<AgencyModel>>
+    hideAgency: (id: number, hidden: boolean) => Promise<ErrorWrapper<boolean>>
+    getHiddenAgencies: (pageNumber: number) => Promise<ErrorWrapper<GetAgenciesResponse>>
+    deleteHiddenAgency: (id: number) => Promise<ErrorWrapper<boolean>>
+    requestDeletion: (agencyId: number) => Promise<ErrorWrapper<boolean>>
+    cancelDeletionRequest: (agencyId: number) => Promise<ErrorWrapper<boolean>>
+    getDeletionRequests: (pageNumber: number, sortBy?: string) => Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>>
+    approveDeletionRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
+    delayDeletionRequest: (requestId: number, reason: string) => Promise<ErrorWrapper<boolean>>
+    updateAgency: (id: number, name: string|null, missionStatement: string|null, websiteUrl: string|null, showContactInfo?: boolean | null) => Promise<ErrorWrapper<void>>
+    updateAgencyLocation: (agencyId: number, location: UpdateAgencyLocationPayload) => Promise<ErrorWrapper<void>>
 }
 
 export const agencyApi = (auth: AuthContextType): AgencyApiType => {
 
+    const defaultErrorsAll: Map<number, string> = new Map<number, string>([
+        [403, "You must be logged in to view agencies!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsPending: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can view pending agencies!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsApprove: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can approve agencies!"],
+        [404, "Agency not found!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsCountPending: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can count pending agencies!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsCreateAgency: Map<number, string> = new Map<number, string>([
+        [400, "Invalid agency data! Please check your inputs."],
+        [502, "There was an issue validating that address. Please try again later"],
+        [403, "You must be a designated agency representative to create an agency listing. If you believe this is a mistake, contact an administrator."],
+        [-1, "Internal client error"]
+    ]);
+
+    const defaultErrorsHideAgency: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can hide agencies!"],
+        [404, "Agency not found!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsGetHiddenAgencies: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can view hidden agencies!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsDeleteHiddenAgency: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can delete hidden agencies!"],
+        [404, "Agency not found!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsRequestDeletion: Map<number, string> = new Map<number, string>([
+        [403, "You must be the owner of this agency to request deletion."],
+        [404, "Agency not found!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsCancelDeletionRequest: Map<number, string> = new Map<number, string>([
+        [403, "Only the requester can cancel this deletion request."],
+        [404, "Deletion request not found!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsGetDeletionRequests: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can view deletion requests!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsApproveDeletionRequest: Map<number, string> = new Map<number, string>([
+        [403, "Only administrators can approve deletion requests!"],
+        [404, "Deletion request not found!"],
+        [-1, "Internal server error"]
+    ]);
+
     return {
-        getAll: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
-            try {
-                const res = await auth.api.get(`/agencies/all?pageNumber=${pageNumber}`)
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "You must be logged in to view agencies!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+        getAll: async (pageNumber: number, params?: AgencyGetAllParams): Promise<ErrorWrapper<GetAgenciesResponse>> => {
+            const searchParams = new URLSearchParams({ pageNumber: String(pageNumber) });
+            if (params?.search?.trim()) searchParams.set("search", params.search.trim());
+            if (params?.searchBy) searchParams.set("searchBy", params.searchBy);
+            return doGenericRequest<GetAgenciesResponse>(
+                auth.api,
+                RequestType.GET,
+                `/agencies/all?${searchParams.toString()}`,
+                {},
+                defaultErrorsAll
+            );
         },
         getPending: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
-            try {
-                const res = await auth.api.get(`/agencies/pending?pageNumber=${pageNumber}`)
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "Only administrators can view pending agencies!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<GetAgenciesResponse>(
+                auth.api,
+                RequestType.GET,
+                `/agencies/pending?pageNumber=${pageNumber}`,
+                {},
+                defaultErrorsPending
+            )
         },
         approve: async (id: number, approved: boolean): Promise<ErrorWrapper<boolean>> => {
-            try {
-                await auth.api.post("/agencies/approve", {id: id, approved: approved})
-                return {data: true, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "Only administrators can approve agencies!", isError: true}
-                        case 404:
-                            return {data: undefined, error: "Agency not found!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                "/agencies/approve",
+                { id, approved },
+                defaultErrorsApprove
+            )
         },
         countPending: async (): Promise<ErrorWrapper<number>> => {
-            try {
-                const res = await auth.api.get("/agencies/pending/count")
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 403:
-                            return {data: undefined, error: "Only administrators can count pending agencies!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<number>(
+                auth.api,
+                RequestType.GET,
+                "/agencies/pending/count",
+                {},
+                defaultErrorsCountPending
+            )
         },
         create: async (createModel: CreateAgencyModel): Promise<ErrorWrapper<AgencyModel>> => {
-            try {
-                const res = await auth.api.post("/agencies/create", createModel)
-                return {data: res.data, isError: false, error: undefined}
-            } catch(err: any) {
-                if (err.response) {
-                    // Check for validation errors first
-                    const validationError = extractValidationError(err.response);
-                    if (validationError) {
-                        return {data: undefined, isError: true, error: validationError, validationErrors: getValidationErrors(err.response)}
-                    }
-                    
-                    switch (err.response.status) {
-                        case 400:
-                            return {data: undefined, isError: true, error: "Invalid agency data! Please check your inputs."}
-                        case 502:
-                            return {data: undefined, isError: true, error: "There was an issue validating that address. Please try again later"}
-                        case 403:
-                            return {data: undefined, isError:true, error: "You must be a designated agency representative to create an agency listing. If you believe this is a mistake, contact an administrator."}
-                        default:
-                            return {data: undefined, isError:true, error: "Internal server error"}
-                    }
-                }
-            }
-            return {data: undefined, isError:true, error: "Internal client error"}
+            return doGenericRequest<AgencyModel>(
+                auth.api,
+                RequestType.POST,
+                "/agencies/create",
+                createModel,
+                defaultErrorsCreateAgency
+            )
+        },
+        hideAgency: async (id: number, hidden: boolean): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/agencies/hide?id=${id}&hidden=${hidden}`,
+                {},
+                defaultErrorsHideAgency
+            );
+        },
+        getHiddenAgencies: async (pageNumber: number): Promise<ErrorWrapper<GetAgenciesResponse>> => {
+            return doGenericRequest<GetAgenciesResponse>(
+                auth.api,
+                RequestType.GET,
+                `/agencies/getHidden?pageNumber=${pageNumber}`,
+                {},
+                defaultErrorsGetHiddenAgencies
+            );
+        },
+        deleteHiddenAgency: async (id: number): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.DELETE,
+                `/agencies/delete?id=${id}`,
+                {},
+                defaultErrorsDeleteHiddenAgency
+            );
+        },
+        requestDeletion: async (agencyId: number): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/agencies/deletion-request?agencyId=${agencyId}`,
+                {},
+                defaultErrorsRequestDeletion
+            );
+        },
+        cancelDeletionRequest: async (agencyId: number): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.DELETE,
+                `/agencies/deletion-request?agencyId=${agencyId}`,
+                {},
+                defaultErrorsCancelDeletionRequest
+            );
+        },
+        getDeletionRequests: async (pageNumber: number, sortBy?: string): Promise<ErrorWrapper<GetAgencyDeletionRequestsResponse>> => {
+            const params = new URLSearchParams({ pageNumber: String(pageNumber) });
+            if (sortBy) params.set("sortBy", sortBy);
+            return doGenericRequest<GetAgencyDeletionRequestsResponse>(
+                auth.api,
+                RequestType.GET,
+                `/agencies/deletion-requests?${params.toString()}`,
+                {},
+                defaultErrorsGetDeletionRequests
+            );
+        },
+        approveDeletionRequest: async (requestId: number): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/agencies/deletion-request/approve?requestId=${requestId}`,
+                {},
+                defaultErrorsApproveDeletionRequest
+            );
+        },
+        delayDeletionRequest: async (requestId: number, reason: string): Promise<ErrorWrapper<boolean>> => {
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.POST,
+                `/agencies/deletion-request/delay`,
+                { requestId, reason },
+                new Map<number, string>([
+                    [403, "Only administrators can delay deletion requests."],
+                    [404, "Deletion request not found!"],
+                    [-1, "Internal server error"]
+                ])
+            );
+        },
+        updateAgency: async (agencyId: number, name: string|null, missionStatement: string|null, websiteUrl: string|null, showContactInfo?: boolean | null): Promise<ErrorWrapper<void>> => {
+                return doGenericRequest<void>(
+                    auth.api,
+                    RequestType.PUT,
+                    `/agencies/update`,
+                    { agencyId, name, missionStatement, websiteUrl, showContactInfo: showContactInfo ?? null },
+                    new Map<number, string>([
+                        [400, "Invalid agency data! Please check your inputs."],
+                        [403, "You must be the owner of this agency to update it."],
+                        [404, "Agency not found!"],
+                        [502, "There was an issue validating that address. Please try again later"],
+                        [-1, "Internal client error"]
+                    ])
+                );
+        },
+        updateAgencyLocation: async (agencyId: number, location: UpdateAgencyLocationPayload): Promise<ErrorWrapper<void>> => {
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.PUT,
+                "/agencies/update-location",
+                { agencyId, location },
+                new Map<number, string>([
+                    [400, "Invalid address. Check zip code (501–99950) and required fields."],
+                    [403, "You must be the owner of this agency to update its location."],
+                    [404, "Agency not found!"],
+                    [-1, "Internal client error"]
+                ])
+            );
         }
-    }
-
+    };
 }

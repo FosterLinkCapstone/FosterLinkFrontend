@@ -1,6 +1,4 @@
 import type { HiddenFaqModel } from "../HiddenFaqModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetHiddenFaqsResponse {
-    faqs: HiddenFaqModel[];
-    totalPages: number;
-}
+export type GetHiddenFaqsResponse = PaginatedResponse<HiddenFaqModel>;

@@ -3,9 +3,9 @@ import { useAuth } from "../backend/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState } from "react"
-import { Alert, AlertTitle } from "@/components/ui/alert"
-import { AlertCircleIcon } from "lucide-react"
+import { ExpandableAlert } from "../components/ExpandableAlert"
 import { userApi } from "../backend/api/UserApi"
 import { Link, useNavigate, useSearchParams } from "react-router"
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner"
@@ -14,9 +14,10 @@ export const Login = () => {
     const [searchParams, _] = useSearchParams()
     const email = useRef<string>("")
     const password = useRef<string>("")
+    const [stayLoggedIn, setStayLoggedIn] = useState(false)
     const [error, setError] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
-    const [fieldErrors,setFieldErrors] = useState<{[key: string]: string}>({})
+    const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({})
     const auth = useAuth()
     const userApiRef = userApi(auth)
     const navigate = useNavigate()
@@ -25,8 +26,8 @@ export const Login = () => {
         setLoading(true)
         setError("")
         setFieldErrors({})
-        if (email.current != "" && password.current != "") {
-            userApiRef.login(email.current, password.current).then(res => {
+        if (email.current !== "" && password.current !== "") {
+            userApiRef.login(email.current, password.current, stayLoggedIn).then(res => {
                 if (res.isError) {
                     setError(res.error!)
                     if (res.validationErrors) {
@@ -37,8 +38,10 @@ export const Login = () => {
                         setFieldErrors(fieldErrors)
                     }
                 } else {
-                    auth.setToken(res.data!)
-                    navigate(searchParams.has("currentPage") ? searchParams.get("currentPage")! : "/")
+                    auth.setToken(res.data!, stayLoggedIn)
+                    const dest = searchParams.get("currentPage") ?? "/";
+                    const safeDest = (dest.startsWith("/") && !dest.startsWith("//")) ? dest : "/";
+                    navigate(safeDest)
                 }
             }).finally(() => { setLoading(false) })
         } else {
@@ -49,13 +52,14 @@ export const Login = () => {
 
     return (
         <div className="h-screen flex items-center justify-center">
+        <title>Login</title>
 <Card className="w-full max-w-sm">
             <CardHeader>
                 <CardTitle>Login to your account</CardTitle>
                 <CardDescription>Or, <Link to="/register" className="text-primary hover:text-primary/90">sign up</Link></CardDescription>
             </CardHeader>
             <CardContent>
-                <form>
+                <form id="login-form" onSubmit={(e) => { e.preventDefault(); submitLogin(); }}>
                     <div className="flex flex-col gap-6">
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email</Label>
@@ -63,24 +67,29 @@ export const Login = () => {
                             <span className="text-red-500">{fieldErrors["email"]}</span>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/90">Forgot password?</Link>
+                            </div>
                             <Input id="password" type="password" onChange={(event) => password.current = event.target.value} required/>
                             <span className="text-red-500">{fieldErrors["password"]}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="stayLoggedIn"
+                                checked={stayLoggedIn}
+                                onCheckedChange={(checked) => setStayLoggedIn(checked === true)}
+                            />
+                            <Label htmlFor="stayLoggedIn" className="cursor-pointer font-normal">Stay logged in</Label>
                         </div>
                     </div>
                 </form>
             </CardContent>
             <CardFooter className="flex-col gap-2">
-                <Button type="button" onClick={submitLogin} className="w-full" disabled={loading}>
+                <Button type="submit" form="login-form" className="w-full" disabled={loading}>
                     {loading ? <BackgroundLoadSpinner loading={true} className="size-5 shrink-0" /> : "Login"}
                 </Button>
-                {
-                    error != "" && <Alert variant="destructive">
-                    <AlertCircleIcon/>
-                    <AlertTitle>{error}</AlertTitle>
-                </Alert>
-                }
-
+                {error !== "" && <ExpandableAlert message={error} />}
             </CardFooter>
         </Card>
         </div>

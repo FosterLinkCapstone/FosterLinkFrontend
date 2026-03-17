@@ -1,106 +1,56 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { Navbar } from "../components/Navbar";
 import { useAuth } from "../backend/AuthContext";
 import type { ThreadModel } from "../backend/models/ThreadModel";
 import { threadApi } from "../backend/api/ThreadApi";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
-import { getInitials } from "../util/StringUtil";
-import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { userApi } from "../backend/api/UserApi";
-import { VerifiedCheck } from "../components/VerifiedCheck";
-import type { FaqModel } from "../backend/models/FaqModel";
+import type { ProfileMetadataModel } from "../backend/models/ProfileMetadataModel";
 import { faqApi } from "../backend/api/FaqApi";
-import { Paginator } from "../components/Paginator";
+import type { FaqModel } from "../backend/models/FaqModel";
 import type { GetThreadsResponse } from "../backend/models/api/GetThreadsResponse";
+import type { GetFaqsResponse } from "../backend/models/api/GetFaqsResponse";
+import { accountDeletionApi } from "../backend/api/AccountDeletionApi";
+import type { AccountDeletionRequestModel } from "../backend/models/AccountDeletionRequestModel";
+import { StatusDialog } from "../components/StatusDialog";
+import { confirm } from "../components/ConfirmDialog";
+import { PageLayout } from "../components/PageLayout";
+import { ProfileHeader } from "../components/profile/ProfileHeader";
+import { UserThreadsList } from "../components/profile/UserThreadsList";
+import type { OrderBy } from "../components/profile/UserThreadsList";
+import { UserFaqSection } from "../components/profile/UserFaqSection";
+import { formatJoinedText, formatJoinedTooltip } from "../util/DateUtil";
 
-type OrderBy = "newest" | "oldest" | "likes";
-
-// Helper to safely decode URI component
 const decodeParam = (param: string | undefined): string =>
   param ? decodeURIComponent(param) : "";
 
-// Helper to format join date as relative text
-const formatJoinedText = (dateInput: string | Date | undefined): string => {
-  if (!dateInput) return "";
-  const created = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  if (isNaN(created.getTime())) return "";
-
-  const now = new Date();
-  const diffMs = now.getTime() - created.getTime();
-  const diffMonths = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30.4375));
-  const years = Math.floor(diffMonths / 12);
-  const months = diffMonths % 12;
-
-  if (years > 0) {
-    return `Joined ${years} year${years === 1 ? "" : "s"} ago`;
-  }
-  return `Joined ${months <= 0 ? 1 : months} month${months === 1 ? "" : "s"} ago`;
-};
-
-// Helper to format join date as tooltip
-const formatJoinedTooltip = (dateInput: string | Date | undefined): string => {
-  if (!dateInput) return "";
-  const created = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  if (isNaN(created.getTime())) return "";
-
-  const month = String(created.getMonth() + 1).padStart(2, "0");
-  const day = String(created.getDate()).padStart(2, "0");
-  const year = created.getFullYear();
-  return `Joined on ${month}/${day}/${year}`;
-};
-
-// testing global page layout for reduced boilerplate
-const PageLayout: React.FC<{ auth: ReturnType<typeof useAuth>; children: React.ReactNode }> = ({ auth, children }) => (
-  <div className="min-h-screen bg-background">
-    <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-      <Navbar userInfo={auth.getUserInfo()} />
-    </div>
-    {children}
-  </div>
-);
-
-// Skeleton card for loading state
-const ThreadCardSkeleton = () => (
-  <Card className="p-4">
-    <div className="flex justify-between items-start gap-4">
-      <div className="flex-1 space-y-2">
-        <div className="h-5 w-3/4 bg-muted/50 rounded animate-pulse" />
-        <div className="h-4 w-full bg-muted/30 rounded animate-pulse" />
-        <div className="h-4 w-2/3 bg-muted/30 rounded animate-pulse" />
-      </div>
-      <div className="space-y-1">
-        <div className="h-3 w-20 bg-muted/30 rounded animate-pulse" />
-        <div className="h-3 w-12 bg-muted/30 rounded animate-pulse" />
-      </div>
-    </div>
-  </Card>
-);
-
 export const UserProfile = () => {
-  const { userId  } = useParams();
+  const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const auth = useAuth();
   const navigate = useNavigate();
   const threadApiRef = useMemo(() => threadApi(auth), [auth]);
+  const deletionApiRef = useRef(accountDeletionApi(auth));
+  deletionApiRef.current = accountDeletionApi(auth);
 
   const [profileMetadata, setProfileMetadata] = useState<ProfileMetadataModel | null>(null);
   const [faqResponses, setFaqResponses] = useState<FaqModel[]>([]);
+  const [faqsTotalPages, setFaqsTotalPages] = useState(1);
+  const [faqsCurrentPage, setFaqsCurrentPage] = useState(1);
   const [threads, setThreads] = useState<ThreadModel[]>([]);
   const [threadsTotalPages, setThreadsTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [detailFaq, setDetailFaq] = useState<FaqModel | null>(null);
+  const detailFaqContent = useRef("");
+
   const [searchDraft, setSearchDraft] = useState("");
   const [searchText, setSearchText] = useState("");
   const [orderBy, setOrderBy] = useState<OrderBy>("newest");
   const [threadsCurrentPage, setThreadsCurrentPage] = useState(1);
+
+  const [myDeletionRequest, setMyDeletionRequest] = useState<AccountDeletionRequestModel | null | undefined>(undefined);
+  const [statusMsg, setStatusMsg] = useState<{ msg: string; success: boolean } | null>(null);
 
   const numericUserId = useMemo(() => {
     if (!userId) return null;
@@ -108,7 +58,6 @@ export const UserProfile = () => {
     return Number.isNaN(parsed) ? null : parsed;
   }, [userId]);
 
-  // Decode URL params once
   const initialData = useMemo(() => ({
     username: decodeParam(searchParams.get("username") || undefined),
     fullName: decodeParam(searchParams.get("fullName") || undefined),
@@ -118,7 +67,6 @@ export const UserProfile = () => {
 
   const canDoInitialRender = !!(initialData.username && initialData.fullName && initialData.joinDate);
 
-  // Computed display values with fallbacks
   const display = useMemo(() => {
     const user = profileMetadata?.user;
     const joinDateSource = user?.createdAt ?? initialData.joinDate;
@@ -130,6 +78,8 @@ export const UserProfile = () => {
       joinedText: formatJoinedText(joinDateSource),
       joinedTooltip: formatJoinedTooltip(joinDateSource),
       verified: user?.verified ?? false,
+      banned: user?.banned ?? false,
+      restricted: user?.restricted ?? false,
     };
   }, [profileMetadata?.user, initialData]);
 
@@ -148,8 +98,14 @@ export const UserProfile = () => {
 
     Promise.all([
       userApi(auth).getProfileMetadata(numericUserId),
-      threadApiRef.searchByUser(numericUserId, 0)
-    ]).then(([profileRes, threadRes]) => {
+      threadApiRef.searchByUser(numericUserId, 0),
+      faqApi(auth).allAuthor(numericUserId, 0),
+    ]).then(([profileRes, threadRes, faqRes]) => {
+      if (profileRes.isError) {
+        navigate("/not-found", { replace: true });
+        return;
+      }
+
       if (!profileRes.isError && profileRes.data) {
         setProfileMetadata(profileRes.data);
       } else {
@@ -157,19 +113,114 @@ export const UserProfile = () => {
       }
 
       if (!threadRes.isError && threadRes.data) {
-        setThreads(threadRes.data.threads);
+        setThreads(threadRes.data.items);
         setThreadsTotalPages(threadRes.data.totalPages);
       } else {
         setError(prev => appendError(prev, threadRes.error || "Unable to load user posts."));
       }
-    }).finally(() => setLoading(false));
 
-    faqApi(auth).allAuthor(numericUserId).then(res => {
-      if (!res.isError && res.data) {
-        setFaqResponses(res.data);
+      if (!faqRes.isError && faqRes.data) {
+        setFaqResponses(faqRes.data.items);
+        setFaqsTotalPages(faqRes.data.totalPages);
+        setFaqsCurrentPage(1);
+      } else {
+        setFaqResponses([]);
+        setFaqsTotalPages(1);
+      }
+    }).finally(() => setLoading(false));
+  }, [numericUserId, threadApiRef]);
+
+  const isOwnProfile = useMemo(() => {
+    const currentUserId = auth.getUserInfo()?.id;
+    return !!currentUserId && !!numericUserId && currentUserId === numericUserId;
+  }, [auth, numericUserId]);
+
+  useEffect(() => {
+    if (!isOwnProfile || !auth.isLoggedIn()) {
+      setMyDeletionRequest(null);
+      return;
+    }
+    deletionApiRef.current.getMyRequest().then(res => {
+      if (!res.isError) {
+        setMyDeletionRequest(res.data ?? null);
+      } else {
+        setMyDeletionRequest(null);
       }
     });
-  }, [numericUserId, auth, threadApiRef]);
+  }, [isOwnProfile, auth]);
+
+  const handleCancelDeletion = async () => {
+    const confirmed = await confirm({
+      message: "Are you sure you want to cancel your account deletion request? Your account will be unlocked and remain active.",
+    });
+    if (!confirmed) return;
+    const res = await deletionApiRef.current.cancelDeletion();
+    if (!res.isError) {
+      setMyDeletionRequest(null);
+      setStatusMsg({ msg: "Your deletion request has been cancelled. Your account is now active.", success: true });
+    } else {
+      setStatusMsg({ msg: res.error ?? "Failed to cancel deletion request.", success: false });
+    }
+  };
+
+  const handleBan = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to ban ${display.username}? They will be locked out of their account.` });
+    if (!confirmed) return;
+    const res = await userApi(auth).banUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, banned: true } } : prev);
+      setStatusMsg({ msg: "User has been banned.", success: true });
+    } else {
+      setStatusMsg({ msg: res.error ?? "Failed to ban user.", success: false });
+    }
+  };
+
+  const handleUnban = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to unban ${display.username}?` });
+    if (!confirmed) return;
+    const res = await userApi(auth).unbanUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, banned: false } } : prev);
+      setStatusMsg({ msg: "User has been unbanned.", success: true });
+    } else {
+      setStatusMsg({ msg: res.error ?? "Failed to unban user.", success: false });
+    }
+  };
+
+  const handleRestrict = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to restrict ${display.username}?` });
+    if (!confirmed) return;
+    const res = await userApi(auth).restrictUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, restricted: true } } : prev);
+      setStatusMsg({ msg: "User has been restricted.", success: true });
+    } else {
+      setStatusMsg({ msg: res.error ?? "Failed to restrict user.", success: false });
+    }
+  };
+
+  const handleUnrestrict = async () => {
+    if (!numericUserId) return;
+    const confirmed = await confirm({ message: `Are you sure you want to unrestrict ${display.username}?` });
+    if (!confirmed) return;
+    const res = await userApi(auth).unrestrictUser(numericUserId);
+    if (!res.isError) {
+      setProfileMetadata(prev => prev ? { ...prev, user: { ...prev.user, restricted: false } } : prev);
+      setStatusMsg({ msg: "User has been unrestricted.", success: true });
+    } else {
+      setStatusMsg({ msg: res.error ?? "Failed to unrestrict user.", success: false });
+    }
+  };
+
+  const loadFaqContent = async (faqId: number): Promise<void> => {
+    const content = await faqApi(auth).getContent(faqId);
+    if (!content.isError && content.data) {
+      detailFaqContent.current = content.data;
+    }
+  };
 
   const filteredSortedThreads = useMemo(() => {
     let result = [...threads];
@@ -195,20 +246,25 @@ export const UserProfile = () => {
     setThreadsCurrentPage(1);
   };
 
-  const handleAgencyClick = () => {
-    navigate(`/agencies/?agencyId=${profileMetadata?.agencyId}`);
-  };
-
   const handlePageChange = async (pageNumber: number): Promise<GetThreadsResponse> => {
     const res = await threadApiRef.searchByUser(numericUserId!, pageNumber - 1);
     if (!res.isError && res.data) {
       return res.data;
     }
     setError(prev => prev ? `${prev} | ${res.error}` : res.error || "Unable to load user posts.");
-    return { threads: [], totalPages: 1 };
+    return { items: [], totalPages: 1 };
   };
 
-  // Show loading state only if we can't do initial render
+  const handleFaqPageChange = async (pageNumber: number): Promise<GetFaqsResponse> => {
+    const res = await faqApi(auth).allAuthor(numericUserId!, pageNumber - 1);
+    if (!res.isError && res.data) {
+      return res.data;
+    }
+    return { items: [], totalPages: 1 };
+  };
+
+  const isLoadingWithInitialRender = loading && canDoInitialRender;
+
   if (loading && !canDoInitialRender) {
     return (
       <PageLayout auth={auth}>
@@ -219,7 +275,6 @@ export const UserProfile = () => {
     );
   }
 
-  // Show error only if we have no initial render data to fall back on
   if ((error || !profileMetadata?.user) && !canDoInitialRender && !loading) {
     return (
       <PageLayout auth={auth}>
@@ -230,167 +285,71 @@ export const UserProfile = () => {
     );
   }
 
-  const isLoadingWithInitialRender = loading && canDoInitialRender;
-
   return (
     <PageLayout auth={auth}>
+      <title>{display.username}</title>
+      <StatusDialog
+        open={!!statusMsg}
+        onOpenChange={() => setStatusMsg(null)}
+        title={statusMsg?.msg ?? ""}
+        subtext=""
+        isSuccess={statusMsg?.success ?? false}
+      />
+
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Profile Header */}
-        <div className="flex flex-col items-center text-center mb-10">
-          <Avatar className="h-28 w-28 mb-4">
-            <AvatarImage src={display.profilePicUrl} alt={display.username} />
-            <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-              {getInitials(display.fullName)}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-semibold">{display.fullName}</h1>
-            {display.verified && <VerifiedCheck className="h-5 w-5" />}
-          </div>
-
-          <div className="text-muted-foreground mb-2">@{display.username}</div>
-
-          <div className="text-sm text-muted-foreground mb-4" title={display.joinedTooltip}>
-            {display.joinedText}
-          </div>
-
-          {/* Badges - only shown after full profile loads */}
-          {profileMetadata && (
-            <div className="flex flex-wrap justify-center gap-2">
-              {profileMetadata.admin && (
-                <Badge className="px-4 py-1 rounded-full border-amber-400 dark:border-amber-600 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">
-                  Administrator
-                </Badge>
-              )}
-              {profileMetadata.faqAuthor && (
-                <Badge className="px-4 py-1 rounded-full border-emerald-400 dark:border-emerald-600 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200">
-                  FAQ Author
-                </Badge>
-              )}
-              {profileMetadata.agencyName !== null && (
-                <Badge
-                  className="px-4 py-1 rounded-full border-primary/50 bg-primary/10 text-primary cursor-pointer dark:bg-primary/30 dark:text-primary-foreground dark:border-primary/60"
-                  title={profileMetadata.agencyName ? `User is an agent of ${profileMetadata.agencyName}${profileMetadata.agencyCount > 1 ? ` + ${profileMetadata.agencyCount - 1} more` : ''}` : undefined}
-                  onClick={handleAgencyClick}
-                >
-                  Agency Rep
-                </Badge>
-              )}
-            </div>
-          )}
-          {isLoadingWithInitialRender && (
-            <div className="h-6 w-32 bg-muted/50 rounded-full animate-pulse" />
-          )}
-        </div>
-
-        {/* Search & Filter */}
-        <Card className="p-4 mb-4">
-          <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-            <form className="flex-1 flex items-center gap-2" onSubmit={handleSearchSubmit}>
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search posts by title..."
-                  value={searchDraft}
-                  onChange={(e) => setSearchDraft(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Button type="submit" variant="outline" className="whitespace-nowrap">
-                Search
-              </Button>
-            </form>
-            <div className="w-full md:w-48">
-              <Select
-                value={orderBy}
-                onValueChange={(value: OrderBy) => {
-                  setOrderBy(value);
-                  setThreadsCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Order By" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover text-popover-foreground">
-                  <SelectItem value="newest">Newest first</SelectItem>
-                  <SelectItem value="oldest">Oldest first</SelectItem>
-                  <SelectItem value="likes">Most liked</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </Card>
-
-        {/* Threads List */}
-        <div className="space-y-3">
-          {isLoadingWithInitialRender ? (
-            [1, 2, 3].map((i) => <ThreadCardSkeleton key={i} />)
-          ) : filteredSortedThreads.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              {searchText ? "No posts found matching your search." : "This user hasn't posted any threads yet."}
-            </div>
-          ) : (
-            filteredSortedThreads.map((t) => (
-              <Card
-                key={t.id}
-                className="p-4 hover:shadow-md cursor-pointer transition-shadow"
-                onClick={() => navigate(`/threads/thread/${t.id}`)}
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <div>
-                    <h3 className="text-lg text-left font-semibold mb-1">{t.title}</h3>
-                    <p className="text-sm text-left text-muted-foreground line-clamp-2">{t.content}</p>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    <div>
-                      {new Date(t.createdAt).toLocaleDateString()}{" "}
-                      {new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                    <div className="mt-1">{t.likeCount} likes</div>
-                  </div>
-                </div>
-              </Card>
-            ))
-          )}
-        </div>
-
-        <Paginator<GetThreadsResponse>
-          pageCount={threadsTotalPages}
-          currentPage={threadsCurrentPage}
-          setCurrentPage={setThreadsCurrentPage}
-          onDataChanged={(data) => {
-            setThreads(data.threads);
-            setThreadsTotalPages(data.totalPages);
-          }}
-          onPageChanged={handlePageChange}
+        <ProfileHeader
+          display={display}
+          profileMetadata={profileMetadata}
+          isOwnProfile={isOwnProfile}
+          isLoadingWithInitialRender={isLoadingWithInitialRender}
+          myDeletionRequest={myDeletionRequest}
+          auth={auth}
+          onBan={handleBan}
+          onUnban={handleUnban}
+          onRestrict={handleRestrict}
+          onUnrestrict={handleUnrestrict}
+          onCancelDeletion={handleCancelDeletion}
+          onAgencyClick={() => navigate(`/agencies/?agencyId=${profileMetadata?.agencyId}`)}
+          onNavigateAdmin={() => navigate(`/admin/users?searchBy=USERNAME&query=${encodeURIComponent(display.username)}`)}
         />
 
-        {/* FAQ Responses */}
-        {faqResponses.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">FAQ Responses</h2>
-            <div className="space-y-3">
-              {faqResponses.map((faq) => (
-                <Card key={faq.id} className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2">{faq.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{faq.summary}</p>
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate(`/faq?openId=${faq.id}`)}
-                        className="text-sm"
-                      >
-                        View More
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+        <UserThreadsList
+          isLoadingWithInitialRender={isLoadingWithInitialRender}
+          filteredSortedThreads={filteredSortedThreads}
+          searchText={searchText}
+          searchDraft={searchDraft}
+          onSearchDraftChange={setSearchDraft}
+          orderBy={orderBy}
+          onOrderByChange={setOrderBy}
+          onSearchSubmit={handleSearchSubmit}
+          threadsTotalPages={threadsTotalPages}
+          threadsCurrentPage={threadsCurrentPage}
+          onCurrentPageChange={setThreadsCurrentPage}
+          onPageChanged={handlePageChange}
+          onDataChanged={(data) => {
+            setThreads(data.items);
+            setThreadsTotalPages(data.totalPages);
+          }}
+        />
+
+        <UserFaqSection
+          faqAuthor={profileMetadata?.faqAuthor ?? false}
+          faqResponses={faqResponses}
+          faqsTotalPages={faqsTotalPages}
+          faqsCurrentPage={faqsCurrentPage}
+          onCurrentPageChange={setFaqsCurrentPage}
+          onPageChanged={handleFaqPageChange}
+          onDataChanged={(data) => {
+            setFaqResponses(data.items);
+            setFaqsTotalPages(data.totalPages);
+          }}
+          onViewFaq={(faq) => {
+            loadFaqContent(faq.id).then(() => setDetailFaq(faq));
+          }}
+          detailFaq={detailFaq}
+          detailFaqContent={detailFaqContent.current}
+          onCloseFaqDialog={() => setDetailFaq(null)}
+        />
       </div>
     </PageLayout>
   );

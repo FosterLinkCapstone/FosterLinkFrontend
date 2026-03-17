@@ -1,212 +1,643 @@
 import type { ErrorWrapper } from "@/net-fosterlink/util/ErrorWrapper";
-import { extractValidationError, getValidationErrors } from "@/net-fosterlink/util/ValidationError";
+import { doGenericRequest, type GetErrorForStatus, RequestType } from "@/net-fosterlink/util/ApiUtil";
 import type { AuthContextType } from "../AuthContext";
 import type { AgentInfoModel } from "../models/AgentInfoModel";
 import type { UserInfoResponse } from "../models/api/UserInfoResponse";
 import type { ProfileMetadataModel } from "../models/ProfileMetadataModel";
+import type { UserSettingsModel } from "../models/UserSettingsModel";
+import type { AdminUserModel, AdminUserStatsModel, GetAdminUsersResponse } from "../models/AdminUserModel";
+import type { AdminFaqSuggestionModel } from "../models/AdminFaqSuggestionModel";
+import type { GetAdminFaqAnswersForUserResponse } from "../models/AdminFaqForUserModel";
+import type { AdminAgencyForUserModel } from "../models/AdminAgencyForUserModel";
+import type { AdminReplyForUserModel } from "../models/AdminReplyForUserModel";
+import type { GetAdminThreadsForUserResponse } from "../models/AdminThreadForUserModel";
+import type { GetAuditLogModel } from "../models/AuditLogModel";
+
+export interface UpdateUserPayload {
+    userId: number;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+    username?: string;
+    password?: string;
+    profilePictureUrl?: string;
+}
+
+export interface UserDataExport {
+    id: number;
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    phoneNumber: string;
+    profilePictureUrl: string;
+    idVerified: boolean;
+    verifiedFoster: boolean;
+    verifiedAgencyRep: boolean;
+    administrator: boolean;
+    faqAuthor: boolean;
+    emailVerified: boolean;
+    accountDeleted: boolean;
+    unsubscribeAll: boolean;
+    createdAt: string;
+    updatedAt: string | null;
+    bannedAt: string | null;
+    restrictedAt: string | null;
+    restrictedUntil: string | null;
+    threads: Array<{
+        id: number;
+        title: string;
+        content: string;
+        createdAt: string;
+        updatedAt: string | null;
+        hidden: boolean;
+        userDeleted: boolean;
+    }>;
+    agencies: Array<{
+        id: number;
+        name: string;
+        websiteUrl: string;
+        missionStatement: string;
+        approved: boolean | null;
+        hidden: boolean;
+        createdAt: string;
+        updatedAt: string | null;
+    }>;
+    disabledEmailTypeIds: number[];
+    mailingListIds: number[];
+    accountDeletionRequest: {
+        requestId: number;
+        requestedAt: string;
+        autoApproveBy: string;
+        clearAccount: boolean;
+    } | null;
+    consentRecords: Array<{
+        consentType: string;
+        granted: boolean;
+        timestamp: string;
+        policyVersion: string | null;
+        mechanism: string | null;
+    }>;
+}
 
 export interface UserApiType {
-    login: (email: string, password: string) => Promise<ErrorWrapper<string>>,
+    login: (email: string, password: string, stayLoggedIn?: boolean) => Promise<ErrorWrapper<string>>,
+    forgotPassword: (email: string) => Promise<ErrorWrapper<void>>,
+    resetPassword: (token: string, userId: string, newPassword: string) => Promise<ErrorWrapper<void>>,
     getInfo: () => Promise<ErrorWrapper<UserInfoResponse>>,
-    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string}) => Promise<ErrorWrapper<string>>
+    register: (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string, confirmAgeRequirement: boolean, consentTerms: boolean, consentPrivacy: boolean, consentMarketing: boolean}) => Promise<ErrorWrapper<string>>
     isAdmin: () => Promise<ErrorWrapper<boolean>>
     isFaqAuthor: () => Promise<ErrorWrapper<boolean>>
     getAgentInfo: (userId: number) => Promise<ErrorWrapper<AgentInfoModel>>,
-    getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>
+    getProfileMetadata: (userId: number) => Promise<ErrorWrapper<ProfileMetadataModel>>,
+    getSettings: () => Promise<ErrorWrapper<UserSettingsModel>>,
+    resendVerificationEmail: () => Promise<ErrorWrapper<void>>,
+    updateUser: (data: UpdateUserPayload) => Promise<ErrorWrapper<void>>,
+    changePassword: (oldPassword: string, newPassword: string) => Promise<ErrorWrapper<void>>,
+    banUser: (userId: number) => Promise<ErrorWrapper<void>>,
+    unbanUser: (userId: number) => Promise<ErrorWrapper<void>>,
+    restrictUser: (userId: number, restrictedUntil?: string) => Promise<ErrorWrapper<void>>,
+    unrestrictUser: (userId: number) => Promise<ErrorWrapper<void>>,
+    getUserStats: () => Promise<ErrorWrapper<AdminUserStatsModel>>,
+    getAllUsers: (page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
+    getDeletedUsers: (page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
+    searchUsers: (searchBy: string, query: string, page: number) => Promise<ErrorWrapper<GetAdminUsersResponse>>,
+    setUserRole: (userId: number, role: string, enabled: boolean) => Promise<ErrorWrapper<void>>,
+    requestAdminRole: (userId: number) => Promise<ErrorWrapper<void>>,
+    requestRevokeAdminRole: (userId: number) => Promise<ErrorWrapper<void>>,
+    getFaqSuggestionsForUser: (userId: number) => Promise<ErrorWrapper<AdminFaqSuggestionModel[]>>,
+    getFaqAnswersForUser: (userId: number, page: number) => Promise<ErrorWrapper<GetAdminFaqAnswersForUserResponse>>,
+    getAgenciesForUser: (userId: number) => Promise<ErrorWrapper<AdminAgencyForUserModel[]>>,
+    getRepliesForUser: (userId: number) => Promise<ErrorWrapper<AdminReplyForUserModel[]>>,
+    getThreadsForUser: (userId: number, page: number) => Promise<ErrorWrapper<GetAdminThreadsForUserResponse>>,
+    getAuditLog: (page: number) => Promise<ErrorWrapper<GetAuditLogModel>>,
+    clearUserProfile: (userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean) => Promise<ErrorWrapper<AdminUserModel>>,
+    getMyData: () => Promise<ErrorWrapper<UserDataExport>>,
+    exportData: () => Promise<ErrorWrapper<Blob>>,
 }
 
 export const userApi = (auth: AuthContextType): UserApiType => {
+    const defaultErrorsLogin: Map<number, string> = new Map<number, string>([
+        [400, "Invalid login credentials format"],
+        [401, "Incorrect password"],
+        [403, "Request was rejected. Please refresh the page and try again."],
+        [404, "That email was not found"],
+        [-1, "Unknown error!"]
+    ]);
+
+    const getLoginErrorForStatus: GetErrorForStatus = (status, data: any) => {
+        if (status === 403 && data?.reason === "banned") {
+            return "Your account has been banned. If you believe this is a mistake, please contact an administrator.";
+        }
+        return undefined;
+    };
+
+    const defaultErrorsGetInfo: Map<number, string> = new Map<number, string>([
+        [401, "You must be logged in to view your info!"],
+        [404, "User not found!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsRegister: Map<number, string> = new Map<number, string>([
+        [400, "Invalid registration data. Please check your inputs."],
+        [422, "The email address you entered doesn't appear to be valid. Please double-check it and try again."],
+        [429, "You have already registered in the last 10 minutes, and need to wait to create the next one."],
+        [409, "A user with that email or username already exists."],
+        [-1, "Unknown error"]
+    ]);
+
+    const defaultErrorsIsAdmin: Map<number, string> = new Map<number, string>([
+        [401, "You must be logged in to check admin status!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsIsFaqAuthor: Map<number, string> = new Map<number, string>([
+        [401, "You must be logged in to check FAQ author status!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsGetAgentInfo: Map<number, string> = new Map<number, string>([
+        [400, "You can only request the agent info of a user marked as an agent. Message an administrator if you believe this is a mistake."],
+        [404, "Could not find that user!"],
+        [-1, "Internal server error"]
+    ]);
+
+    const defaultErrorsGetProfileMetadata: Map<number, string> = new Map<number, string>([
+        [404, "Could not find that user!"],
+        [-1, "Internal server error"],
+        [403, "This account is locked pending deletion."]
+    ]);
+
     return {
-        login: async (email: string, password: string): Promise<ErrorWrapper<string>> => {
-        let response: ErrorWrapper<string> = {
-            isError: false,
-            error: undefined,
-            data: ""
-        }
-        try {
-            const res = await auth.api.post("/users/login", {
-                email: email,
-                password: password
-            })
-            response.data = res.data.token
-            return response
-        } catch (err: any) {
-            response.isError = true
-            response.data = undefined
-            if (err.response) {
-                // Check for validation errors first
-                const validationError = extractValidationError(err.response);
-                if (validationError) {
-                    response.validationErrors = getValidationErrors(err.response)
-                }
-                
-                switch(err.response.status) {
-                    case 400:
-                        response.error = "Invalid login credentials format"
-                        return response
-                    case 401:
-                        response.error = "Incorrect password"
-                        return response
-                    case 404:
-                        response.error = "That email was not found"
-                        return response
-                    default:
-                        response.error = "Unknown error!"
-                        return response
-                }
-            } else {
-                response.isError = true
-                response.error = "Unknown error!"
-                return response
-            }
-        }
+        login: async (email: string, password: string, stayLoggedIn?: boolean): Promise<ErrorWrapper<string>> => {
+            return doGenericRequest<string>(
+                auth.api,
+                RequestType.POST,
+                "/users/login",
+                { email, password, stayLoggedIn: stayLoggedIn ?? false },
+                defaultErrorsLogin,
+                (data: any) => data.token as string,
+                getLoginErrorForStatus
+            );
+        },
+        forgotPassword: async (email: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid email address."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Unknown error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/users/forgotPassword",
+                { email },
+                defaultErrors
+            );
+        },
+        resetPassword: async (token: string, userId: string, newPassword: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid request."],
+                [403, "This reset link is invalid or has expired."],
+                [404, "Account not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Unknown error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/resetPassword?token=${encodeURIComponent(token)}&userId=${encodeURIComponent(userId)}`,
+                { newPassword },
+                defaultErrors
+            );
         },
         getInfo: async (): Promise<ErrorWrapper<UserInfoResponse>> => {
-            try {
-                const res = await auth.api.get(`/users/getInfo`)
-                return {
-                    data: {
-                        found: true,
-                        user: res.data
-                    },
-                    error: undefined,
-                    isError: false
-                }
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 401:
-                            return {data: {found: false, user: undefined}, error: "You must be logged in to view your info!", isError: true}
-                        case 404:
-                            return {data: {found: false, user: undefined}, error: "User not found!", isError: true}
-                        default:
-                            return {data: {found: false, user: undefined}, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: {found: false, user: undefined}, error: "Internal client error", isError: true}
+            return doGenericRequest<UserInfoResponse>(
+                auth.api,
+                RequestType.GET,
+                "/users/getInfo",
+                {},
+                defaultErrorsGetInfo,
+                (data: any) => ({
+                    found: true,
+                    user: data
+                })
+            );
         },
-        register: async (info: {firstName: string, lastName: string, username: string, email: string, password: string}): Promise<ErrorWrapper<string>> => {
-            
-            try {
-                const res = await auth.api.post(`/users/register`, {
+        register: async (info: {firstName: string, lastName: string, username: string, email: string, phoneNumber: string, password: string, confirmAgeRequirement: boolean, consentTerms: boolean, consentPrivacy: boolean, consentMarketing: boolean}): Promise<ErrorWrapper<string>> => {
+            return doGenericRequest<string>(
+                auth.api,
+                RequestType.POST,
+                "/users/register",
+                {
                     ...info,
                     registeredUsingEmail: true
-                })
-                return {
-                    error: undefined,
-                    isError: false,
-                    data: res.data.token
-                }
-            } catch(err: any) {
-                if (err.response) {
-                    // Check for validation errors first
-                    const validationError = extractValidationError(err.response);
-                    let error = {}
-                    if (validationError) {
-                        error = {
-                            validationErrors: getValidationErrors(err.response),
-                            data: undefined,
-                            isError: true
-                        }
-                    }
-                    
-                    if (err.response.status == 400) {
-                        error = {
-                            ...error,
-                            error: "Invalid registration data. Please check your inputs.",
-                        }
-                    } else if (err.response.status == 429) {
-                        error = {
-                            ...error,
-                            error: "You have already registered in the last 10 minutes, and need to wait to create the next one.",
-                        }
-                    } else if (err.response.status == 409) {
-                        error = {
-                            ...error,
-                            error: "A user with that email or username already exists.",
-                        }
-                    } else {
-                        error = {
-                            ...error,
-                            error: "Unknown error",
-                        }
-                    }
-                    return error as ErrorWrapper<string>;
-                } else {
-                    return {
-                        error: "Unknown error",
-                        isError: true,
-                        data: undefined
-                    }
-                }
-            }
+                },
+                defaultErrorsRegister,
+                (data: any) => data.token as string
+            );
         },
         isAdmin: async(): Promise<ErrorWrapper<boolean>> => {
-            try {
-                const res = await auth.api.get("/users/isAdmin")
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 401:
-                            return {data: undefined, error: "You must be logged in to check admin status!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.GET,
+                "/users/isAdmin",
+                {},
+                defaultErrorsIsAdmin
+            );
         },
         isFaqAuthor: async(): Promise<ErrorWrapper<boolean>> => {
-            try {
-                const res = await auth.api.get("/users/isFaqAuthor")
-                return {data: res.data, error: undefined, isError: false}
-            } catch (err: any) {
-                if (err.response) {
-                    switch(err.response.status) {
-                        case 401:
-                            return {data: undefined, error: "You must be logged in to check FAQ author status!", isError: true}
-                        default:
-                            return {data: undefined, error: "Internal server error", isError: true}
-                    }
-                }
-            }
-            return {data: undefined, error: "Internal client error", isError: true}
+            return doGenericRequest<boolean>(
+                auth.api,
+                RequestType.GET,
+                "/users/isFaqAuthor",
+                {},
+                defaultErrorsIsFaqAuthor
+            );
         },
         getAgentInfo: async(userId: number): Promise<ErrorWrapper<AgentInfoModel>> => {
-            try {
-                const res = await auth.api.get(`/users/agentInfo?userId=${userId}`)
-                return {isError: false, error: undefined, data: res.data}
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 400:
-                            return {isError: true, error: "You can only request the agent info of a user marked as an agent. Message an administrator if you believe this is a mistake.", data: undefined}
-                        case 404:
-                            return {isError: true, error: "Could not find that user!", data: undefined}
-                    }
-                }
-            }
-            return {isError: true, error: "Internal server error", data: undefined}
+            return doGenericRequest<AgentInfoModel>(
+                auth.api,
+                RequestType.GET,
+                `/users/agentInfo?userId=${userId}`,
+                {},
+                defaultErrorsGetAgentInfo
+            );
         },
         getProfileMetadata: async(userId: number): Promise<ErrorWrapper<ProfileMetadataModel>> => {
-            try {
-                const res = await auth.api.get(`/users/profileMetadata?userId=${userId}`)
-                return {isError: false, error: undefined, data: res.data}
-            } catch (err: any) {
-                if (err.response) {
-                    switch (err.response.status) {
-                        case 404:
-                            return {isError: true, error: "Could not find that user!", data: undefined}
-                        default:
-                            return {isError: true, error: "Internal server error", data: undefined}
-                    }
-                }
-            }
-            return {isError: true, error: "Internal server error", data: undefined}
-        }
+            return doGenericRequest<ProfileMetadataModel>(
+                auth.api,
+                RequestType.GET,
+                `/users/profileMetadata?userId=${userId}`,
+                {},
+                defaultErrorsGetProfileMetadata
+            );
+        },
 
+        getSettings: async(): Promise<ErrorWrapper<UserSettingsModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in to view your settings."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<UserSettingsModel>(
+                auth.api,
+                RequestType.GET,
+                "/users/getSettings",
+                {},
+                defaultErrors
+            );
+        },
+
+        resendVerificationEmail: async(): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in."],
+                [404, "User not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/users/resendVerificationEmail",
+                {},
+                defaultErrors
+            );
+        },
+
+        updateUser: async(data: UpdateUserPayload): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid update data. Please check your inputs."],
+                [401, "You are not authorized to update this account."],
+                [409, "That username or email is already taken."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.PUT,
+                "/users/update",
+                data,
+                defaultErrors
+            );
+        },
+
+        changePassword: async(oldPassword: string, newPassword: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "Old password is incorrect."],
+                [404, "User not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                "/users/changePassword",
+                { oldPassword, newPassword },
+                defaultErrors
+            );
+        },
+
+        banUser: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to ban users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/ban?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        unbanUser: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to unban users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/unban?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        restrictUser: async(userId: number, restrictedUntil?: string): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to restrict users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            const params = restrictedUntil
+                ? `/users/restrict?userId=${userId}&restrictedUntil=${encodeURIComponent(restrictedUntil)}`
+                : `/users/restrict?userId=${userId}`;
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                params,
+                {},
+                defaultErrors
+            );
+        },
+
+        unrestrictUser: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to unrestrict users."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/users/unrestrict?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getUserStats: async(): Promise<ErrorWrapper<AdminUserStatsModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view user stats."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminUserStatsModel>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/stats`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getDeletedUsers: async(page: number): Promise<ErrorWrapper<GetAdminUsersResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view deleted accounts."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminUsersResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/deleted?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getAllUsers: async(page: number): Promise<ErrorWrapper<GetAdminUsersResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view users."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminUsersResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/all?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        searchUsers: async(searchBy: string, query: string, page: number): Promise<ErrorWrapper<GetAdminUsersResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "Invalid search parameters."],
+                [403, "You do not have permission to search users."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminUsersResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/search?searchBy=${encodeURIComponent(searchBy)}&query=${encodeURIComponent(query)}&page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        setUserRole: async(userId: number, role: string, enabled: boolean): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "That role cannot be set via this endpoint."],
+                [403, "You do not have permission to set user roles."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/setRole?userId=${userId}&role=${encodeURIComponent(role)}&enabled=${enabled}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        requestAdminRole: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to request administrator role assignment."],
+                [404, "User not found."],
+                [409, "User is already an administrator or account is deleted."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/requestAdminRole?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        requestRevokeAdminRole: async(userId: number): Promise<ErrorWrapper<void>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to request administrator role revocation."],
+                [404, "User not found."],
+                [409, "User is not an administrator or account is deleted."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<void>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/requestRevokeAdminRole?userId=${userId}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getFaqSuggestionsForUser: async(userId: number): Promise<ErrorWrapper<AdminFaqSuggestionModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's FAQ suggestions."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminFaqSuggestionModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/faq-suggestions`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getFaqAnswersForUser: async(userId: number, page: number): Promise<ErrorWrapper<GetAdminFaqAnswersForUserResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's FAQ answers."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminFaqAnswersForUserResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/faq-answers?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getAgenciesForUser: async(userId: number): Promise<ErrorWrapper<AdminAgencyForUserModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's agencies."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminAgencyForUserModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/agencies`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getRepliesForUser: async(userId: number): Promise<ErrorWrapper<AdminReplyForUserModel[]>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's replies."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminReplyForUserModel[]>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/replies`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getThreadsForUser: async(userId: number, page: number): Promise<ErrorWrapper<GetAdminThreadsForUserResponse>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view this user's threads."],
+                [404, "User not found."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAdminThreadsForUserResponse>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/${userId}/threads?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getAuditLog: async(page: number): Promise<ErrorWrapper<GetAuditLogModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [403, "You do not have permission to view the audit log."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<GetAuditLogModel>(
+                auth.api,
+                RequestType.GET,
+                `/admin/users/audit-log?page=${page}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        clearUserProfile: async(userId: number, clearFullName: boolean, clearUsername: boolean, clearProfilePicture: boolean): Promise<ErrorWrapper<AdminUserModel>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [400, "At least one field must be selected for clearing."],
+                [403, "You do not have permission to clear user profiles."],
+                [404, "User not found."],
+                [409, "Cannot modify a deleted account."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<AdminUserModel>(
+                auth.api,
+                RequestType.POST,
+                `/admin/users/clearProfile?userId=${userId}&clearFullName=${clearFullName}&clearUsername=${clearUsername}&clearProfilePicture=${clearProfilePicture}`,
+                {},
+                defaultErrors
+            );
+        },
+
+        getMyData: async(): Promise<ErrorWrapper<UserDataExport>> => {
+            const defaultErrors: Map<number, string> = new Map([
+                [401, "You must be logged in to view your data."],
+                [404, "User not found."],
+                [429, "Too many requests. Please try again later."],
+                [-1, "Internal server error"]
+            ]);
+            return doGenericRequest<UserDataExport>(
+                auth.api,
+                RequestType.GET,
+                "/users/my-data",
+                {},
+                defaultErrors
+            );
+        },
+
+        exportData: async(): Promise<ErrorWrapper<Blob>> => {
+            try {
+                const response = await auth.api.get("/users/export-data", { responseType: "blob" });
+                return { isError: false, data: response.data as Blob, error: undefined };
+            } catch (err: any) {
+                const status: number = err?.response?.status ?? -1;
+                if (status === 429) return { isError: true, error: "You can only download your data once every 24 hours.", data: undefined };
+                if (status === 404) return { isError: true, error: "User not found.", data: undefined };
+                return { isError: true, error: "Failed to download data export.", data: undefined };
+            }
+        },
     }
-    
-    }
+}

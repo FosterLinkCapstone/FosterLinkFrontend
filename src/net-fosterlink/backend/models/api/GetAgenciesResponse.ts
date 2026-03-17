@@ -1,6 +1,4 @@
 import type { AgencyModel } from "../AgencyModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetAgenciesResponse {
-    agencies: AgencyModel[];
-    totalPages: number;
-}
+export type GetAgenciesResponse = PaginatedResponse<AgencyModel>;

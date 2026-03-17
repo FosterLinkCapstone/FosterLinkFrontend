@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navbar } from "../components/Navbar";
+import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ThreadModel } from "../backend/models/ThreadModel";
@@ -47,7 +47,7 @@ export const Threads = () => {
   const loadThreads = useCallback(async (o: OrderBy) => {
     const res = await threadApiRef.current.getThreads(orderByToApi(o), 0);
     if (!res.isError && res.data) {
-      setThreads(res.data.threads);
+      setThreads(res.data.items);
       setTotalPages(res.data.totalPages);
       setCurrentPage(1);
       setLoading(false);
@@ -114,16 +114,15 @@ export const Threads = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-          <Navbar userInfo={auth.getUserInfo()} />
-        </div>
+      <PageLayout auth={auth}>
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex gap-3 mb-6">
-            <Skeleton className="h-9 flex-1 rounded-md" />
-            <Skeleton className="h-9 min-w-[120px] w-[120px] rounded-md" />
-            <Skeleton className="h-9 min-w-[120px] w-[120px] rounded-md" />
-            <Skeleton className="h-9 w-[80px] rounded-md" />
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
+            <Skeleton className="h-9 w-full sm:flex-1 rounded-md" />
+            <div className="flex gap-3 w-full sm:w-auto">
+              <Skeleton className="h-9 flex-1 sm:flex-none min-w-[120px] w-[120px] rounded-md" />
+              <Skeleton className="h-9 flex-1 sm:flex-none min-w-[120px] w-[120px] rounded-md" />
+              <Skeleton className="h-9 w-[80px] rounded-md" />
+            </div>
           </div>
           {auth.isLoggedIn() && (
             <div className="max-w-7xl mb-6">
@@ -136,53 +135,52 @@ export const Threads = () => {
             ))}
           </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-background border-b border-border h-16 flex items-center justify-center text-muted-foreground">
-        <Navbar userInfo={auth.getUserInfo()}/>
-      </div>
-      
+    <PageLayout auth={auth}>
+      <title>Threads</title>
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
           <Input
             type="text"
             placeholder="Enter search text..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="flex-1"
+            className="w-full sm:flex-1"
           />
 
-          <Select value={searchBy} onValueChange={setSearchBy}>
-            <SelectTrigger className="w-auto min-w-[120px]">
-              <SelectValue placeholder="Search By" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover text-popover-foreground">
-              <SelectItem value="THREAD_TITLE">Thread Title</SelectItem>
-              <SelectItem value="THREAD_CONTENT">Thread Content</SelectItem>
-              <SelectItem value="USERNAME">Username</SelectItem>
-              <SelectItem value="TAGS">Tags</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <Select value={searchBy} onValueChange={setSearchBy}>
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-auto min-w-[120px]">
+                <SelectValue placeholder="Search By" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground">
+                <SelectItem value="THREAD_TITLE">Thread Title</SelectItem>
+                <SelectItem value="THREAD_CONTENT">Thread Content</SelectItem>
+                <SelectItem value="USERNAME">Username</SelectItem>
+                <SelectItem value="TAGS">Tags</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={orderBy} onValueChange={(value: OrderBy) => setOrderBy(value)}>
-            <SelectTrigger className="w-auto min-w-[120px]">
-              <SelectValue placeholder="Order By" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover text-popover-foreground">
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-              <SelectItem value="likes">Most liked</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={orderBy} onValueChange={(value: OrderBy) => setOrderBy(value)}>
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-auto min-w-[120px]">
+                <SelectValue placeholder="Order By" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground">
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="likes">Most liked</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Button variant="outline" className="whitespace-nowrap" onClick={doSearch}>Search</Button>
+            <Button variant="outline" className="whitespace-nowrap" onClick={doSearch}>Search</Button>
+          </div>
         </div>
         {
           auth.isLoggedIn() && <div className="max-w-7xl mb-6">
-                                  <Button className="w-full !border-solid !border-1" onClick={() => setCreating(!creating)}>Create Thread</Button>
+                                  <Button className="w-full !border-solid !border-1" onClick={() => setCreating(!creating)} disabled={auth.restricted}>Create Thread</Button>
                                 </div>
         }
 
@@ -220,7 +218,7 @@ export const Threads = () => {
             onPageChanged={async (pageNum) => {
               const res = await threadApiRef.current.getThreads(orderByToApi(orderBy), pageNum - 1);
               const payload = res.data;
-              const data = payload?.threads ?? [];
+              const data = payload?.items ?? [];
               if (payload) {
                 setTotalPages(payload.totalPages);
               }
@@ -229,6 +227,6 @@ export const Threads = () => {
           />
         ))}
       </div>
-    </div>
+    </PageLayout>
   );
 };

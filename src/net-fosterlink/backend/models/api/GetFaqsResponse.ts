@@ -1,6 +1,4 @@
 import type { FaqModel } from "../FaqModel";
+import type { PaginatedResponse } from "./PaginatedResponse";
 
-export interface GetFaqsResponse {
-    faqs: FaqModel[];
-    totalPages: number;
-}
+export type GetFaqsResponse = PaginatedResponse<FaqModel>;
