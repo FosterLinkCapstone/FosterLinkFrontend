@@ -228,7 +228,7 @@ export const DeleteAccountDialog = ({ open, onOpenChange, onSuccess }: DeleteAcc
                         <Button
                             variant="outline"
                             onClick={handleConfirm}
-                            disabled={!agreed}
+                            disabled={!agreed || loading}
                             className="w-full sm:w-auto bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-700 hover:bg-red-200 dark:hover:bg-red-900/60 disabled:opacity-40"
                         >
                             {loading ? "Submitting..." : "Confirm"}

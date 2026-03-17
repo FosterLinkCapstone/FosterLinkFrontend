@@ -35,6 +35,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [tagEditLoading, setTagEditLoading] = useState<boolean>(false)
     const [replies, setReplies] = useState<ReplyModel[]>([])
     const [loadingReplies, setLoadingReplies] = useState<boolean>(true)
+    const [replyLoading, setReplyLoading] = useState<boolean>(false)
     const [editingTags, setEditingTags] = useState<boolean>(false);
     const [editingTitle, setEditingTitle] = useState<boolean>(false);
     const [titleEditLoading, setTitleEditLoading] = useState<boolean>(false)
@@ -76,6 +77,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
             setReplyError('');
             setReplyFieldErrors({});
             if (replyText != '' && thread) {
+                setReplyLoading(true)
                 threadApiRef.replyTo(replyText, thread.id).then(res => {
                     if (!res.isError && res.data) {
                         setReplies([res.data, ...replies])
@@ -89,7 +91,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                             setReplyFieldErrors(next);
                         }
                     }
-                })
+                }).finally(() => setReplyLoading(false))
             } else {
                 setReplyError("Please enter something!");
             }
@@ -174,7 +176,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
         ))
     };
 
-    const currentUserId = auth.isLoggedIn() ? auth.getUserInfo()!.id : null;
+    const currentUserId = auth.isLoggedIn() ? auth.getUserInfo()?.id ?? null : null;
     const isAuthor = currentUserId === thread.author.id;
 
     return (
@@ -187,6 +189,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                         replyError={replyError}
                         isLoggedIn={auth.isLoggedIn()}
                         restricted={auth.restricted}
+                        loading={replyLoading}
                         onReplyTextChange={setReplyText}
                         onSubmit={handleSubmitNewReply}
                     />
@@ -307,8 +310,8 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                                             <Button variant="outline" onClick={handleCancelReply}>
                                                 Cancel
                                             </Button>
-                                            <Button onClick={handleSubmitNewReply} disabled={auth.restricted}>
-                                                Submit
+                                            <Button onClick={handleSubmitNewReply} disabled={auth.restricted || replyLoading}>
+                                                {replyLoading ? "Submitting..." : "Submit"}
                                             </Button>
                                         </div>
                                     </div>

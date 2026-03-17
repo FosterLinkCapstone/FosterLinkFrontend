@@ -11,12 +11,16 @@ interface ProfilePictureDialogProps {
     onConfirm: (url: string) => void
 }
 
+const DEFAULT_PFP_URL = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg?20200418092106"
+
 export const ProfilePictureDialog = ({ open, onOpenChange, currentUrl, onConfirm }: ProfilePictureDialogProps) => {
     const auth = useAuth()
-    const [url, setUrl] = useState(currentUrl)
+    const isDefault = currentUrl === DEFAULT_PFP_URL
+    const displayUrl = isDefault ? "" : currentUrl
+    const [url, setUrl] = useState(displayUrl)
 
     const handleOpenChange = (isOpen: boolean) => {
-        if (!isOpen) setUrl(currentUrl)
+        if (!isOpen) setUrl(displayUrl)
         onOpenChange(isOpen)
     }
 

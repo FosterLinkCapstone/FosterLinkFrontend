@@ -114,7 +114,7 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
             </p>
             <div className="flex gap-2">
               {/* Restore only for thread author on user-deleted, or for admin on admin-deleted; admins cannot restore user-deleted threads */}
-              {(thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin) ? (
+              {(thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()?.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin) ? (
                 <Button className="flex-1" onClick={restoreThread} disabled={auth.restricted}>
                   Restore
                 </Button>
@@ -177,7 +177,7 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
 
           <div className="flex items-center gap-1.5 mb-4">
             {/* Restore only for thread author on user-deleted, or for admin on admin-deleted; admins cannot restore user-deleted threads */}
-            {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin)) && (
+            {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()?.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin)) && (
               <Button variant="outline" onClick={restoreThread}>Restore</Button>
             )}
             <Button variant="outline" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={permanentlyDeleteThread}>Delete</Button>

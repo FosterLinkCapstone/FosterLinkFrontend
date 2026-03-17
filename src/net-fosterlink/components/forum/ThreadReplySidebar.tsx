@@ -8,6 +8,7 @@ interface ThreadReplySidebarProps {
     replyError: string;
     isLoggedIn: boolean;
     restricted: boolean;
+    loading: boolean;
     onReplyTextChange: (text: string) => void;
     onSubmit: () => void;
 }
@@ -18,6 +19,7 @@ export const ThreadReplySidebar = ({
     replyError,
     isLoggedIn,
     restricted,
+    loading,
     onReplyTextChange,
     onSubmit,
 }: ThreadReplySidebarProps) => (
@@ -34,8 +36,8 @@ export const ThreadReplySidebar = ({
             <span className="text-red-500">{replyFieldErrors["content"]}</span>
         </div>
         {replyError && <p className="text-red-500 text-sm mb-2">{replyError}</p>}
-        <Button onClick={onSubmit} className="w-full" disabled={!isLoggedIn || restricted}>
-            Submit
+        <Button onClick={onSubmit} className="w-full" disabled={!isLoggedIn || restricted || loading}>
+            {loading ? "Submitting..." : "Submit"}
         </Button>
     </Card>
 );

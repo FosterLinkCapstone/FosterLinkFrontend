@@ -34,7 +34,7 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
     const [loading, setLoading] = useState<boolean>(false)
 
-    const isReplyAuthor = auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id;
+    const isReplyAuthor = auth.isLoggedIn() && auth.getUserInfo()?.id === reply.author.id;
 
     const likeReply = useCallback(() => {
         if (!auth.isLoggedIn()) return;
@@ -186,14 +186,14 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
                         )}
                     </div>
                 )}
-                {auth.isLoggedIn() && !auth.admin && auth.getUserInfo()!.id === reply.author.id && (
+                {auth.isLoggedIn() && !auth.admin && auth.getUserInfo()?.id === reply.author.id && (
                     <div className="mt-2 flex items-center gap-2">
                         <Button variant="outline" size="sm" className="bg-red-200 text-red-400 dark:bg-red-900/50 dark:text-red-200 dark:border-red-700/70 dark:hover:bg-red-900/70" onClick={deleteReply} disabled={auth.restricted}>
                             Delete
                         </Button>
                     </div>
                 )}
-                {auth.isLoggedIn() && auth.getUserInfo()!.id === reply.author.id && (
+                {auth.isLoggedIn() && auth.getUserInfo()?.id === reply.author.id && (
                     <div className="mt-2 flex items-center gap-2">
                         <Button
                             variant="outline"
@@ -204,8 +204,8 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
                             {editing ? 'Cancel' : 'Edit'}
                         </Button>
                         {editing && (
-                            <Button variant="outline" size="sm" onClick={submitEdit} disabled={auth.restricted}>
-                                Submit
+                            <Button variant="outline" size="sm" onClick={submitEdit} disabled={auth.restricted || loading}>
+                                {loading ? "Submitting..." : "Submit"}
                             </Button>
                         )}
                     </div>

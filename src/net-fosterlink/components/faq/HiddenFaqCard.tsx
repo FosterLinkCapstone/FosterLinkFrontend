@@ -37,7 +37,7 @@ export const HiddenFaqCard = memo<HiddenFaqCardProps>(({
         </Alert>
     );
 
-    const canRestore = (faq.hiddenByAuthor && auth.isLoggedIn() && auth.getUserInfo()!.id === faq.author.id && !auth.admin) || (!faq.hiddenByAuthor && auth.admin);
+    const canRestore = (faq.hiddenByAuthor && auth.isLoggedIn() && auth.getUserInfo()?.id === faq.author.id && !auth.admin) || (!faq.hiddenByAuthor && auth.admin);
     const actionButtons = (
         <>
             {canRestore && (

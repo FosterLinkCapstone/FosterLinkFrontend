@@ -221,7 +221,7 @@ function ThreadList({
 
             <div className="w-full flex flex-col mt-1 gap-2">
               {/* Restore only for thread author on user-deleted, or for admin on admin-deleted; admins cannot restore user-deleted threads */}
-              {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()!.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin)) && (
+              {((thread.postMetadata.userDeleted && auth.isLoggedIn() && auth.getUserInfo()?.id === thread.author.id && !auth.admin) || (!thread.postMetadata.userDeleted && auth.admin)) && (
                 <Button
                   variant="outline"
                   className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/50 dark:text-emerald-50 dark:border-emerald-400/70 hover:bg-emerald-200 dark:hover:bg-emerald-500/70"
