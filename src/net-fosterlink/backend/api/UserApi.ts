@@ -141,6 +141,7 @@ export const userApi = (auth: AuthContextType): UserApiType => {
 
     const defaultErrorsRegister: Map<number, string> = new Map<number, string>([
         [400, "Invalid registration data. Please check your inputs."],
+        [422, "The email address you entered doesn't appear to be valid. Please double-check it and try again."],
         [429, "You have already registered in the last 10 minutes, and need to wait to create the next one."],
         [409, "A user with that email or username already exists."],
         [-1, "Unknown error"]
