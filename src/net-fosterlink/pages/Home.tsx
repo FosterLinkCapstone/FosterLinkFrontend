@@ -172,7 +172,7 @@ export const Home = () => {
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12 dark:from-purple-700 dark:to-pink-700">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold mb-4">Want to promote your agency or write FAQ responses?</h2>
-          <p className="text-lg mb-6">Message us at placeholder@email.com</p>
+          <p className="text-lg mb-6">Message us at admin@fosterlink.net</p>
         </div>
       </div>
 
