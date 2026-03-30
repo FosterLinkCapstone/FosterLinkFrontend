@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import type { FaqModel } from "@/net-fosterlink/backend/models/FaqModel"
 import { getInitials } from "@/net-fosterlink/util/StringUtil"
 import { Check, Share2 } from "lucide-react"
+import { MarkdownContent } from "@/components/ui/markdown-content"
 import { useState } from "react"
 import { useNavigate } from "react-router"
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil"
@@ -48,9 +49,7 @@ export const FaqDialog = ({detailFaq, handleOpenChange, content} : {detailFaq: F
 
               <div className="flex-1 overflow-y-auto p-6 bg-muted/30">
                 <div className="prose max-w-none">
-                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                    {content}
-                  </p>
+                  <MarkdownContent content={content} className="text-foreground leading-relaxed" />
                 </div>
               </div>
 

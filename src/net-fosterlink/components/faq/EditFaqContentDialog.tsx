@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea";
 import { useState, useEffect } from "react";
 import type { AuthContextType } from "@/net-fosterlink/backend/AuthContext";
 import { faqApi } from "@/net-fosterlink/backend/api/FaqApi";
@@ -61,10 +62,10 @@ export const EditFaqContentDialog = ({
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
                     ) : (
-                        <textarea
+                        <MarkdownTextarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            className="flex-1 min-h-[300px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                            className="flex-1 min-h-[300px] w-full resize-none"
                             placeholder="FAQ content..."
                         />
                     )}

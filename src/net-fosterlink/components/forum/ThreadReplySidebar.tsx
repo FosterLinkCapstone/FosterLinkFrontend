@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea";
 
 interface ThreadReplySidebarProps {
     replyText: string;
@@ -26,7 +26,7 @@ export const ThreadReplySidebar = ({
     <Card className="p-4 border-border">
         <h3 className="font-semibold mb-3">Reply</h3>
         <div className="grid gap-2 mb-3">
-            <Textarea
+            <MarkdownTextarea
                 placeholder="Enter reply here..."
                 value={replyText}
                 onChange={(e) => onReplyTextChange(e.target.value)}

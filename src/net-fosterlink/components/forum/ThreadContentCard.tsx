@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownContent } from "@/components/ui/markdown-content";
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea";
 
 interface ThreadContentCardProps {
     content: string;
@@ -19,7 +20,7 @@ export const ThreadContentCard = ({
     <Card className="p-6 mb-6 border-border">
         <div className="max-w-none">
             {editing ? (
-                <Textarea
+                <MarkdownTextarea
                     value={editedContent}
                     onChange={(e) => onEditedContentChange(e.target.value)}
                     onSubmit={onSubmitEdit}
@@ -27,7 +28,7 @@ export const ThreadContentCard = ({
                     id="editedContent"
                 />
             ) : (
-                <p className="whitespace-pre-wrap text-foreground">{content}</p>
+                <MarkdownContent content={content} className="text-foreground" />
             )}
         </div>
     </Card>

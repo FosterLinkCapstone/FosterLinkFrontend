@@ -18,6 +18,7 @@ import { confirm } from "../components/ConfirmDialog";
 import { useNavigate } from "react-router";
 import { VerifiedCheck } from "../components/badges/VerifiedCheck";
 import { buildProfileUrl } from "../util/UserUtil";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) => {
   const [otherThreads, setOtherThreads] = useState<ThreadModel[]>([])
@@ -171,7 +172,7 @@ export const HiddenThreadDetailPage = ({thread}: {thread: HiddenThreadModel}) =>
 
           <Card className="p-6 mb-6 border-border">
             <div className="max-w-none">
-              <p className="whitespace-pre-wrap text-foreground">{thread.content}</p>
+              <MarkdownContent content={thread.content} className="text-foreground" />
             </div>
           </Card>
 
