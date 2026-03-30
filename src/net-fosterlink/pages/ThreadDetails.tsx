@@ -13,6 +13,7 @@ import { useAuth } from "../backend/AuthContext";
 import { threadApi } from "../backend/api/ThreadApi";
 import type { ReplyModel } from "../backend/models/ReplyModel";
 import { getInitials } from "../util/StringUtil";
+import { decodeHtmlEntities } from "@/components/ui/markdown-content";
 import { BackgroundLoadSpinner } from "../components/BackgroundLoadSpinner";
 import { confirm } from "../components/ConfirmDialog";
 import { VerifiedCheck } from "../components/badges/VerifiedCheck";
@@ -29,7 +30,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [replyError, setReplyError] = useState<string>('');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [editing, setEditing] = useState<boolean>(false);
-    const [editedContent, setEditedContent] = useState<string>(thread.content);
+    const [editedContent, setEditedContent] = useState<string>(decodeHtmlEntities(thread.content));
     const [otherThreads, setOtherThreads] = useState<ThreadModel[]>([])
     const [threadEditLoading, setThreadEditLoading] = useState<boolean>(false)
     const [tagEditLoading, setTagEditLoading] = useState<boolean>(false)

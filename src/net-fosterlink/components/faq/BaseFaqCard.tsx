@@ -7,6 +7,8 @@ function formatFaqDate(value: Date | string): string {
 }
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { MarkdownContent } from "@/components/ui/markdown-content";
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { ChevronDown, ChevronUp, Loader2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -161,15 +163,16 @@ export const BaseFaqCard = memo<BaseFaqCardProps>(({
                     <>
                         <div className="bg-muted p-6 text-center">
                             {isEditing && onEditSummaryChange ? (
-                                <textarea
+                                <MarkdownTextarea
                                     value={editSummary ?? faq.summary}
                                     onChange={handleSummaryChange}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="w-full min-h-[80px] text-foreground mb-4 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="w-full min-h-[80px] resize-none"
                                     placeholder="Summary"
+                                    restricted
                                 />
                             ) : (
-                                <p className="text-foreground mb-4">{displaySummary}</p>
+                                <MarkdownContent content={displaySummary} className="text-foreground mb-4" restricted />
                             )}
                             <div className="flex flex-col items-center gap-2">
                                 <button

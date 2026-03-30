@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea";
 import { Button } from "@/components/ui/button";
 import { threadApi } from "../../backend/api/ThreadApi";
 import { useAuth } from "../../backend/AuthContext";
@@ -63,7 +63,7 @@ export const CreateThreadCardWide = ({onCancel, onCreate}: {onCancel: () => void
           <span className="text-red-500">{fieldErrors["title"]}</span>
         </div>
         <div className="w-full grid gap-2">
-          <Textarea
+          <MarkdownTextarea
             placeholder="Enter post content"
             id="new-thread-content"
             value={content}

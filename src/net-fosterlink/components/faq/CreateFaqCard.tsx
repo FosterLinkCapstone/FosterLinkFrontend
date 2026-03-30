@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea"
 import {
   Command,
   CommandEmpty,
@@ -133,16 +132,17 @@ export const CreateFaqCard = ({
             {serverFieldErrors?.title && <span className="text-red-500">{serverFieldErrors.title}</span>}
 
             <div className="grid gap-2">
-              <Input
+              <MarkdownTextarea
                 onChange={(e) => setNewFaqSummary(e.target.value)}
                 value={newFaqSummary}
-                type="text"
                 placeholder="FAQ Summary. Typically 2-3 sentences"
+                className="min-h-[80px] resize-none"
+                restricted
               />
               <span className="text-red-500">{serverFieldErrors?.summary}</span>
             </div>
             <div className="grid gap-2">
-              <Textarea
+              <MarkdownTextarea
                 onChange={(e) => setNewFaqContent(e.target.value)}
                 value={newFaqContent}
                 placeholder="FAQ Content. Typically an in depth answer to the question."

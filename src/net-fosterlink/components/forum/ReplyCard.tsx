@@ -2,7 +2,8 @@ import { Card } from "@/components/ui/card";
 import type { ReplyModel } from "../../backend/models/ReplyModel";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownContent, decodeHtmlEntities } from "@/components/ui/markdown-content";
+import { MarkdownTextarea } from "@/components/ui/markdown-textarea";
 import { useAuth } from "../../backend/AuthContext";
 import { memo, useCallback, useRef, useState } from "react";
 import { threadApi } from "../../backend/api/ThreadApi";
@@ -30,7 +31,7 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
     const apiCall = useCallback(() => threadApiRef.current.likeReply(reply.id), [reply.id]);
     const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(reply.liked, reply.likeCount, apiCall);
     const [editing, setEditing] = useState<boolean>(false)
-    const [editedContent, setEditedContent] = useState<string>(reply.content)
+    const [editedContent, setEditedContent] = useState<string>(decodeHtmlEntities(reply.content))
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
     const [loading, setLoading] = useState<boolean>(false)
 
@@ -111,7 +112,7 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
 
     const handleToggleEdit = useCallback(() => {
         if (editing) {
-            setEditedContent(reply.content)
+            setEditedContent(decodeHtmlEntities(reply.content))
             setEditing(false)
         } else {
             setEditing(true)
@@ -132,7 +133,7 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
         <>
             {editing ? (
                 <div className="grid gap-2 mb-3">
-                    <Textarea
+                    <MarkdownTextarea
                         value={editedContent}
                         onChange={handleEditedContentChange}
                         className="w-full min-h-[100px]"
@@ -140,7 +141,7 @@ export const ReplyCard = memo<ReplyCardProps>(({ reply, onReply, onReplyUpdate, 
                     <span className="text-red-500">{fieldErrors["content"]}</span>
                 </div>
             ) : (
-                <p className="text-foreground mb-3 text-start whitespace-pre-wrap">{reply.content}</p>
+                <MarkdownContent content={reply.content} className="text-foreground mb-3 text-start" />
             )}
 
             <div className="flex flex-wrap items-center justify-between">
