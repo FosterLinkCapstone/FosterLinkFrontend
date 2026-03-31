@@ -33,6 +33,8 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [editedContent, setEditedContent] = useState<string>(decodeHtmlEntities(thread.content));
     const [otherThreads, setOtherThreads] = useState<ThreadModel[]>([])
     const [threadEditLoading, setThreadEditLoading] = useState<boolean>(false)
+    const [threadEditError, setThreadEditError] = useState<string>('')
+    const [threadEditFieldError, setThreadEditFieldError] = useState<string>('')
     const [tagEditLoading, setTagEditLoading] = useState<boolean>(false)
     const [replies, setReplies] = useState<ReplyModel[]>([])
     const [loadingReplies, setLoadingReplies] = useState<boolean>(true)
@@ -40,6 +42,7 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     const [editingTags, setEditingTags] = useState<boolean>(false);
     const [editingTitle, setEditingTitle] = useState<boolean>(false);
     const [titleEditLoading, setTitleEditLoading] = useState<boolean>(false)
+    const [titleEditError, setTitleEditError] = useState<string>('')
     const auth = useAuth()
     const threadApiRef = useMemo(() => threadApi(auth), [auth])
     const { isLiked, likeCount, likeInFlight, toggleLike } = useLikeToggle(
@@ -107,12 +110,22 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
     }
 
     const submitEdit = () => {
-        thread.content = editedContent
-        setEditing(false)
+        setThreadEditError('')
+        setThreadEditFieldError('')
         setThreadEditLoading(true)
-        threadApiRef.editThreadContent(thread.id, editedContent).then(() => {
-            setThreadEditLoading(false)
-        })
+        threadApiRef.editThreadContent(thread.id, editedContent).then((res) => {
+            if (res.isError) {
+                const contentFieldError = res.validationErrors?.find(e => e.field === 'content')?.message;
+                if (contentFieldError) {
+                    setThreadEditFieldError(contentFieldError);
+                } else {
+                    setThreadEditError(res.error || 'Failed to save changes. Please try again.');
+                }
+            } else {
+                thread.content = editedContent
+                setEditing(false)
+            }
+        }).finally(() => setThreadEditLoading(false))
     }
 
     const tagsUpdated = (editedTags: string[]) => {
@@ -123,11 +136,15 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
         })
     }
     const titleUpdated = (editedTitle: string) => {
-        thread.title = editedTitle;
+        setTitleEditError('')
         setTitleEditLoading(true);
-        threadApiRef.updateTitle(thread.id, editedTitle).then(() => {
-            setTitleEditLoading(false);
-        })
+        threadApiRef.updateTitle(thread.id, editedTitle).then((res) => {
+            if (res.isError) {
+                setTitleEditError(res.error || 'Failed to save title. Please try again.');
+            } else {
+                thread.title = editedTitle;
+            }
+        }).finally(() => setTitleEditLoading(false));
     }
 
     const hideThread = async () => {
@@ -205,17 +222,18 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                     </Card>
                 </div>
 
-                <div className="flex-1 order-1 lg:order-2">
-                    <ThreadHeader 
-                        thread={thread} 
-                        tagsUpdated={tagsUpdated} 
-                        editingTags={editingTags} 
-                        setEditingTags={setEditingTags} 
+                <div className="flex-1 min-w-0 order-1 lg:order-2">
+                    <ThreadHeader
+                        thread={thread}
+                        tagsUpdated={tagsUpdated}
+                        editingTags={editingTags}
+                        setEditingTags={setEditingTags}
                         tagEditLoading={tagEditLoading}
                         titleUpdated={titleUpdated}
                         editingTitle={editingTitle}
                         setEditingTitle={setEditingTitle}
                         titleEditLoading={titleEditLoading}
+                        titleEditError={titleEditError}
                     />
 
                     <ThreadContentCard
@@ -224,6 +242,8 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                         editedContent={editedContent}
                         onEditedContentChange={setEditedContent}
                         onSubmitEdit={submitEdit}
+                        editError={threadEditError}
+                        editFieldError={threadEditFieldError}
                     />
 
                     {auth.isLoggedIn() && (
@@ -235,7 +255,10 @@ export const ThreadDetailPage = ({ thread }: { thread: ThreadModel }) => {
                             restricted={auth.restricted}
                             onHideOrDelete={hideThread}
                             onPermanentDelete={auth.admin && isAuthor ? deleteThreadAsUser : undefined}
-                            onToggleEdit={() => setEditing(!editing)}
+                            onToggleEdit={() => {
+                                if (editing) setEditedContent(decodeHtmlEntities(thread.content))
+                                setEditing(!editing)
+                            }}
                             onSubmitEdit={submitEdit}
                         />
                     )}

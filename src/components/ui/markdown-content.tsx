@@ -93,7 +93,13 @@ export function MarkdownContent({
   decodeEntities = true,
   restricted = false,
 }: MarkdownContentProps) {
-  const processed = decodeEntities ? decodeHtmlEntities(content) : content;
+  const decoded = decodeEntities ? decodeHtmlEntities(content) : content;
+  // Markdown collapses multiple blank lines into one paragraph break.
+  // Preserve extra blank lines by inserting non-breaking space paragraphs.
+  const processed = decoded.replace(/\n{3,}/g, (match) => {
+    const extra = match.length - 2;
+    return '\n\n' + '\u00A0\n\n'.repeat(extra);
+  });
 
   if (preview) {
     return (
@@ -105,7 +111,7 @@ export function MarkdownContent({
   const components = restricted ? restrictedComponents : markdownComponents;
 
   return (
-    <div className={cn("text-left", className)}>
+    <div className={cn("text-left break-words min-w-0", className)}>
       <Markdown remarkPlugins={plugins} components={components}>
         {processed}
       </Markdown>

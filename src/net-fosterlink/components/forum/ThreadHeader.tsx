@@ -23,18 +23,20 @@ interface ThreadHeaderProps {
     editingTitle: boolean;
     setEditingTitle: (editing: boolean) => void;
     titleEditLoading: boolean;
+    titleEditError?: string;
 }
 
-export const ThreadHeader = ({ 
-    thread, 
-    tagsUpdated, 
-    editingTags, 
-    setEditingTags, 
+export const ThreadHeader = ({
+    thread,
+    tagsUpdated,
+    editingTags,
+    setEditingTags,
     tagEditLoading,
     titleUpdated,
     editingTitle,
     setEditingTitle,
-    titleEditLoading }: ThreadHeaderProps) => {
+    titleEditLoading,
+    titleEditError }: ThreadHeaderProps) => {
     const navigate = useNavigate();
     const auth = useAuth();
 
@@ -79,6 +81,7 @@ export const ThreadHeader = ({
                                 <span className="text-destructive ml-1">(min {TITLE_MIN_LENGTH} characters)</span>
                             )}
                         </p>
+                        {titleEditError && <p className="text-destructive text-sm">{titleEditError}</p>}
                     </div>
                 ) : (
                     <div className="mb-2 w-full overflow-hidden">
