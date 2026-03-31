@@ -4,6 +4,8 @@ import { useAuth } from "../backend/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { userApi } from "../backend/api/UserApi";
 import { faqApi } from "../backend/api/FaqApi";
+import { accountDeletionApi } from "../backend/api/AccountDeletionApi";
+import type { AccountDeletionRequestModel } from "../backend/models/AccountDeletionRequestModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PhoneNumberInput } from "../components/PhoneNumberInput";
-import { Pencil, Lock, Trash2, AlertCircleIcon, LogOut, FileText } from "lucide-react";
+import { Pencil, Lock, Trash2, AlertCircleIcon, LogOut, FileText, X } from "lucide-react";
 import { getInitials } from "../util/StringUtil";
 import { ProfilePictureDialog } from "../components/account-settings/ProfilePictureDialog";
 import { ChangePasswordDialog } from "../components/account-settings/ChangePasswordDialog";
@@ -21,6 +23,7 @@ import { UnsavedChangesBar } from "../components/account-settings/UnsavedChanges
 import { emptyForm, validateAccountSettings, type FormState } from "../util/AccountSettingsValidation";
 import { EmailPreferencesCard, type EmailPreferencesCardHandle } from "../components/account-settings/EmailPreferencesCard";
 import { MyDataDialog } from "../components/account-settings/MyDataDialog";
+import { confirm } from "../components/ConfirmDialog";
 
 export const AccountSettings = () => {
     const auth = useAuth();
@@ -40,6 +43,8 @@ export const AccountSettings = () => {
     const [showMyDataDialog, setShowMyDataDialog] = useState(false);
     const [logoutAllLoading, setLogoutAllLoading] = useState(false);
     const [deletingFaqSuggestions, setDeletingFaqSuggestions] = useState(false);
+    const [pendingDeletionRequest, setPendingDeletionRequest] = useState<AccountDeletionRequestModel | null>(null);
+    const [cancellingDeletion, setCancellingDeletion] = useState(false);
 
     const [saveStatus, setSaveStatus] = useState<{ msg: string; success: boolean } | null>(null);
     const [saving, setSaving] = useState(false);
@@ -73,6 +78,11 @@ export const AccountSettings = () => {
                 setUserId(id);
                 setForm(fields);
                 savedRef.current = { ...fields };
+            }
+
+            const deletionRes = await accountDeletionApi(auth).getMyRequest();
+            if (!cancelled && !deletionRes.isError) {
+                setPendingDeletionRequest(deletionRes.data ?? null);
             }
 
             setLoading(false);
@@ -197,6 +207,22 @@ export const AccountSettings = () => {
         }
     };
 
+    const handleCancelDeletion = async () => {
+        const confirmed = await confirm({
+            message: "Are you sure you want to cancel your account deletion request? Your account will be unlocked and remain active.",
+        });
+        if (!confirmed) return;
+        setCancellingDeletion(true);
+        const res = await accountDeletionApi(auth).cancelDeletion();
+        setCancellingDeletion(false);
+        if (!res.isError) {
+            setPendingDeletionRequest(null);
+            setSaveStatus({ msg: "Your deletion request has been cancelled. Your account is now active.", success: true });
+        } else {
+            setSaveStatus({ msg: res.error ?? "Failed to cancel deletion request.", success: false });
+        }
+    };
+
     if (!auth.isLoggedIn()) return null;
 
     if (loading) {
@@ -240,6 +266,10 @@ export const AccountSettings = () => {
             <DeleteAccountDialog
                 open={showDeleteDialog}
                 onOpenChange={setShowDeleteDialog}
+                onSuccess={async () => {
+                    const res = await accountDeletionApi(auth).getMyRequest();
+                    if (!res.isError) setPendingDeletionRequest(res.data ?? null);
+                }}
             />
             <MyDataDialog
                 open={showMyDataDialog}
@@ -430,15 +460,46 @@ export const AccountSettings = () => {
                             {logoutAllLoading ? "Signing out everywhere…" : "Log out everywhere"}
                         </Button>
 
-                        <Button
-                            variant="outline"
-                            className="w-full justify-center gap-2 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300"
-                            onClick={() => setShowDeleteDialog(true)}
-                            type="button"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                            Delete account
-                        </Button>
+                        {pendingDeletionRequest ? (
+                            <div className="space-y-2">
+                                <Alert className="bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200">
+                                    <AlertCircleIcon className="h-4 w-4" />
+                                    <AlertTitle className="text-left">Account deletion pending</AlertTitle>
+                                    <AlertDescription className="text-red-800 dark:text-red-200">
+                                        Your account is scheduled for deletion. Cancel this request to keep your account active.
+                                    </AlertDescription>
+                                </Alert>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-center gap-2 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300"
+                                    onClick={handleCancelDeletion}
+                                    disabled={cancellingDeletion}
+                                    type="button"
+                                >
+                                    <X className="h-4 w-4" />
+                                    {cancellingDeletion ? "Cancelling…" : "Cancel deletion request"}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-center gap-2 text-muted-foreground"
+                                    disabled
+                                    type="button"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete account
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                className="w-full justify-center gap-2 text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300"
+                                onClick={() => setShowDeleteDialog(true)}
+                                type="button"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Delete account
+                            </Button>
+                        )}
                     </div>
                 </Card>
 

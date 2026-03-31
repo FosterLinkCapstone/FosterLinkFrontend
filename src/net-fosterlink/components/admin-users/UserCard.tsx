@@ -1,9 +1,9 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Ban, ShieldAlert } from "lucide-react";
+import { Ban, ShieldAlert, Trash2 } from "lucide-react";
 import { getInitials } from "@/net-fosterlink/util/StringUtil";
 import { buildProfileUrl } from "@/net-fosterlink/util/UserUtil";
 import type { AdminUserModel } from "@/net-fosterlink/backend/models/AdminUserModel";
@@ -25,6 +25,7 @@ interface UserCardProps {
 }
 
 export const UserCard = memo(({ user, deleted, onRoleToggle, onBan, onUnban, onRestrict, onUnrestrict, onClear }: UserCardProps) => {
+    const navigate = useNavigate();
     const [openZeroTooltipLabel, setOpenZeroTooltipLabel] = useState<string | null>(null);
     const isBanned = user.bannedAt !== null;
     const isRestricted = user.restrictedAt !== null;
@@ -69,6 +70,15 @@ export const UserCard = memo(({ user, deleted, onRoleToggle, onBan, onUnban, onR
                             <Badge className="px-2 py-0 text-xs rounded-full border-orange-400 dark:border-orange-600 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200">
                                 <ShieldAlert className="h-3 w-3 mr-1 inline" />
                                 Restricted · {formatRestrictionInfo(user.restrictedUntil)}
+                            </Badge>
+                        )}
+                        {user.pendingDeletion && (
+                            <Badge
+                                className="px-2 py-0 text-xs rounded-full border-purple-400 dark:border-purple-600 bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 cursor-pointer hover:opacity-80"
+                                onClick={() => navigate(`/admin/account-deletion-requests?userId=${user.id}`)}
+                                title="View deletion request"
+                            >
+                                <Trash2 className="h-3 w-3 mr-1 inline" /> Pending Deletion
                             </Badge>
                         )}
                     </div>
