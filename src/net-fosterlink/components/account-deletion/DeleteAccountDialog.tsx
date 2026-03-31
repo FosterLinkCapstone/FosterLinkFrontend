@@ -15,7 +15,7 @@ interface DeleteAccountDialogProps {
     onSuccess?: () => void
 }
 
-const CONTACT_EMAIL = "placeholder@fosterlink.net"
+const CONTACT_EMAIL = "admin@fosterlink.net"
 
 const InfoDialog = ({
     open,
