@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 import { PageLayout } from "../components/PageLayout"
 import { useAuth } from "../backend/AuthContext"
 import { accountDeletionApi } from "../backend/api/AccountDeletionApi"
@@ -45,11 +45,15 @@ const RequestCard = ({
     onApprove,
     onDelay,
     approving,
+    highlighted,
+    cardRef,
 }: {
     req: AccountDeletionRequestModel
     onApprove: (req: AccountDeletionRequestModel) => void
     onDelay: (req: AccountDeletionRequestModel) => void
     approving: boolean
+    highlighted?: boolean
+    cardRef?: React.Ref<HTMLDivElement>
 }) => {
     const navigate = useNavigate()
     const [showFullNote, setShowFullNote] = useState(false)
@@ -58,7 +62,7 @@ const RequestCard = ({
     const hasDelayNote = !!req.delayNote
 
     return (
-        <div className="flex flex-col w-full gap-1">
+        <div ref={cardRef} className={`flex flex-col w-full gap-1 rounded-lg transition-all duration-300 ${highlighted ? "ring-2 ring-primary ring-offset-2" : ""}`}>
             {urgent && (
                 <Alert className="bg-red-200 text-red-900 border-red-300 dark:bg-red-900/50 dark:text-red-100 dark:border-red-400/70" variant="destructive">
                     <AlertCircle />
@@ -154,8 +158,13 @@ const RequestCard = ({
 
 export const AccountDeletionRequests = () => {
     const auth = useAuth()
+    const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const highlightUserId = searchParams.get("userId") ? Number(searchParams.get("userId")) : null
     const apiRef = useRef(accountDeletionApi(auth))
     apiRef.current = accountDeletionApi(auth)
+
+    const highlightRef = useRef<HTMLDivElement | null>(null)
 
     const [requests, setRequests] = useState<AccountDeletionRequestModel[]>([])
     const [currentPage, setCurrentPage] = useState(1)
@@ -179,6 +188,12 @@ export const AccountDeletionRequests = () => {
         }
         return []
     }
+
+    useEffect(() => {
+        if (highlightRef.current) {
+            highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+    }, [requests])
 
     useEffect(() => {
         setLoading(true)
@@ -283,6 +298,13 @@ export const AccountDeletionRequests = () => {
                     </div>
                 </div>
 
+                {searchParams.has("userId") && (
+                    <Alert className="w-full bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700 mb-4" variant="default">
+                        <AlertCircle />
+                        <AlertTitle>You are currently viewing a single user. <a className="text-primary hover:text-primary/90 cursor-pointer font-medium" onClick={() => navigate("/admin/account-deletion-requests")}>Clear Selection</a></AlertTitle>
+                    </Alert>
+                )}
+
                 {loading ? (
                     <div className="flex justify-center py-12">
                         <div className="size-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
@@ -293,15 +315,20 @@ export const AccountDeletionRequests = () => {
                     <p className="text-center text-muted-foreground py-12">No pending deletion requests.</p>
                 ) : (
                     <div className="flex flex-col items-center gap-6">
-                        {requests.map(req => (
+                        {requests.map(req => {
+                            const isHighlighted = highlightUserId !== null && req.requestedBy.id === highlightUserId
+                            return (
                             <RequestCard
                                 key={req.id}
                                 req={req}
                                 onApprove={handleApprove}
                                 onDelay={handleDelay}
                                 approving={approvingId === req.id}
+                                highlighted={isHighlighted}
+                                cardRef={isHighlighted ? highlightRef : undefined}
                             />
-                        ))}
+                            )
+                        })}
                         <Paginator<AccountDeletionRequestModel[]>
                             pageCount={totalPages}
                             currentPage={currentPage}

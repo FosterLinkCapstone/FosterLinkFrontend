@@ -80,16 +80,17 @@ export const AuthProvider = ({ apiUrl, children }: { apiUrl: string, children: R
     const isRefreshing = useRef(false)
     const failedQueue = useRef<Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }>>([])
 
-    // Main API client
-    const api = useMemo(() => axios.create({ baseURL: apiUrl }), [apiUrl])
-
-    // Apply stored token to API client on mount
-    useEffect(() => {
+    // Main API client — token applied synchronously so child components can make
+    // authenticated requests during their own mount effects without racing the
+    // deferred useEffect that sets up interceptors.
+    const api = useMemo(() => {
+        const instance = axios.create({ baseURL: apiUrl })
         const stored = readStoredToken()
         if (stored) {
-            api.defaults.headers.common.Authorization = `Bearer ${stored}`
+            instance.defaults.headers.common.Authorization = `Bearer ${stored}`
         }
-    }, [api])
+        return instance
+    }, [apiUrl])
 
     // Dedicated refresh client — no auth interceptor, no 401 retry, no CSRF header.
     // withCredentials ensures the HttpOnly refresh_token cookie is sent.

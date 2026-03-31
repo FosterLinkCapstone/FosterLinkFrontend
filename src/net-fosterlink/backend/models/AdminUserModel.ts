@@ -25,6 +25,9 @@ export interface AdminUserModel {
     agencyCount: number;
     faqAnswerCount: number;
     faqSuggestionCount: number;
+
+    // Deletion status
+    pendingDeletion: boolean;
 }
 
 import type { PaginatedResponse } from "./api/PaginatedResponse";

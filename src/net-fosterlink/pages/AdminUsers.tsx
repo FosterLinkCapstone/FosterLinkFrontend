@@ -12,6 +12,7 @@ import { Paginator } from "../components/Paginator";
 import { StatusDialog } from "../components/StatusDialog";
 import { confirm } from "../components/ConfirmDialog";
 import { Search, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AdminUserStatsModel, GetAdminUsersResponse } from "../backend/models/AdminUserModel";
 import { UserCard } from "../components/admin-users/UserCard";
 import { ROLE_META, type SearchBy, type RoleKey } from "../components/admin-users/AdminRoleConstants";
@@ -371,15 +372,22 @@ export const AdminUsers = () => {
                         Search
                     </Button>
 
-                    <Button
-                        type="button"
-                        variant={mode === "DELETED" ? "default" : "outline"}
-                        className="whitespace-nowrap"
-                        onClick={handleToggleDeleted}
-                    >
-                        <Trash2 className="h-4 w-4 mr-1.5" />
-                        Deleted Accounts
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant={mode === "DELETED" ? "default" : "outline"}
+                                    className="whitespace-nowrap"
+                                    onClick={handleToggleDeleted}
+                                >
+                                    <Trash2 className="h-4 w-4 mr-1.5" />
+                                    Deleted Accounts
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Includes Pending</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </form>
 
                 {/* Results */}
@@ -416,7 +424,7 @@ export const AdminUsers = () => {
                             <UserCard
                                 key={user.id}
                                 user={user}
-                                deleted={mode === "DELETED"}
+                                deleted={mode === "DELETED" && !user.pendingDeletion}
                                 onRoleToggle={handleRoleToggle}
                                 onBan={handleBan}
                                 onUnban={handleUnban}
