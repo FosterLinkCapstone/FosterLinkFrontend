@@ -29,7 +29,7 @@ export interface FaqApiType {
     approve: (id: number, approved: boolean) => Promise<ErrorWrapper<boolean>>
     create: (title: string, summary: string, content: string) => Promise<ErrorWrapper<FaqModel>>
     update: (id: number, payload: UpdateFaqPayload) => Promise<ErrorWrapper<boolean>>
-    checkApprovalStatus: () => Promise<ApprovalCheckModel>
+    checkApprovalStatus: () => Promise<ApprovalCheckModel | null>
     getRequests: () => Promise<ErrorWrapper<FaqRequestModel[]>>
     answerRequest: (requestId: number) => Promise<ErrorWrapper<boolean>>
     createRequest: (suggested: string) => Promise<ErrorWrapper<boolean>>
@@ -174,9 +174,13 @@ export const faqApi = (auth: AuthContextType): FaqApiType => {
                 defaultErrorsUpdateFaq
             )
         },
-        checkApprovalStatus: async(): Promise<ApprovalCheckModel> => {
-            const res = await auth.api.get("/faq/checkApproval")
-            return res.data
+        checkApprovalStatus: async(): Promise<ApprovalCheckModel | null> => {
+            try {
+                const res = await auth.api.get("/faq/checkApproval")
+                return res.data
+            } catch {
+                return null
+            }
         },
         getRequests: async(): Promise<ErrorWrapper<FaqRequestModel[]>> => {
             return doGenericRequest<FaqRequestModel[]>(
