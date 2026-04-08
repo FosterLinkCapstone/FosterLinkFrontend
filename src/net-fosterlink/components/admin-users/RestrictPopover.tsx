@@ -19,6 +19,12 @@ export const RestrictPopover = ({ user, onRestrict, onUnrestrict, disabled }: Re
 
     const isRestricted = user.restrictedAt !== null;
 
+    const handleToggle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setForever(e.target.checked);
+        if (e.target.checked) setSelectedDate(undefined);
+    }, []);
+    const handleDateSelect = useCallback((date: Date | undefined) => setSelectedDate(date), []);
+
     if (isRestricted) {
         return (
             <Button
@@ -32,12 +38,6 @@ export const RestrictPopover = ({ user, onRestrict, onUnrestrict, disabled }: Re
             </Button>
         );
     }
-
-    const handleToggle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        setForever(e.target.checked);
-        if (e.target.checked) setSelectedDate(undefined);
-    }, []);
-    const handleDateSelect = useCallback((date: Date | undefined) => setSelectedDate(date), []);
 
     const handleConfirm = () => {
         const until = !forever && selectedDate
