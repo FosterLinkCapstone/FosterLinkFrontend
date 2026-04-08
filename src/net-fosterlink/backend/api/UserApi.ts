@@ -470,7 +470,9 @@ export const userApi = (auth: AuthContextType): UserApiType => {
                 RequestType.POST,
                 `/admin/users/setRole?userId=${userId}&role=${encodeURIComponent(role)}&enabled=${enabled}`,
                 {},
-                defaultErrors
+                defaultErrors,
+                undefined,
+                (status, data) => status === 400 && typeof data === "string" ? data : undefined
             );
         },
 
