@@ -258,6 +258,8 @@ export const AccountSettings = () => {
                 onOpenChange={setShowProfilePicDialog}
                 currentUrl={form.profilePictureUrl}
                 onConfirm={(url) => handleField("profilePictureUrl", url)}
+                fullName={fullName}
+                username={form.username}
             />
             <ChangePasswordDialog
                 open={showChangePasswordDialog}
